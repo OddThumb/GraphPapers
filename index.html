@@ -272,6 +272,12 @@ main{flex:1; display:flex; overflow:hidden; min-height:0}
 #qJumpBlock select:focus{outline:none; border-color:var(--soft)}
 #qCount{white-space:nowrap; font-size:9px; color:var(--accent)}
 #qCount.exhausted{color:var(--soft)}
+.qt-chips{display:flex; flex-wrap:wrap; gap:6px}
+.qt-chip{
+  font:inherit; font-size:11px; padding:3px 8px; border-radius:4px;
+  border:1px solid var(--rule); background:transparent; color:var(--ink); cursor:pointer;
+}
+.qt-chip.selected{background:var(--accent-tint); border-color:var(--accent); color:var(--accent)}
 a{color:var(--link)}
 .status-line{font-family:'Geist Mono',monospace; font-size:10px; color:var(--soft); padding:16px}
 .error-box{font-size:12px; color:var(--ink); padding:16px; border:1px solid var(--rule); border-radius:6px; margin:16px}
@@ -356,7 +362,7 @@ a{color:var(--link)}
 </head>
 <body>
 <header>
-  <h1 id="titleBtn" data-i18n-attr="title:reloadTitle" title="Reload the current graph with fresh data">GraphPapers</h1><span id="version">v1.7</span>
+  <h1 id="titleBtn" data-i18n-attr="title:reloadTitle" title="Reload the current graph with fresh data">GraphPapers</h1><span id="version">v0.8</span>
   <div class="search-wrap">
     <input id="searchInput" type="text" data-i18n-attr="placeholder:searchPlaceholder" placeholder="Search by title, DOI, or OpenAlex ID">
     <div id="dropdown" hidden></div>
@@ -472,7 +478,7 @@ a{color:var(--link)}
           <svg width="76" height="24" aria-hidden="true">
             <line x1="2" y1="12" x2="62" y2="12" stroke="var(--accent)" stroke-width="2" stroke-dasharray="6,3"/>
             <polygon points="62 8, 71 12, 62 16" fill="var(--accent)"/>
-          </svg><span class="lg-val" data-i18n="lgJumpVal" data-i18n-html>Where you jumped from &mdash; by <b>Read together</b> (co-citation) or <b>Shared foundations</b> (shared rare references), whichever <b>Find by</b> was set to. Either way the target had no citation link to the current paper, so the trail records a path citations could not have found. The ringed nodes it connects are past seeds, their ring fading the further back along the path they sit.</span></div>
+          </svg><span class="lg-val" data-i18n="lgJumpVal" data-i18n-html>Where you jumped from &mdash; by whichever of the four <b>Find by</b> routes was set: <b>Read together</b> (co-citation), <b>Shared foundations</b> (shared rare references), <b>Same ideas</b> (shared subject keywords, no citation tie at all), or <b>Linked through a third paper</b> (a shared intermediate). Every route guarantees no citation link between the two papers, so the trail records a path citations could not have found. The ringed nodes it connects are past seeds, their ring fading the further back along the path they sit.</span></div>
       </div>
       <div id="promptPanel" hidden>
         <div id="promptHead">
@@ -582,7 +588,7 @@ const I18N = {
     lgDashedEdge: 'Dashed edge',
     lgDashedVal: 'A real citation, arrow pointing at the older paper. Turn these on with <b>Citation links</b>.',
     lgJumpTrail: 'Jump trail',
-    lgJumpVal: 'Where you jumped from &mdash; by <b>Read together</b> (co-citation) or <b>Shared foundations</b> (shared rare references), whichever <b>Find by</b> was set to. Either way the target had no citation link to the current paper, so the trail records a path citations could not have found. The ringed nodes it connects are past seeds, their ring fading the further back along the path they sit.',
+    lgJumpVal: 'Where you jumped from &mdash; by whichever of the four <b>Find by</b> routes was set: <b>Read together</b> (co-citation), <b>Shared foundations</b> (shared rare references), <b>Same ideas</b> (shared subject keywords, no citation tie at all), or <b>Linked through a third paper</b> (a shared intermediate). Every route guarantees no citation link between the two papers, so the trail records a path citations could not have found. The ringed nodes it connects are past seeds, their ring fading the further back along the path they sit.',
     promptHeading: 'LLM story prompt', depth: 'Depth', depthAll: 'All', output: 'Output',
     copy: 'Copy', close: 'Close', copied: 'Copied', pressCmdC: 'Press Cmd+C',
     promptCount: '{n} papers · {chars} chars',
@@ -597,13 +603,16 @@ const I18N = {
     quantumJumpTitle: 'Jump to a random high-similarity paper with no citation link to the current one',
     undoJump: 'Undo jump', undoJumpTitle: 'Undo the last jump',
     findBy: 'Find by', findByCocite: 'Read together', findByCoupling: 'Shared foundations',
+    findByIdeas: 'Same ideas', findByChain: 'Linked through a third paper',
     field: 'Field', fieldAny: 'Any field', fieldSame: 'Same field', fieldCross: 'Different field',
     clearTrail: 'Clear trail', clearTrailTitle: 'Empty the jump trail',
     resetDraws: 'Reset draws', resetDrawsTitle: 'Forget which candidates have already been drawn',
     qReady: 'Ready', qLeft: '{untried} of {all} left', jumping: 'Jumping…',
+    pickATerm: 'Pick at least one term.',
     loadGraphFirst: 'Load a graph first.',
     jumpExhausted: 'Quantum Jump! has already drawn every candidate for this paper and these options. Reset draws to start over.',
     noJumpCandidates: 'No quantum jump candidates match these options.',
+    sharedKeywordCount: '{n} shared keyword(s)', chainVia: 'Linked through: {title}',
     statusFetchingSeed: 'Fetching seed paper…', statusCollecting: 'Collecting references and citations…',
     statusComputing: 'Computing similarity…',
     couldNotReach: 'Could not reach OpenAlex: {msg}',
@@ -645,7 +654,7 @@ const I18N = {
     lgDashedEdge: '점선',
     lgDashedVal: '실제 인용 관계이며, 화살표는 더 오래된 논문을 가리킵니다. <b>인용 연결선</b>으로 켤 수 있습니다.',
     lgJumpTrail: '점프 경로',
-    lgJumpVal: '어디서 건너왔는지를 보여줍니다 &mdash; <b>찾는 방식</b>에 따라 <b>함께 읽히는 논문</b>(동시인용) 또는 <b>같은 토대를 쓰는 논문</b>(공유 참고문헌) 기준입니다. 어느 쪽이든 대상 논문은 현재 논문과 인용 관계가 없었으므로, 이 경로는 인용만으로는 찾을 수 없었던 길을 기록합니다. 경로가 잇는, 테두리가 있는 노드들은 이전 시드들이며, 경로를 따라 더 뒤에 있을수록 테두리가 흐려집니다.',
+    lgJumpVal: '어디서 건너왔는지를 보여줍니다 &mdash; 네 가지 <b>찾는 방식</b> 중 무엇이 선택되었든: <b>함께 읽히는 논문</b>(동시인용), <b>같은 토대를 쓰는 논문</b>(공유 참고문헌), <b>같은 아이디어</b>(공유 주제 키워드, 인용 관계 전혀 없음), 또는 <b>제3의 논문 경유</b>(공유된 중간 논문). 어느 방식이든 두 논문 사이에 인용 관계가 없음을 보장하므로, 이 경로는 인용만으로는 찾을 수 없었던 길을 기록합니다. 경로가 잇는, 테두리가 있는 노드들은 이전 시드들이며, 경로를 따라 더 뒤에 있을수록 테두리가 흐려집니다.',
     promptHeading: 'LLM 이야기 프롬프트', depth: '깊이', depthAll: '전체', output: '출력',
     copy: '복사', close: '닫기', copied: '복사됨', pressCmdC: 'Cmd+C를 누르세요',
     promptCount: '{n}개 논문 · {chars}자',
@@ -660,13 +669,16 @@ const I18N = {
     quantumJumpTitle: '현재 논문과 인용 관계가 없는, 유사도 높은 논문으로 무작위로 점프합니다',
     undoJump: '점프 되돌리기', undoJumpTitle: '마지막 점프를 되돌립니다',
     findBy: '찾는 방식', findByCocite: '함께 읽히는 논문', findByCoupling: '같은 토대를 쓰는 논문',
+    findByIdeas: '같은 아이디어', findByChain: '제3의 논문 경유',
     field: '분야', fieldAny: '분야 무관', fieldSame: '같은 분야', fieldCross: '다른 분야',
     clearTrail: '경로 지우기', clearTrailTitle: '점프 경로를 비웁니다',
     resetDraws: '뽑기 기록 초기화', resetDrawsTitle: '이미 뽑은 후보 기록을 초기화합니다',
     qReady: '준비됨', qLeft: '{all}개 중 {untried}개 남음', jumping: '점프하는 중…',
+    pickATerm: '용어를 하나 이상 선택하세요.',
     loadGraphFirst: '먼저 그래프를 불러오세요.',
     jumpExhausted: '이 논문과 조건에 대해 Quantum Jump!가 모든 후보를 이미 뽑았습니다. 다시 시작하려면 뽑기 기록을 초기화하세요.',
     noJumpCandidates: '이 조건에 맞는 Quantum Jump 후보가 없습니다.',
+    sharedKeywordCount: '공유 키워드 {n}개', chainVia: '{title}을(를) 통해 연결됨',
     statusFetchingSeed: '시드 논문을 가져오는 중…', statusCollecting: '참고문헌과 인용 정보를 모으는 중…',
     statusComputing: '유사도를 계산하는 중…',
     couldNotReach: 'OpenAlex에 연결할 수 없습니다: {msg}',
@@ -739,15 +751,19 @@ async function searchWorks(q){
   return (data.results || []).map(normalizeWork);
 }
 
+// shared select= list for citer/reference/candidate records -- keywords + concepts feed the
+// 'ideas' route's term chips and scoring; everything else was already needed.
+const SELECT_WORK = 'id,display_name,publication_year,cited_by_count,referenced_works,authorships,doi,open_access,primary_location,updated_date,biblio,type,primary_topic,keywords,concepts';
+
 async function fetchSeed(id){
   const w = await fetchJSON(API + '/works/' + id +
-    '?select=id,doi,display_name,publication_year,cited_by_count,referenced_works,authorships,abstract_inverted_index,primary_location,open_access,updated_date,biblio,type,primary_topic');
+    '?select=id,doi,display_name,publication_year,cited_by_count,referenced_works,authorships,abstract_inverted_index,primary_location,open_access,updated_date,biblio,type,primary_topic,keywords,concepts');
   return normalizeWork(w);
 }
 
 async function fetchCiters(id){
   const data = await fetchJSON(API + '/works?filter=cites:' + id +
-    '&per-page=100&sort=cited_by_count:desc&select=id,display_name,publication_year,cited_by_count,referenced_works,authorships,doi,open_access,primary_location,updated_date,biblio,type,primary_topic');
+    '&per-page=100&sort=cited_by_count:desc&select=' + SELECT_WORK);
   return (data.results || []).map(normalizeWork);
 }
 
@@ -757,7 +773,7 @@ function chunk(arr, size){ const out=[]; for(let i=0;i<arr.length;i+=size) out.p
 async function fetchWorksByIds(ids){
   if (!ids.length) return [];
   const data = await fetchJSON(API + '/works?filter=openalex_id:' + ids.join('|') +
-    '&per-page=100&select=id,display_name,publication_year,cited_by_count,referenced_works,authorships,doi,open_access,primary_location,updated_date,biblio,type,primary_topic');
+    '&per-page=100&select=' + SELECT_WORK);
   return (data.results || []).map(normalizeWork);
 }
 
@@ -976,6 +992,122 @@ function dedupeByTitle(seed, works){
   return out;
 }
 
+// pure: shared field-filter for the 'ideas'/'chain' routes -- 'any' passes everything, 'same'/'cross'
+// compare fieldOf(w) against fieldOf(seed) (a candidate with no field never matches same/cross).
+function fieldMatches(seed, w, field){
+  if (!field || field === 'any') return true;
+  const f = fieldOf(w);
+  if (f == null) return false;
+  return field === 'same' ? f === fieldOf(seed) : f !== fieldOf(seed);
+}
+
+// pure: every id with ANY bibliometric tie to the seed -- referenced by it, citing it, co-cited
+// with it, or bibliographically coupled with it. Routes 'ideas' and 'chain' both exclude this set;
+// it's what makes them structurally unable to return what 'cocite'/'coupling' already can.
+function bibliometricTies(seed, citers, coCiteCounts, couplingCounts){
+  return new Set([seed.id, ...(seed.referenced_works || []),
+    ...citers.map(c => c.id), ...coCiteCounts.keys(), ...couplingCounts.keys()]);
+}
+
+// pure: merges seed.keywords + seed.concepts into one toggleable term list for the 'ideas' route's
+// chips. Concepts are kept only at levels 2-4 -- 0-1 are field-level ("Physics", "Astronomy", too
+// broad to filter on) and 5 is usually a single-paper term. Deduped by lowercased display_name
+// (higher score wins a collision), sorted by score, top 10.
+function mergeIdeaTerms(seed){
+  const raw = [
+    ...(seed.keywords || []).map(k => ({ id: k.id, display_name: k.display_name, score: k.score || 0, kind: 'keyword' })),
+    ...(seed.concepts || []).filter(c => c.level >= 2 && c.level <= 4)
+      .map(c => ({ id: c.id, display_name: c.display_name, score: c.score || 0, kind: 'concept' }))
+  ];
+  const byName = new Map();
+  for (const term of raw) {
+    const key = String(term.display_name || '').toLowerCase();
+    const existing = byName.get(key);
+    if (!existing || term.score > existing.score) byName.set(key, term);
+  }
+  return [...byName.values()].sort((a, b) => b.score - a.score).slice(0, 10);
+}
+
+// pure: OpenAlex filter clause for one 'ideas' term -- keywords and concepts use different filter keys.
+const termFilterClause = term => (term.kind === 'concept' ? 'concepts.id:' : 'keywords.id:') + term.id;
+
+// pure: scores 'ideas' route candidates by the summed score of the shared SELECTED terms (the
+// chips the user actually picked, not the seed's top terms) divided by sqrt(cited_by_count) -- the
+// same fame correction the other routes use. Excludes anything in `exclude` (any bibliometric tie
+// to the seed), which is the entire reason this route can surface what cocite/coupling structurally
+// cannot.
+function ideasCandidates(seed, candidates, exclude, terms, opts){
+  opts = opts || {};
+  const field = opts.field || 'any';
+  return candidates
+    .filter(w => w.id !== seed.id && !exclude.has(w.id))
+    .filter(w => fieldMatches(seed, w, field))
+    .map(w => {
+      const wIds = new Set([...(w.keywords || []).map(k => k.id), ...(w.concepts || []).map(c => c.id)]);
+      const overlap = terms.reduce((sum, term) => sum + (wIds.has(term.id) ? term.score : 0), 0);
+      return { w, s: overlap / Math.sqrt(Math.max(1, w.cited_by_count || 0)) };
+    })
+    .filter(x => x.s > 0)
+    .sort((a, b) => b.s - a.s)
+    .slice(0, 12)
+    .map(x => x.w);
+}
+
+// pure: the seed's `n` strongest similarity neighbours in the current graph (bibliographic coupling
+// + co-citation over `pool`), excluding the seed -- the "B" papers for the 'chain' route's Swanson
+// ABC pattern.
+function topSimilarNodes(seed, pool, nodes, n){
+  const sim = simScorer(pool);
+  return nodes.filter(w => w.id !== seed.id)
+    .map(w => ({ w, s: sim(seed.id, w.id) }))
+    .sort((a, b) => b.s - a.s)
+    .slice(0, n)
+    .map(x => x.w);
+}
+
+// pure: merges per-B co-citation count maps (Swanson ABC 'chain' route: countsPerB[i] is
+// coCitationCounts centred on bList[i] instead of the seed) into Map(id -> {total, viaB, viaCount}).
+// viaB is the single B that contributed the largest share -- the intermediate the trail evidence
+// names, since "connected through B" is the entire content of a chain finding. Drops anything in
+// `exclude` (any bibliometric tie to the seed/A) up front, which is what makes this route
+// structurally unable to return what cocite/coupling already can.
+function combineChainCounts(bList, countsPerB, exclude){
+  const merged = new Map();
+  bList.forEach((b, i) => {
+    for (const [id, count] of countsPerB[i]) {
+      if (exclude.has(id)) continue;
+      const cur = merged.get(id) || { total: 0, viaB: null, viaCount: 0 };
+      cur.total += count;
+      if (count > cur.viaCount) { cur.viaCount = count; cur.viaB = b; }
+      merged.set(id, cur);
+    }
+  });
+  return merged;
+}
+
+// pure: scores 'chain' route candidates -- coCiteCountWithB / sqrt(cited_by_count), summed over
+// every intermediate B a candidate appeared through (summing the raw counts first and dividing once
+// is equivalent, since sqrt(cited_by_count) is the same for every B). Each returned candidate
+// carries `_chainVia` (the strongest single B, from combineChainCounts) so the trail evidence can
+// name it.
+function chainCandidates(seed, candidates, merged, opts){
+  opts = opts || {};
+  const field = opts.field || 'any';
+  return candidates
+    .filter(w => w.id !== seed.id)
+    .filter(w => fieldMatches(seed, w, field))
+    .map(w => {
+      const m = merged.get(w.id);
+      const s = m ? m.total / Math.sqrt(Math.max(1, w.cited_by_count || 0)) : 0;
+      const via = m ? { id: m.viaB.id, title: m.viaB.display_name, count: m.viaCount } : null;
+      return { w: Object.assign({}, w, { _chainVia: via }), s };
+    })
+    .filter(x => x.s > 0)
+    .sort((a, b) => b.s - a.s)
+    .slice(0, 12)
+    .map(x => x.w);
+}
+
 // pure: `candidates` scored against the seed, best first, top 12. Score = a route-specific
 // "specificity" term (guards against the "famous paper" confound: a paper linked to everything
 // scores low unless it's ALSO disproportionately linked to this seed specifically) + bibliographic
@@ -1017,17 +1149,24 @@ function quantumCandidates(seed, scorerPool, candidates, opts){
     .map(x => x.w);
 }
 
-// pure: quantumCandidates minus whatever has already been drawn from this seed+route, per a
-// Map("seedId|route" => Set(id)).
-function untriedCandidates(seed, scorerPool, candidates, opts, tried){
-  const key = seed.id + '|' + ((opts && opts.route) || 'cocite');
+// pure: drops ids already drawn for this seed+route (shared by all four routes) from an
+// already-scored/sorted candidate list, per a Map("seedId|route" => Set(id)).
+function dropTried(seedId, route, list, tried){
+  const key = seedId + '|' + route;
   const drawn = (tried && tried.get(key)) || new Set();
-  return quantumCandidates(seed, scorerPool, candidates, opts).filter(w => !drawn.has(w.id));
+  return list.filter(w => !drawn.has(w.id));
+}
+
+// pure: quantumCandidates minus whatever has already been drawn from this seed+route.
+function untriedCandidates(seed, scorerPool, candidates, opts, tried){
+  const route = (opts && opts.route) || 'cocite';
+  return dropTried(seed.id, route, quantumCandidates(seed, scorerPool, candidates, opts), tried);
 }
 
 // pure: the hover/tap card for a trail edge -- the evidence for why Quantum Jump linked these two
-// papers, snapshotted at jump time. evidence: { coCite: {count, titles}, sharedRefs: {count, titles} }.
-// A section is omitted entirely when its count is 0, not printed as "0 shared references".
+// papers, snapshotted at jump time. evidence: { coCite: {count, titles}, sharedRefs: {count, titles},
+// ideas: {keywords: [names]}, chain: {viaId, viaTitle, count} }. A section is omitted entirely when
+// it has no content, not printed as "0 shared references".
 function trailCardHtml(evidence, fromTitle){
   const section = (headerFor, ev) => {
     if (!ev || !ev.count) return '';
@@ -1035,10 +1174,19 @@ function trailCardHtml(evidence, fromTitle){
     const more = ev.count > ev.titles.length ? '<div class="tc-more">' + tf('andMore', { n: ev.count - ev.titles.length }) + '</div>' : '';
     return '<div class="tc-section"><p class="eyebrow" style="margin:0 0 4px">' + headerFor(ev.count) + '</p>' + items + more + '</div>';
   };
+  const chainSection = ev => {
+    if (!ev) return '';
+    return '<div class="tc-section"><p class="eyebrow" style="margin:0 0 4px">' + tf('chainVia', { title: esc(ev.viaTitle || t('untitled')) }) + '</p>' +
+      '<div class="tc-item">' + tf('citeBothCount', { n: ev.count }) + '</div></div>';
+  };
+  const ideasEv = evidence && evidence.ideas && evidence.ideas.keywords.length
+    ? { count: evidence.ideas.keywords.length, titles: evidence.ideas.keywords } : null;
   return '<p class="eyebrow" style="margin:0 0 4px">' + esc(t('jumpedFrom')) + '</p>' +
     '<div class="tc-title">' + esc(fromTitle || t('untitled')) + '</div>' +
     section(n => tf('citeBothCount', { n }), evidence && evidence.coCite) +
-    section(n => tf('sharedRefCount', { n }), evidence && evidence.sharedRefs);
+    section(n => tf('sharedRefCount', { n }), evidence && evidence.sharedRefs) +
+    section(n => tf('sharedKeywordCount', { n }), ideasEv) +
+    chainSection(evidence && evidence.chain);
 }
 
 function reconstructAbstract(inv){
@@ -1253,8 +1401,11 @@ function quantumBlockHtml(){
       '<select id="qFindBy">' +
         '<option value="cocite">' + esc(t('findByCocite')) + '</option>' +
         '<option value="coupling">' + esc(t('findByCoupling')) + '</option>' +
+        '<option value="ideas">' + esc(t('findByIdeas')) + '</option>' +
+        '<option value="chain">' + esc(t('findByChain')) + '</option>' +
       '</select>' +
     '</label>' +
+    '<div class="qt-chips" id="qIdeasChips" hidden></div>' +
     '<label class="gt-field"><span>' + esc(t('field')) + '</span>' +
       '<select id="qField">' +
         '<option value="any">' + esc(t('fieldAny')) + '</option>' +
@@ -1277,7 +1428,7 @@ function wireQuantumBlock(){
   document.getElementById('qField').value = qFieldVal;
   document.getElementById('quantumJumpBtn').onclick = quantumJump;
   document.getElementById('quantumUndoBtn').onclick = quantumUndo;
-  document.getElementById('qFindBy').onchange = e => { qFindByVal = e.target.value; refreshQuantumUI(); };
+  document.getElementById('qFindBy').onchange = e => { qFindByVal = e.target.value; renderIdeasChips(); refreshQuantumUI(); };
   document.getElementById('qField').onchange = e => { qFieldVal = e.target.value; refreshQuantumUI(); };
   document.getElementById('qClearTrail').onclick = () => {
     state.trail = [];
@@ -1295,7 +1446,43 @@ function wireQuantumBlock(){
     state.tried = new Map();
     refreshQuantumUI();
   };
+  renderIdeasChips();
   refreshQuantumUI();
+}
+
+// per-seed term chips for the 'ideas' route -- computed once per seed (mergeIdeaTerms is pure;
+// the top-3 default selection lives in state so a chip toggle survives a panel re-render).
+function ensureIdeasTerms(seed){
+  if (state.ideasTermsFor !== seed.id) {
+    state.ideasTermsFor = seed.id;
+    state.ideasTerms = mergeIdeaTerms(seed);
+    state.ideasSelected = new Set(state.ideasTerms.slice(0, 3).map(term => term.id));
+  }
+  return { terms: state.ideasTerms, selected: state.ideasSelected };
+}
+
+// shows/hides and (re)populates the 'ideas' term chips. Toggling a chip invalidates that route's
+// cached jumpPool for this seed so the next readout/press reflects the new selection -- fetching
+// stays lazy, exactly like every other route.
+function renderIdeasChips(){
+  const box = document.getElementById('qIdeasChips');
+  if (!box) return;
+  if (qFindByVal !== 'ideas' || !state.seed) { box.hidden = true; box.innerHTML = ''; return; }
+  const seed = state.seed;
+  const { terms, selected } = ensureIdeasTerms(seed);
+  box.hidden = false;
+  box.innerHTML = terms.map(term =>
+    '<button type="button" class="qt-chip' + (selected.has(term.id) ? ' selected' : '') + '" data-id="' + esc(term.id) + '">' +
+      esc(term.display_name) + '</button>').join('');
+  box.querySelectorAll('.qt-chip').forEach(btn => {
+    btn.onclick = () => {
+      const id = btn.getAttribute('data-id');
+      if (selected.has(id)) selected.delete(id); else selected.add(id);
+      state.jumpPool.delete(jumpKey(seed.id, 'ideas'));
+      renderIdeasChips();
+      refreshQuantumUI();
+    };
+  });
 }
 
 function renderDetail(work){
@@ -2030,6 +2217,74 @@ function restoreGraph(snap){
   updateFreshness();
 }
 
+// OpenAlex ANDs repeated filter keys when comma-joined in one filter param (verified: ANDing the
+// seed's top keyword/concept terms gives a tight, on-topic set; the OR form "keywords.id:a|b|c"
+// returns 100k+ unrelated works and must never be used). Adaptive relaxation drops the
+// lowest-scoring SELECTED term first and never widens past what the user actually picked.
+async function fetchIdeasWorks(selected){
+  if (!selected.length) return [];
+  const runWith = terms => fetchJSON(API + '/works?filter=' +
+      terms.map(termFilterClause).join(',') +
+      '&per-page=100&sort=cited_by_count:desc&select=' + SELECT_WORK)
+    .then(data => (data.results || []).map(normalizeWork));
+
+  let terms = selected;
+  let results = await runWith(terms);
+  if (results.length < 25 && terms.length > 1) { terms = terms.slice(0, -1); results = await runWith(terms); }
+  if (results.length < 10 && terms.length > 1) { terms = terms.slice(0, -1); results = await runWith(terms); }
+  return results;
+}
+
+// fetches (or returns the cached) candidate pool for one seed+route. 'ideas' and 'chain' need the
+// seed's cocite/coupling counts to build their exclusion set (bibliometricTies) -- recursing into
+// ensureJumpPool for those two routes computes them on demand and reuses the very same cache entry,
+// so nothing the other routes need is ever fetched twice.
+async function ensureJumpPool(seed, route){
+  const key = jumpKey(seed.id, route);
+  if (state.jumpPool.has(key)) return state.jumpPool.get(key);
+
+  if (route === 'coupling') {
+    const { counts, works, rareRefs } = await couplingCandidateIds(seed, state.refs, state.citers);
+    state.jumpPool.set(key, { works: dedupeByTitle(seed, works), counts, nCiters: 0, rareRefs });
+
+  } else if (route === 'ideas') {
+    const cociteCounts = (await ensureJumpPool(seed, 'cocite')).counts;
+    const couplingCounts = (await ensureJumpPool(seed, 'coupling')).counts;
+    const exclude = bibliometricTies(seed, state.citers, cociteCounts, couplingCounts);
+    const { terms, selected } = ensureIdeasTerms(seed);
+    const chosenTerms = terms.filter(term => selected.has(term.id));
+    const works = await fetchIdeasWorks(chosenTerms);
+    state.jumpPool.set(key, { works: dedupeByTitle(seed, works), exclude, terms: chosenTerms, counts: new Map(), nCiters: 0 });
+
+  } else if (route === 'chain') {
+    const cociteCounts = (await ensureJumpPool(seed, 'cocite')).counts;
+    const couplingCounts = (await ensureJumpPool(seed, 'coupling')).counts;
+    const exclude = bibliometricTies(seed, state.citers, cociteCounts, couplingCounts);
+    const bList = topSimilarNodes(seed, state.pool, state.nodes, 5);
+    const countsPerB = await Promise.all(bList.map(b =>
+      fetchCiters(b.id).then(citersOfB => coCitationCounts(b, [], citersOfB))));
+    const merged = combineChainCounts(bList, countsPerB, exclude);
+    const idCounts = new Map([...merged].map(([id, v]) => [id, v.total]));
+    const works = await fetchWorksByIds(shortlistIds(idCounts));
+    state.jumpPool.set(key, { works: dedupeByTitle(seed, works), merged, counts: new Map(), nCiters: 0 });
+
+  } else { // cocite (default)
+    const counts = coCitationCounts(seed, state.refs, state.citers);
+    const works = await fetchWorksByIds(shortlistIds(counts));
+    state.jumpPool.set(key, { works: dedupeByTitle(seed, works), counts, nCiters: state.citers.length });
+  }
+  return state.jumpPool.get(key);
+}
+
+// dispatches to the route-specific pure scorer. cocite/coupling share quantumCandidates (it already
+// branches on opts.route for the specificity formula); ideas/chain need their own candidate-pool
+// shape (an exclude set / a merged co-citation map) so they get their own scorers.
+function routeCandidates(seed, scorerPool, jump, opts){
+  if (opts.route === 'ideas') return ideasCandidates(seed, jump.works, jump.exclude, jump.terms || [], opts);
+  if (opts.route === 'chain') return chainCandidates(seed, jump.works, jump.merged, opts);
+  return quantumCandidates(seed, scorerPool, jump.works, opts);
+}
+
 function refreshQuantumUI(){
   const jumpBtn = document.getElementById('quantumJumpBtn');
   if (!jumpBtn) return; // block only renders on the seed's own detail view
@@ -2039,6 +2294,14 @@ function refreshQuantumUI(){
   if (!state.seed) { countEl.textContent = ''; jumpBtn.disabled = true; return; }
   const seed = state.seed;
   const route = qFindByVal;
+
+  if (route === 'ideas' && !ensureIdeasTerms(seed).selected.size) {
+    countEl.textContent = t('pickATerm');
+    countEl.classList.remove('exhausted');
+    jumpBtn.disabled = true;
+    return;
+  }
+
   const key = jumpKey(seed.id, route);
   if (!state.jumpPool.has(key)) {
     countEl.textContent = t('qReady');
@@ -2047,11 +2310,10 @@ function refreshQuantumUI(){
     return;
   }
   const jump = state.jumpPool.get(key);
-  const candidates = jump.works;
   const scorerPool = [seed, ...state.pool, ...jump.works];
   const opts = { field: qFieldVal, coCounts: jump.counts, nCiters: jump.nCiters, route };
-  const all = quantumCandidates(seed, scorerPool, candidates, opts);
-  const untried = untriedCandidates(seed, scorerPool, candidates, opts, state.tried);
+  const all = routeCandidates(seed, scorerPool, jump, opts);
+  const untried = dropTried(seed.id, route, all, state.tried);
   countEl.textContent = tf('qLeft', { untried: untried.length, all: all.length });
   countEl.classList.toggle('exhausted', untried.length === 0);
   jumpBtn.disabled = untried.length === 0;
@@ -2061,6 +2323,7 @@ async function quantumJump(){
   if (!state.seed) return;
   const seed = state.seed;
   const route = qFindByVal;
+  if (route === 'ideas' && !ensureIdeasTerms(seed).selected.size) return;
   const key = jumpKey(seed.id, route);
   const btn = document.getElementById('quantumJumpBtn');
   if (btn) {
@@ -2073,17 +2336,7 @@ async function quantumJump(){
 
   let jump;
   try {
-    if (!state.jumpPool.has(key)) {
-      if (route === 'coupling') {
-        const { counts, works, rareRefs } = await couplingCandidateIds(seed, state.refs, state.citers);
-        state.jumpPool.set(key, { works: dedupeByTitle(seed, works), counts, nCiters: 0, rareRefs });
-      } else {
-        const counts = coCitationCounts(seed, state.refs, state.citers);
-        const works = await fetchWorksByIds(shortlistIds(counts));
-        state.jumpPool.set(key, { works: dedupeByTitle(seed, works), counts, nCiters: state.citers.length });
-      }
-    }
-    jump = state.jumpPool.get(key);
+    jump = await ensureJumpPool(seed, route);
   } catch (err) {
     stopRingLoop();
     if (btn) { btn.disabled = false; btn.textContent = t('quantumJumpBtn'); btn.classList.remove('is-jumping'); }
@@ -2091,14 +2344,13 @@ async function quantumJump(){
     return;
   }
 
-  const candidates = jump.works;
   const scorerPool = [seed, ...state.pool, ...jump.works];
   const opts = { field: qFieldVal, coCounts: jump.counts, nCiters: jump.nCiters, route };
-  const untried = untriedCandidates(seed, scorerPool, candidates, opts, state.tried);
+  const all = routeCandidates(seed, scorerPool, jump, opts);
+  const untried = dropTried(seed.id, route, all, state.tried);
   if (!untried.length) {
     stopRingLoop();
     if (btn) { btn.disabled = false; btn.textContent = t('quantumJumpBtn'); btn.classList.remove('is-jumping'); }
-    const all = quantumCandidates(seed, scorerPool, candidates, opts);
     setError(all.length ? t('jumpExhausted') : t('noJumpCandidates'));
     return;
   }
@@ -2108,14 +2360,21 @@ async function quantumJump(){
 
   // snapshot the evidence for the trail edge NOW: state.citers/pool belong to this (about-to-be-
   // departed) seed only until loadAndBuildGraph overwrites them for the new one. Which evidence is
-  // relevant depends on the route: cocite jumps show co-citation + any shared references; coupling
-  // jumps show only the rare references that actually justified the link (trailCardHtml already
-  // skips a section whose count is 0, so leaving coCite unset for a coupling jump hides it).
+  // relevant depends on the route (trailCardHtml already skips a section with no content, so
+  // leaving a field unset just hides it): cocite shows co-citation + any shared references; coupling
+  // shows only the rare references that justified the link; ideas names the terms actually selected
+  // at jump time (not the seed's top terms -- the user's choice IS the explanation); chain names the
+  // intermediate B paper and how many papers cite both B and the chosen C.
   let evidence;
   if (route === 'coupling') {
     const sharedRare = (jump.rareRefs || []).filter(r => (chosen.referenced_works || []).includes(r.id));
     evidence = { route, sharedRefs: { count: sharedRare.length, titles: sharedRare.slice(0, 6).map(r => r.display_name).filter(Boolean) } };
-  } else {
+  } else if (route === 'ideas') {
+    evidence = { route, ideas: { keywords: (jump.terms || []).map(term => term.display_name) } };
+  } else if (route === 'chain') {
+    const via = chosen._chainVia;
+    evidence = { route, chain: via ? { viaId: via.id, viaTitle: via.title, count: via.count } : null };
+  } else { // cocite
     const coCiters = state.citers.filter(c => (c.referenced_works || []).includes(chosen.id));
     const aRefs = new Set(seed.referenced_works || []);
     const bRefs = new Set(chosen.referenced_works || []);
@@ -2413,7 +2672,7 @@ section(P.priorHeader, prior) +
 section(P.laterHeader, deriv) +
 section(P.relatedHeader, other),
 '---',
-ptf(P.generatedBy, { v: 'v1.7' }),
+ptf(P.generatedBy, { v: 'v0.8' }),
 ptf(depth > 9 ? P.countAll : P.countHops, { n: picked.length, d: depth, ts: new Date().toISOString().slice(0, 16).replace('T', ' ') }),
 '',
 directive
@@ -2730,6 +2989,105 @@ function selfTest(){
     tried3.set(seedT3.id + '|cocite', new Set([picked.id]));
     const after = untriedCandidates(seedT3, poolT3, poolT3, {}, tried3).length;
     assert('untriedCandidates count decreases by exactly one per draw', after === before - 1);
+
+    // ---- routes 'ideas' and 'chain': independence from cocite/coupling ----
+
+    // bibliometricTies: the exclusion set both new routes build from -- refs, citers, and every
+    // id in the seed's co-citation / coupling maps
+    const tieSeed = { id: 'S', referenced_works: ['R1'] };
+    const tieCiters = [{ id: 'CT1' }];
+    const tieCocite = new Map([['CO1', 3]]);
+    const tieCoupling = new Map([['CP1', 2]]);
+    const ties = bibliometricTies(tieSeed, tieCiters, tieCocite, tieCoupling);
+    assert('bibliometricTies covers the seed, its refs, its citers, and both count maps',
+      ['S', 'R1', 'CT1', 'CO1', 'CP1'].every(id => ties.has(id)));
+
+    // mergeIdeaTerms: keywords + concepts (levels 2-4 only), deduped by name, sorted, top 10
+    const kwSeed = {
+      keywords: [{ id: 'k1', display_name: 'Pulsar', score: 0.9 }],
+      concepts: [
+        { id: 'c1', display_name: 'Physics', level: 0, score: 0.99 },     // level 0 -> dropped
+        { id: 'c2', display_name: 'Nebula', level: 3, score: 0.7 },
+        { id: 'c3', display_name: 'pulsar', level: 2, score: 0.95 }        // dupes 'Pulsar' at a higher score
+      ]
+    };
+    const mergedTerms = mergeIdeaTerms(kwSeed);
+    assert('mergeIdeaTerms drops out-of-range concept levels', !mergedTerms.some(term => term.id === 'c1'));
+    assert('mergeIdeaTerms dedupes case-insensitively, keeping the higher score', mergedTerms.find(term => term.display_name.toLowerCase() === 'pulsar').id === 'c3');
+    assert('mergeIdeaTerms sorts by score descending', mergedTerms.every((term, i) => i === 0 || mergedTerms[i - 1].score >= term.score));
+
+    // ideasCandidates: scores by shared SELECTED-term score / sqrt(cited_by_count), excludes any
+    // bibliometric tie, applies the field filter, never contains the seed
+    const ideasSeed = { id: 'IS', referenced_works: ['R1'], primary_topic: { field: { display_name: 'Physics' } } };
+    const ideasExclude = bibliometricTies(ideasSeed, [{ id: 'CT1' }], new Map([['CO1', 1]]), new Map());
+    const ideasTerms = [{ id: 'k1', score: 0.9 }, { id: 'k2', score: 0.5 }];
+    const ideasCands = [
+      { id: 'R1', keywords: [{ id: 'k1' }], cited_by_count: 1 },                        // tied to seed -> excluded
+      { id: 'CO1', keywords: [{ id: 'k1' }], cited_by_count: 1 },                       // co-cited with seed -> excluded
+      { id: 'I1', keywords: [{ id: 'k1' }, { id: 'k2' }], cited_by_count: 4 },
+      { id: 'I2', concepts: [{ id: 'k1' }], cited_by_count: 100 }
+    ];
+    const ideasRes = ideasCandidates(ideasSeed, ideasCands, ideasExclude, ideasTerms, {});
+    assert('ideasCandidates excludes every bibliometric tie to the seed', !ideasRes.some(w => w.id === 'R1' || w.id === 'CO1'));
+    assert('ideasCandidates sorts by keyword-overlap score descending', ideasRes[0].id === 'I1');
+    assert('ideasCandidates never contains the seed', !ideasCandidates(ideasSeed, [ideasSeed, ...ideasCands], ideasExclude, ideasTerms, {}).some(w => w.id === 'IS'));
+
+    // topSimilarNodes: the seed's strongest similarity neighbours, seed excluded
+    const topSeed = { id: 'TA', referenced_works: ['Z'] };
+    const topPool = [topSeed, { id: 'TB1', referenced_works: ['Z'] }, { id: 'TB2', referenced_works: [] }];
+    const topB = topSimilarNodes(topSeed, topPool, topPool, 5);
+    assert('topSimilarNodes ranks the similar node first and excludes the seed',
+      topB[0].id === 'TB1' && !topB.some(w => w.id === 'TA'));
+
+    // combineChainCounts: merges per-B counts, excludes anything tied to A, records the strongest B
+    const chainB1 = { id: 'B1', display_name: 'Paper B1' };
+    const chainB2 = { id: 'B2', display_name: 'Paper B2' };
+    const chainMerged = combineChainCounts(
+      [chainB1, chainB2],
+      [new Map([['C1', 3], ['A', 5]]), new Map([['C1', 2]])],
+      new Set(['A'])
+    );
+    assert('combineChainCounts excludes ids tied to the seed', !chainMerged.has('A'));
+    assert('combineChainCounts sums counts across every intermediate', chainMerged.get('C1').total === 5);
+    assert('combineChainCounts records the strongest single intermediate', chainMerged.get('C1').viaB.id === 'B1');
+
+    // chainCandidates: coCiteCountWithB / sqrt(cited_by_count), sorted, seed excluded, carries _chainVia
+    const chainSeed = { id: 'A', referenced_works: [] };
+    const chainFixture = new Map([
+      ['C1', { total: 4, viaB: chainB1, viaCount: 4 }],
+      ['C2', { total: 4, viaB: chainB1, viaCount: 4 }]
+    ]);
+    const chainCands = [{ id: 'C1', cited_by_count: 4 }, { id: 'C2', cited_by_count: 100 }];
+    const chainRes = chainCandidates(chainSeed, chainCands, chainFixture, {});
+    assert('chainCandidates ranks the less-cited candidate higher at equal raw count', chainRes[0].id === 'C1');
+    assert('chainCandidates records a non-empty intermediate id', !!chainRes[0]._chainVia && chainRes[0]._chainVia.id === 'B1');
+    assert('chainCandidates never contains the seed',
+      !chainCandidates(chainSeed, [chainSeed, ...chainCands], chainFixture, {}).some(w => w.id === 'A'));
+
+    // the Field select ('same'/'cross') must also work on both new routes
+    const ideasFieldSeed = { id: 'IFS', referenced_works: [], primary_topic: { field: { display_name: 'Physics' } } };
+    const ideasFieldExclude = new Set(['IFS']);
+    const ideasFieldTerms = [{ id: 'k1', score: 1 }];
+    const ideasFieldCands = [
+      { id: 'IF1', keywords: [{ id: 'k1' }], cited_by_count: 1, primary_topic: { field: { display_name: 'Physics' } } },
+      { id: 'IF2', keywords: [{ id: 'k1' }], cited_by_count: 1, primary_topic: { field: { display_name: 'Chemistry' } } }
+    ];
+    const ideasSame = ideasCandidates(ideasFieldSeed, ideasFieldCands, ideasFieldExclude, ideasFieldTerms, { field: 'same' });
+    assert('ideasCandidates field:same keeps only the matching field', ideasSame.length === 1 && ideasSame[0].id === 'IF1');
+    const ideasCross = ideasCandidates(ideasFieldSeed, ideasFieldCands, ideasFieldExclude, ideasFieldTerms, { field: 'cross' });
+    assert('ideasCandidates field:cross keeps only the differing field', ideasCross.length === 1 && ideasCross[0].id === 'IF2');
+
+    const chainFieldSeed = { id: 'CFS', referenced_works: [], primary_topic: { field: { display_name: 'Physics' } } };
+    const chainFieldMerged = new Map([
+      ['CF1', { total: 4, viaB: chainB1, viaCount: 4 }],
+      ['CF2', { total: 4, viaB: chainB1, viaCount: 4 }]
+    ]);
+    const chainFieldCands = [
+      { id: 'CF1', cited_by_count: 1, primary_topic: { field: { display_name: 'Physics' } } },
+      { id: 'CF2', cited_by_count: 1, primary_topic: { field: { display_name: 'Chemistry' } } }
+    ];
+    const chainSame = chainCandidates(chainFieldSeed, chainFieldCands, chainFieldMerged, { field: 'same' });
+    assert('chainCandidates field:same keeps only the matching field', chainSame.length === 1 && chainSame[0].id === 'CF1');
   }
 
   // ---- citation formatting ----

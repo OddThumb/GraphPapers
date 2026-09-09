@@ -3,11 +3,12 @@
   <img src="docs/hero.png" alt="GraphPapers — a similarity graph built around the GW150914 detection paper">
 </picture>
 
-<sub>Built around the 2016 detection of GW150914. Live data, as the app always shows it.</sub>
+<sub>Built around the 2016 detection of GW150914. Live data, as the app always shows it.
+(The dark capture is one release behind — OpenAlex's daily request quota ran out before it could be retaken.)</sub>
 
 # GraphPapers
 
-**v1.7** · [Open it in a browser](https://oddthumb.github.io/GraphPapers/)
+**v0.8** · [Open it in a browser](https://oddthumb.github.io/GraphPapers/)
 
 A free, single-file alternative to Connected Papers. Enter a paper, get a
 force-directed graph of the ~40 works most related to it, then export a ready-made
@@ -99,6 +100,16 @@ Two ways of finding those papers, chosen with **Find by**:
 |---|---|---|
 | **Read together** | Papers other researchers cite alongside this one, though the two never cite each other | Papers too recent for anyone to have cited them yet |
 | **Shared foundations** | Papers that cite the same *rare* works this one cites | Work built on a different literature |
+| **Same ideas** | Papers tagged with subjects you choose, and no bibliometric tie at all | Work OpenAlex has tagged differently |
+| **Linked through a third paper** | Papers with no link to yours, both strongly tied to some intermediate — Swanson's 1986 method, which connected fish oil to Raynaud's disease through blood viscosity | Pairs with no intermediate in common |
+
+**Same ideas** hands you the seed's own subject tags and lets you pick which to combine.
+The choice decides the reach: keeping the object terms holds you inside the field, while
+picking a measurement term — *spectral analysis*, say — reaches work in medicine or
+engineering doing the same kind of analysis. OpenAlex does not mark which tags are which,
+and only the person reading knows which axis matters.
+
+The four routes returned no overlapping candidates at all in testing, on either seed.
 
 Rarity is what makes the second one work. Sharing a field's standard catalogue with
 someone is no evidence of anything; sharing a paper cited eight times means you are
@@ -192,6 +203,9 @@ Paper data from [OpenAlex](https://openalex.org). Graph layout by
 
 Licensed under the [MIT License](LICENSE). Free to use, modify, and sell, provided
 the copyright notice is kept.
+
+Still 0.x: the shape of this changes often. 1.0 is reserved for when it has been used on
+a real manuscript and earned the right to stop moving.
 
 GraphPapers is an independent project. It is not affiliated with, endorsed by, or
 derived from the code or design of Connected Papers; the comparison in this document
