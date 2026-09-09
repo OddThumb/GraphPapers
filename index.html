@@ -11,10 +11,26 @@
 
 </script>
 <style>
-:root{
+:root, :root[data-palette="editorial"]{
   --paper:#f5f5f5; --paper-2:#ececec; --ink:#2d3142; --muted:#4f5d75;
   --soft:#7a8399; --rule:rgba(45,49,66,0.12); --rule-solid:#bfc0c0;
-  --accent:#eb6c36; --accent-tint:rgba(235,108,54,0.08); --link:#2e5aa8;
+  --accent:#04a260; --accent-tint:rgba(4,162,96,0.10); --link:#2e5aa8;
+  --accent-strong:rgba(4,162,96,0.60);
+  --ramp-lo:#bfc0c0; --ramp-hi:#4f5d75;
+}
+:root[data-palette="dark"]{
+  --paper:#2d3142; --paper-2:#393e53; --ink:#f5f5f5; --muted:#bfc0c0;
+  --soft:#8e98ac; --rule:rgba(245,245,245,0.14); --rule-solid:rgba(191,192,192,0.40);
+  --accent:#f08a59; --accent-tint:rgba(240,138,89,0.12); --link:#6a95d8;
+  --accent-strong:rgba(240,138,89,0.55);
+  --ramp-lo:#6b7285; --ramp-hi:#dfe3ea;
+}
+:root[data-palette="ink"]{
+  --paper:#ffffff; --paper-2:#f2f2f2; --ink:#1a1a1a; --muted:#555555;
+  --soft:#888888; --rule:rgba(0,0,0,0.12); --rule-solid:#cccccc;
+  --accent:#1e4fa3; --accent-tint:rgba(30,79,163,0.08); --link:#1e4fa3;
+  --accent-strong:rgba(30,79,163,0.50);
+  --ramp-lo:#cccccc; --ramp-hi:#333333;
 }
 *{box-sizing:border-box}
 html,body{margin:0;height:100%}
@@ -43,6 +59,13 @@ header{
 #dropdown div:hover{background:var(--paper-2)}
 .res-title{font-size:12px}
 .res-meta{font-family:'Geist Mono',monospace; font-size:9px; color:var(--soft); letter-spacing:0.04em; margin-top:2px}
+#statusLine{font-family:'Geist Mono',monospace; font-size:10px; color:var(--soft);
+  letter-spacing:0.04em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+#paletteCtl{margin-left:auto; display:flex; align-items:center; gap:8px}
+#paletteCtl span{font-family:'Geist Mono',monospace; font-size:8px; text-transform:uppercase;
+  letter-spacing:0.18em; color:var(--soft)}
+#palette{font:inherit; font-size:11px; padding:4px 8px; border:1px solid var(--rule);
+  border-radius:4px; background:var(--paper); color:var(--ink); cursor:pointer}
 #netBar{
   flex:0 0 auto; padding:8px 24px; background:var(--accent-tint);
   border-bottom:1px solid var(--accent); color:var(--ink); font-size:12px;
@@ -56,26 +79,86 @@ main{flex:1; display:flex; overflow:hidden; min-height:0}
   cursor:pointer; border-bottom:2px solid transparent;
 }
 .tab.active{color:var(--ink); border-bottom-color:var(--accent)}
-#spacingCtl{display:flex; align-items:center; gap:8px; padding-right:4px}
 #spacingCtl span{font-family:'Geist Mono',monospace; font-size:8px; text-transform:uppercase; letter-spacing:0.18em; color:var(--soft)}
 #spacing{width:96px; accent-color:var(--muted); cursor:pointer}
+#citeLinkCtl span{font-family:'Geist Mono',monospace; font-size:8px; text-transform:uppercase;
+  letter-spacing:0.18em; color:var(--soft)}
+#showCiteLinks{accent-color:var(--muted); cursor:pointer}
 #graphCtls{margin-left:auto; display:flex; align-items:center; gap:16px; padding-right:4px}
-#promptPanel{
+#graphTools{
+  position:absolute; left:12px; top:12px; z-index:5; width:172px;
+  max-height:calc(100% - 24px); overflow-y:auto;
+  background:var(--paper);
+  background:color-mix(in srgb, var(--paper) 65%, transparent);
+  backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px);
+  border:1px solid var(--rule); border-radius:6px;
+  padding:12px; display:flex; flex-direction:column; gap:8px;
+}
+#graphTools:hover{background:color-mix(in srgb, var(--paper) 96%, transparent)}
+#graphTools[hidden]{display:none}
+.gt-head{margin:0; font-family:'Geist Mono',monospace; font-size:8px; text-transform:uppercase;
+  letter-spacing:0.18em; color:var(--soft)}
+.gt-head + *{margin-top:-2px}
+.gt-head:not(:first-child){margin-top:8px; padding-top:12px; border-top:1px solid var(--rule)}
+#graphTools .btn{width:100%; font-size:11px; padding:6px 8px}
+#layoutCtl{display:flex; width:100%}
+#layoutCtl .layoutBtn{flex:1; font:inherit; font-size:11px; padding:6px 4px; cursor:pointer;
+  background:transparent; color:var(--muted); border:1px solid var(--rule)}
+#layoutCtl .layoutBtn:first-child{border-radius:4px 0 0 4px}
+#layoutCtl .layoutBtn:last-child{border-radius:0 4px 4px 0; border-left:none}
+#layoutCtl .layoutBtn.active{background:var(--paper-2); color:var(--ink)}
+#spacingCtl{display:flex; flex-direction:column; gap:4px}
+#spacingCtl span, .gt-field > span, #citeLinkCtl span, #oaCtl span{
+  font-family:'Geist Mono',monospace; font-size:8px; text-transform:uppercase;
+  letter-spacing:0.14em; color:var(--soft)}
+#spacing{width:100%; accent-color:var(--muted); cursor:pointer}
+#citeLinkCtl, #oaCtl{display:flex; align-items:center; gap:6px; cursor:pointer}
+#showCiteLinks, #fOA{accent-color:var(--muted); cursor:pointer}
+.gt-field{display:flex; flex-direction:column; gap:4px}
+.gt-pair{display:flex; gap:4px}
+#graphTools input[type=text], #graphTools input[type=number], #graphTools select{
+  width:100%; min-width:0; font:inherit; font-size:11px; padding:4px 6px;
+  border:1px solid var(--rule); border-radius:4px; background:var(--paper); color:var(--ink);
+}
+#graphTools input:focus, #graphTools select:focus{outline:none; border-color:var(--soft)}
+.gt-foot{display:flex; align-items:center; justify-content:space-between; gap:8px; margin-top:4px}
+.gt-foot .btn{width:auto}
+#fCount{white-space:nowrap; font-size:9px}
+#legendBtn{
+  position:absolute; right:12px; top:12px; z-index:5; width:24px; height:24px;
+  border:1px solid var(--rule-solid); border-radius:50%; background:var(--paper);
+  color:var(--muted); font-family:'Instrument Serif',serif; font-size:14px; font-style:italic;
+  line-height:1; cursor:pointer; padding:0;
+}
+#legendBtn:hover{background:var(--paper-2); color:var(--ink)}
+#legend{
+  position:absolute; right:12px; top:44px; z-index:6; width:340px; max-width:calc(100% - 24px);
+  background:var(--paper); border:1px solid var(--rule-solid); border-radius:6px; padding:16px;
+  display:flex; flex-direction:column; gap:12px;
+}
+.lg-row{display:flex; align-items:flex-start; gap:12px}
+.lg-key{width:76px; flex:0 0 auto; font-family:'Geist Mono',monospace; font-size:8px;
+  letter-spacing:0.14em; text-transform:uppercase; color:var(--soft); padding-top:6px}
+.lg-row svg{flex:0 0 auto}
+.lg-val{font-size:11px; line-height:1.5; color:var(--muted); padding-top:4px}
+.lg-val b{color:var(--ink); font-weight:600}
+#legend[hidden]{display:none}
+#promptPanel, #citePanel{
   position:absolute; left:0; right:0; bottom:0; height:52%; background:var(--paper);
   border-top:1px solid var(--rule-solid); display:flex; flex-direction:column; z-index:5;
 }
-#promptPanel[hidden]{display:none}
-#promptHead{display:flex; align-items:center; gap:16px; padding:8px 16px; border-bottom:1px solid var(--rule)}
-#promptHead .grow{flex:1}
-#promptPanel select{
+#promptPanel[hidden], #citePanel[hidden]{display:none}
+#promptHead, #citeHead{display:flex; align-items:center; gap:16px; padding:8px 16px; border-bottom:1px solid var(--rule)}
+#promptHead .grow, #citeHead .grow{flex:1}
+#promptPanel select, #citePanel select{
   font:inherit; font-size:11px; padding:4px 8px; border:1px solid var(--rule);
   border-radius:4px; background:var(--paper); color:var(--ink);
 }
-#promptText{
+#promptText, #citeText{
   flex:1; margin:0; padding:12px 16px; border:none; resize:none; background:var(--paper);
   color:var(--ink); font-family:'Geist Mono',monospace; font-size:11px; line-height:1.6;
 }
-#promptText:focus{outline:none}
+#promptText:focus, #citeText:focus{outline:none}
 #content{flex:1; position:relative; min-height:0}
 #graphView{position:absolute; inset:0}
 #graphView svg{width:100%; height:100%}
@@ -120,17 +203,40 @@ a{color:var(--link)}
 #ackDlg li{margin-bottom:4px}
 #ackDlg li b{font-weight:600}
 .node-label{font-size:10px; fill:var(--ink); pointer-events:none; font-family:'Geist',sans-serif}
-.link{stroke:var(--muted)}
+
 .dim{opacity:0.12}
+#titleBtn{cursor:pointer}
+#layoutCtl{display:flex; border:1px solid var(--rule); border-radius:4px; overflow:hidden}
+.layoutBtn{background:none; border:none; padding:4px 8px; font:inherit; font-size:11px; color:var(--muted); cursor:pointer}
+.layoutBtn.active{background:var(--paper-2); color:var(--ink)}
+.year-grid line{stroke:var(--rule)}
+.year-grid text{font-family:'Geist Mono',monospace; font-size:8px; fill:var(--soft)}
+#hoverCard{
+  position:absolute; z-index:6; background:var(--paper); border:1px solid var(--rule-solid);
+  border-radius:6px; padding:8px 12px; max-width:280px; pointer-events:none;
+}
+#hoverCard[hidden]{display:none}
+.hc-title{font-size:12px; font-weight:600; color:var(--ink); margin-bottom:4px;
+  display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden}
+.hc-authors{font-size:11px; color:var(--muted); margin-bottom:4px}
+.hc-meta{font-family:'Geist Mono',monospace; font-size:9px; color:var(--soft)}
 </style>
 </head>
 <body>
 <header>
-  <h1>GraphPapers</h1><span id="version">v1.1</span>
+  <h1 id="titleBtn" title="Reload the current graph with fresh data">GraphPapers</h1><span id="version">v1.3</span>
   <div class="search-wrap">
     <input id="searchInput" type="text" placeholder="Search by title, DOI, or OpenAlex ID">
     <div id="dropdown" hidden></div>
   </div>
+  <span id="statusLine"></span>
+  <label id="paletteCtl"><span>Palette</span>
+    <select id="palette">
+      <option value="editorial">Editorial</option>
+      <option value="dark">Dark</option>
+      <option value="ink">Ink</option>
+    </select>
+  </label>
 </header>
 <div id="netBar" hidden>Offline — GraphPapers needs an internet connection to fetch papers from OpenAlex.</div>
 <main>
@@ -141,15 +247,71 @@ a{color:var(--link)}
       <button class="tab" data-tab="citers">Derivative works</button>
       <div id="graphCtls">
         <button class="btn" id="storyBtn">Story prompt</button>
-        <label id="spacingCtl"><span>Spacing</span>
-          <input id="spacing" type="range" min="0.4" max="3" step="0.1" value="1">
-        </label>
+        <button class="btn" id="citeToolbarBtn">Export citations</button>
       </div>
     </div>
     <div id="content">
       <div id="graphView"></div>
+      <div id="hoverCard" hidden></div>
       <div id="refsView" class="listView" hidden></div>
       <div id="citersView" class="listView" hidden></div>
+      <div id="graphTools">
+        <p class="gt-head">Layout</p>
+        <div id="layoutCtl">
+          <button class="layoutBtn active" data-layout="force">Force</button>
+          <button class="layoutBtn" data-layout="timeline">Timeline</button>
+        </div>
+        <label id="spacingCtl"><span>Spacing</span>
+          <input id="spacing" type="range" min="0.4" max="3" step="0.1" value="1">
+        </label>
+        <button class="btn" id="reshuffleBtn" title="Throw the nodes to new random positions and let the layout settle again">Reshuffle</button>
+        <label id="citeLinkCtl" title="Graph edges are similarity links, not citations. Tick this to overlay every real citation between the papers on screen."><input type="checkbox" id="showCiteLinks"><span>Citation links</span></label>
+
+        <p class="gt-head">Filter</p>
+        <label class="gt-field"><span>Keyword</span><input id="fKeyword" type="text"></label>
+        <label class="gt-field"><span>Years</span>
+          <span class="gt-pair"><input id="fYearFrom" type="number"><input id="fYearTo" type="number"></span>
+        </label>
+        <label class="gt-field"><span>Min citations</span><input id="fMinCites" type="number"></label>
+        <label class="gt-field"><span>Journal</span>
+          <select id="fJournal">
+            <option value="all">All journals</option>
+            <option value="top50">Top 50%</option>
+            <option value="top25">Top 25%</option>
+          </select>
+        </label>
+        <label id="oaCtl"><input id="fOA" type="checkbox"><span>OA only</span></label>
+        <div class="gt-foot"><span class="mono" id="fCount"></span><button class="btn" id="fReset">Reset</button></div>
+      </div>
+      <button id="legendBtn" title="What the graph shows" aria-label="Legend">i</button>
+      <div id="legend" hidden>
+        <p class="eyebrow" style="margin:0 0 12px">Legend</p>
+        <div class="lg-row"><span class="lg-key">Node size</span>
+          <svg width="76" height="24" aria-hidden="true">
+            <circle cx="8" cy="12" r="4" fill="var(--soft)"/>
+            <circle cx="28" cy="12" r="7" fill="var(--soft)"/>
+            <circle cx="56" cy="12" r="11" fill="var(--soft)"/>
+          </svg><span class="lg-val">Citation count</span></div>
+        <div class="lg-row"><span class="lg-key">Node colour</span>
+          <svg width="76" height="24" aria-hidden="true">
+            <defs><linearGradient id="lgYear"><stop offset="0" stop-color="var(--ramp-lo)"/><stop offset="1" stop-color="var(--ramp-hi)"/></linearGradient></defs>
+            <rect x="0" y="8" width="76" height="8" rx="2" fill="url(#lgYear)"/>
+          </svg><span class="lg-val">Publication year, <span id="lgYears">older to newer</span></span></div>
+        <div class="lg-row"><span class="lg-key">Seed ring</span>
+          <svg width="76" height="24" aria-hidden="true">
+            <circle cx="14" cy="12" r="8" fill="var(--accent-strong)" stroke="var(--accent)" stroke-width="3"/>
+          </svg><span class="lg-val">The paper the graph is built around</span></div>
+        <div class="lg-row"><span class="lg-key">Solid edge</span>
+          <svg width="76" height="24" aria-hidden="true">
+            <line x1="2" y1="12" x2="62" y2="12" stroke="var(--accent)" stroke-width="2"/>
+            <polygon points="62 8, 71 12, 62 16" fill="var(--accent)"/>
+          </svg><span class="lg-val">Similarity, not citation &mdash; two papers that cite the same works, or are cited together. Fades with distance from the seed.</span></div>
+        <div class="lg-row"><span class="lg-key">Dashed edge</span>
+          <svg width="76" height="24" aria-hidden="true">
+            <line x1="2" y1="12" x2="62" y2="12" stroke="var(--muted)" stroke-width="1.2" stroke-dasharray="4,3"/>
+            <polygon points="62 8, 71 12, 62 16" fill="var(--muted)"/>
+          </svg><span class="lg-val">A real citation, arrow pointing at the older paper. Turn these on with <b>Citation links</b>.</span></div>
+      </div>
       <div id="promptPanel" hidden>
         <div id="promptHead">
           <span class="eyebrow" style="margin:0">LLM story prompt</span>
@@ -166,6 +328,33 @@ a{color:var(--link)}
         </div>
         <textarea id="promptText" readonly spellcheck="false"></textarea>
       </div>
+      <div id="citePanel" hidden>
+        <div id="citeHead">
+          <span class="eyebrow" style="margin:0">EXPORT CITATIONS</span>
+          <label class="mono">Format
+            <select id="citeFormat">
+              <option value="bibtex">BibTeX</option>
+              <option value="ris">RIS</option>
+              <option value="apa">APA</option>
+              <option value="mla">MLA</option>
+              <option value="chicago">Chicago</option>
+            </select>
+          </label>
+          <label class="mono">Scope
+            <select id="citeScope">
+              <option value="single">This paper</option>
+              <option value="visible">Visible papers</option>
+              <option value="all">All 40 papers</option>
+            </select>
+          </label>
+          <span class="mono" id="citeCount"></span>
+          <span class="grow"></span>
+          <button class="btn" id="citeCopy">Copy</button>
+          <button class="btn" id="citeDownload">Download</button>
+          <button class="btn" id="citeClose">Close</button>
+        </div>
+        <textarea id="citeText" readonly spellcheck="false"></textarea>
+      </div>
     </div>
   </div>
   <div id="detailPanel">
@@ -176,16 +365,19 @@ a{color:var(--link)}
 <div id="colophon">
   <div id="freshness" title="No local cache — every lookup is fetched live from OpenAlex"></div>
   <div id="credit">Sangin Kim · <a href="mailto:kimsanginn@gmail.com">kimsanginn@gmail.com</a><br>
+    Sehwan Cheon · <a href="mailto:thousandsh2@gmail.com">thousandsh2@gmail.com</a><br>
+    <a href="https://github.com/OddThumb/GraphPapers" target="_blank" rel="noopener">github.com/OddThumb/GraphPapers</a><br>
     <button id="ackBtn">Acknowledgements</button><br>
-    &copy; 2026 Sangin Kim &middot; MIT License</div>
+    &copy; 2026 Sangin Kim, Sehwan Cheon &middot; MIT License</div>
 </div>
 
 <dialog id="ackDlg">
   <p class="eyebrow">Acknowledgements</p>
-  <!-- one <li> per contributor; keep it to the idea, not the implementation -->
-  <ul id="ackList">
-    <li><b>S. Cheon</b> — for suggesting the LLM story-prompt feature.</li>
-  </ul>
+  <p style="margin:0 0 12px; color:var(--muted)">No entries yet.</p>
+  <ul id="ackList"></ul>
+  <p style="margin:0 0 16px; color:var(--muted); line-height:1.6">
+    GraphPapers is a small open project. Ideas, bug reports, and pull requests are
+    all welcome &mdash; contributors will be credited here.</p>
   <button class="btn" id="ackClose">Close</button>
 </dialog>
 
@@ -225,13 +417,13 @@ async function searchWorks(q){
 
 async function fetchSeed(id){
   const w = await fetchJSON(API + '/works/' + id +
-    '?select=id,doi,display_name,publication_year,cited_by_count,referenced_works,authorships,abstract_inverted_index,primary_location,updated_date');
+    '?select=id,doi,display_name,publication_year,cited_by_count,referenced_works,authorships,abstract_inverted_index,primary_location,open_access,updated_date,biblio,type');
   return normalizeWork(w);
 }
 
 async function fetchCiters(id){
   const data = await fetchJSON(API + '/works?filter=cites:' + id +
-    '&per-page=100&sort=cited_by_count:desc&select=id,display_name,publication_year,cited_by_count,referenced_works,authorships,doi,updated_date');
+    '&per-page=100&sort=cited_by_count:desc&select=id,display_name,publication_year,cited_by_count,referenced_works,authorships,doi,open_access,primary_location,updated_date,biblio,type');
   return (data.results || []).map(normalizeWork);
 }
 
@@ -241,9 +433,47 @@ async function fetchRefs(refIds){
   const chunks = chunk(refIds, 50).slice(0, 2); // max 2 chunks per spec (URL length safety)
   const results = await Promise.all(chunks.map(ids =>
     fetchJSON(API + '/works?filter=openalex_id:' + ids.join('|') +
-      '&per-page=100&select=id,display_name,publication_year,cited_by_count,referenced_works,authorships,doi,updated_date')
+      '&per-page=100&select=id,display_name,publication_year,cited_by_count,referenced_works,authorships,doi,open_access,primary_location,updated_date,biblio,type')
   ));
   return results.flatMap(d => (d.results || []).map(normalizeWork));
+}
+
+// bare source id of a work's primary-location journal, or undefined if none
+const nodeSourceId = w => w.primary_location && w.primary_location.source && bare(w.primary_location.source.id);
+
+// fetch 2yr-mean-citedness for the journals behind a set of nodes, one request (chunked at 50, max 2 chunks)
+// degrades silently to an empty map on failure -- journal filtering then falls back to "all"
+async function fetchSourceImpact(nodes){
+  const ids = [...new Set(nodes.map(nodeSourceId).filter(Boolean))];
+  const map = new Map();
+  if (!ids.length) return map;
+  try {
+    const chunks = chunk(ids, 50).slice(0, 2);
+    const results = await Promise.all(chunks.map(cids =>
+      fetchJSON(API + '/sources?filter=openalex_id:' + cids.join('|') +
+        '&per-page=100&select=id,display_name,summary_stats')
+    ));
+    for (const d of results) for (const s of (d.results || [])) {
+      const v = s.summary_stats && s.summary_stats['2yr_mean_citedness'];
+      if (typeof v === 'number') map.set(bare(s.id), v);
+    }
+  } catch (err) { /* silent degrade */ }
+  return map;
+}
+
+// pure: 75th/50th percentile of a list of impact values (nearest-rank)
+function computePercentiles(values){
+  const sorted = values.slice().sort((a, b) => a - b);
+  if (!sorted.length) return { p75: null, p50: null };
+  const at = p => sorted[Math.min(sorted.length - 1, Math.floor(p * sorted.length))];
+  return { p75: at(0.75), p50: at(0.5) };
+}
+// pure: bucket a journal's impact value into a tier given the graph's percentile thresholds
+function journalTier(impact, p75, p50){
+  if (impact == null || p75 == null) return 'unknown';
+  if (impact >= p75) return 'top25';
+  if (impact >= p50) return 'top50';
+  return 'rest';
 }
 
 // ---- similarity math ----
@@ -258,6 +488,16 @@ function coCitation(Ca, Cb){
   let c = 0;
   for (const x of Ca) if (Cb.has(x)) c++;
   return c / Math.sqrt(Ca.size * Cb.size);
+}
+
+// pure: citation direction between two node ids, given each id's reference set (Map id -> Set)
+function edgeDirection(a, b, refsOf){
+  const aRefs = refsOf.get(a), bRefs = refsOf.get(b);
+  const aCitesB = !!(aRefs && aRefs.has(b));
+  const bCitesA = !!(bRefs && bRefs.has(a));
+  if (aCitesB && !bCitesA) return 'st';
+  if (bCitesA && !aCitesB) return 'ts';
+  return null;
 }
 
 // pure: pool = array of normalized works (includes seed). Returns {nodes, edges}.
@@ -293,10 +533,21 @@ function computeGraph(seedId, pool){
       const key = a < b ? a + '|' + b : b + '|' + a;
       if (edgeSet.has(key)) continue;
       edgeSet.add(key);
-      edges.push({ source: a, target: b, sim: s });
+      edges.push({ source: a, target: b, sim: s, dir: edgeDirection(a, b, Rmap) });
     }
   }
   return { nodes: nodeIds.map(id => Object.assign({}, map.get(id))), edges };
+}
+
+// every real citation between two nodes of the graph. Kept OUT of the force
+// simulation: they are an overlay, so turning them on never moves anything.
+function citationEdges(nodes){
+  const ids = new Set(nodes.map(n => n.id));
+  const out = [];
+  for (const n of nodes)
+    for (const ref of (n.referenced_works || []))
+      if (ids.has(ref) && ref !== n.id) out.push({ from: n.id, to: ref });
+  return out;
 }
 
 function reconstructAbstract(inv){
@@ -313,16 +564,185 @@ function fmtAuthors(authorships){
   return names.slice(0, 5).join(', ') + ' et al. (' + (names.length - 5) + ' more)';
 }
 
+// ---- citation formatting (pure -- no DOM, no globals) ----
+function authorNames(w){
+  return (w.authorships || []).map(a => a.author && a.author.display_name).filter(Boolean);
+}
+
+// heuristic: splits on the LAST space only. Mis-handles suffixes (Jr., III),
+// multi-word/particle family names (van der Berg), and "Family, Given" order.
+function splitName(full){
+  const s = (full || '').trim();
+  const i = s.lastIndexOf(' ');
+  if (i === -1) return { family: s, given: '' };
+  return { family: s.slice(i + 1), given: s.slice(0, i) };
+}
+
+function initials(given){
+  return (given || '').trim().split(/\s+/).filter(Boolean)
+    .map(n => n[0].toUpperCase() + '.').join(' ');
+}
+
+const journalName = w => (w.primary_location && w.primary_location.source && w.primary_location.source.display_name) || '';
+
+function pagesOf(w, dash){
+  const b = w.biblio || {};
+  if (b.first_page && b.last_page && String(b.first_page) !== String(b.last_page))
+    return b.first_page + (dash || '–') + b.last_page;
+  return b.first_page || '';
+}
+
+const doiBareOf = w => w.doi ? w.doi.replace(/^https?:\/\/doi\.org\//, '') : '';
+
+function bibtexEscape(s){
+  return String(s).replace(/[\\{}&]/g, c => '\\' + c);
+}
+
+function citeKey(w){
+  const names = authorNames(w).map(splitName);
+  const fam = (names[0] ? names[0].family : 'unknown').toLowerCase().replace(/[^a-z0-9]/g, '');
+  const year = w.publication_year || '';
+  const firstWord = (w.display_name || '').trim().split(/\s+/)[0] || '';
+  const word = firstWord.toLowerCase().replace(/[^a-z0-9]/g, '');
+  return fam + year + word;
+}
+
+// "Family, I. N." per author, "&" before the final author for 2-20 authors, "..." + last author for 21+
+function apaAuthorList(names){
+  const fmt = names.map(n => n.given ? n.family + ', ' + initials(n.given) : n.family);
+  if (!fmt.length) return '';
+  if (fmt.length === 1) return fmt[0];
+  if (fmt.length <= 20) return fmt.slice(0, -1).join(', ') + ', & ' + fmt[fmt.length - 1];
+  return fmt.slice(0, 19).join(', ') + ', ... ' + fmt[fmt.length - 1];
+}
+
+// "Family, Given" solo, "Family, Given, and Given Family" for two, "Family, Given, et al." for 3+
+function narrativeAuthorList(names){
+  if (!names.length) return '';
+  if (names.length === 1) return names[0].family + (names[0].given ? ', ' + names[0].given : '');
+  if (names.length === 2) {
+    const [a, b] = names;
+    return a.family + (a.given ? ', ' + a.given : '') + ', and ' + (b.given ? b.given + ' ' : '') + b.family;
+  }
+  const a = names[0];
+  return a.family + (a.given ? ', ' + a.given : '') + ', et al';
+}
+
+function formatCitation(w, style){
+  const names = authorNames(w).map(splitName);
+  const year = w.publication_year || '';
+  const title = w.display_name || '';
+  const journal = journalName(w);
+  const biblio = w.biblio || {};
+  const volume = biblio.volume || '';
+  const issue = biblio.issue || '';
+  const pages = pagesOf(w, style === 'bibtex' ? '--' : '–');
+  const doiUrl = w.doi || '';
+  const doiBare = doiBareOf(w);
+
+  if (style === 'bibtex') {
+    const type = w.type === 'book' ? 'book' : w.type === 'book-chapter' ? 'incollection' : 'article';
+    const fields = [];
+    if (title) fields.push(['title', title]);
+    if (names.length) fields.push(['author', names.map(n => n.given ? n.family + ', ' + n.given : n.family).join(' and ')]);
+    if (year) fields.push(['year', String(year)]);
+    if (journal) fields.push(['journal', journal]);
+    if (volume) fields.push(['volume', volume]);
+    if (issue) fields.push(['number', issue]);
+    if (pages) fields.push(['pages', pages]);
+    if (doiBare) fields.push(['doi', doiBare]);
+    const body = fields.map(([k, v]) => '  ' + k + ' = {' + bibtexEscape(v) + '}').join(',\n');
+    return '@' + type + '{' + citeKey(w) + ',\n' + body + '\n}';
+  }
+
+  if (style === 'ris') {
+    const lines = ['TY  - JOUR'];
+    names.forEach(n => lines.push('AU  - ' + (n.given ? n.family + ', ' + n.given : n.family)));
+    if (title) lines.push('TI  - ' + title);
+    if (year) lines.push('PY  - ' + year);
+    if (journal) lines.push('JO  - ' + journal);
+    if (volume) lines.push('VL  - ' + volume);
+    if (issue) lines.push('IS  - ' + issue);
+    if (biblio.first_page) lines.push('SP  - ' + biblio.first_page);
+    if (biblio.last_page) lines.push('EP  - ' + biblio.last_page);
+    if (doiBare) lines.push('DO  - ' + doiBare);
+    if (doiUrl) lines.push('UR  - ' + doiUrl);
+    lines.push('ER  - ');
+    return lines.join('\n');
+  }
+
+  if (style === 'apa') {
+    let s = '';
+    const authorsStr = apaAuthorList(names);
+    if (authorsStr) s += authorsStr + ' ';
+    if (year) s += '(' + year + '). ';
+    if (title) s += title + '. ';
+    if (journal) {
+      s += journal;
+      if (volume) s += ', ' + volume + (issue ? '(' + issue + ')' : '');
+      if (pages) s += ', ' + pages;
+      s += '. ';
+    }
+    if (doiUrl) s += doiUrl;
+    return s.trim();
+  }
+
+  if (style === 'mla') {
+    let s = '';
+    const authorsStr = narrativeAuthorList(names);
+    if (authorsStr) s += authorsStr + '. ';
+    if (title) s += '"' + title + '." ';
+    const bits = [];
+    if (journal) bits.push(journal);
+    if (volume) bits.push('vol. ' + volume);
+    if (issue) bits.push('no. ' + issue);
+    if (year) bits.push(String(year));
+    if (pages) bits.push('pp. ' + pages);
+    if (doiUrl) bits.push(doiUrl);
+    s += bits.join(', ');
+    s = s.trim();
+    if (s && !s.endsWith('.')) s += '.';
+    return s;
+  }
+
+  // chicago
+  let s = '';
+  const authorsStr = narrativeAuthorList(names);
+  if (authorsStr) s += authorsStr + '. ';
+  if (title) s += '"' + title + '." ';
+  if (journal) {
+    s += journal;
+    if (volume) s += ' ' + volume;
+    if (issue) s += ', no. ' + issue;
+    if (year) s += ' (' + year + ')';
+    if (pages) s += ': ' + pages;
+    s += '.';
+  } else if (year) {
+    s += '(' + year + ').';
+  }
+  if (doiUrl) s += ' ' + doiUrl + '.';
+  return s.trim();
+}
+
 // ---- app state / UI ----
 const state = { seed: null, refs: [], citers: [], nodes: [], edges: [], sim: null, activeTab: 'graph' };
 const detailBody = document.getElementById('detailBody');
 const freshnessEl = document.getElementById('freshness');
 
 function setStatus(msg){
-  document.getElementById('graphView').innerHTML = '<div class="status-line">' + msg + '</div>';
+  document.getElementById('statusLine').textContent = msg || '';
 }
 function setError(msg){
   detailBody.innerHTML = '<div class="error-box">' + msg + '</div>';
+}
+
+function fallbackCopy(text){
+  const ta = document.createElement('textarea');
+  ta.value = text; ta.style.position = 'fixed'; ta.style.left = '-9999px';
+  document.body.appendChild(ta); ta.select();
+  const ok = document.execCommand('copy');
+  document.body.removeChild(ta);
+  return ok;
 }
 
 function renderDetail(work){
@@ -333,9 +753,22 @@ function renderDetail(work){
     '<div class="d-row">' + esc(fmtAuthors(work.authorships)) + '</div>' +
     '<div class="d-row mono">' + (work.publication_year || '?') + ' · cited ' + (work.cited_by_count || 0) + '&times;</div>' +
     '<div class="d-row">' + doi + '</div>' +
+    '<div style="text-align:right">' +
+      (abstract ? '<button class="btn" id="abstractCopy" style="font-size:11px; padding:4px 8px">Copy</button> ' : '') +
+      '<button class="btn" id="citeOneBtn" style="font-size:11px; padding:4px 8px">Cite</button>' +
+    '</div>' +
     (abstract ? '<div class="d-abstract">' + esc(abstract) + '</div>' : '<div class="d-abstract mono">No abstract</div>') +
     '<button class="btn" id="redrawBtn">Rebuild graph from this paper</button>';
   document.getElementById('redrawBtn').onclick = () => loadAndBuildGraph(work.id);
+  document.getElementById('citeOneBtn').onclick = () => openCitePanel('single', work);
+  const abstractCopyBtn = document.getElementById('abstractCopy');
+  if (abstractCopyBtn) {
+    abstractCopyBtn.onclick = () => {
+      const done = navigator.clipboard ? navigator.clipboard.writeText(abstract).then(() => true).catch(() => fallbackCopy(abstract))
+                                       : Promise.resolve(fallbackCopy(abstract));
+      done.then(ok => { abstractCopyBtn.textContent = ok ? 'Copied' : 'Press Cmd+C'; setTimeout(() => { abstractCopyBtn.textContent = 'Copy'; }, 2000); });
+    };
+  }
 
   // refs/citers are fetched without abstracts (payload); pull this one's on demand
   if (!('abstract_inverted_index' in work)) {
@@ -367,28 +800,138 @@ function updateFreshness(){
 }
 
 // ---- graph rendering (d3-force) ----
-let sim3, spacing = 1;
+let sim3, spacing = 1, layoutMode = 'force', pinnedId = null, citeLayerSel = null;
+let citeGroupSel = null;
+let positionCiteLinks = () => {};
+let nodeSel, linkSel, gridSel, graphW = 800, graphH = 600;
+const cssVar = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const HOP_MIX = { 1: 1, 2: 0.70, 3: 0.46, 4: 0.28 };
+const hopColor = b => d3.interpolateLab(cssVar('--paper'), cssVar('--accent'))(HOP_MIX[b] || 0.28);
+// pure: which hop-color bucket (1-4) an edge falls into, given its max endpoint distance from the seed
+function hopBucket(h){
+  if (h == null || h >= 4) return 4;
+  if (h <= 1) return 1;
+  return h;
+}
+
+function yearScaleFor(nodes){
+  const years = [...new Set(nodes.map(n => n.publication_year).filter(Boolean))].sort((a, b) => a - b);
+  const lo = 48, hi = Math.max(lo + 1, graphH - 48);
+  if (!years.length) return Object.assign(() => (lo + hi) / 2, { years, domain: () => [0, 0] });
+  const step = years.length > 1 ? (hi - lo) / (years.length - 1) : 0;
+  const pos = new Map(years.map((y, i) => [y, lo + i * step]));
+  const f = y => pos.has(y) ? pos.get(y) : hi;   // unknown year sits on the newest row
+  f.years = years;
+  f.domain = () => [years[0], years[years.length - 1]];
+  return f;
+}
+
+// horizontal year gridlines for timeline mode; hidden (and cleared) in force mode
+function drawYearGrid(nodes){
+  if (!gridSel) return;
+  gridSel.selectAll('*').remove();
+  if (layoutMode !== 'timeline') { gridSel.style('display', 'none'); return; }
+  gridSel.style('display', null);
+  const yearScale = yearScaleFor(nodes);
+  const years = [...new Set(nodes.map(n => n.publication_year).filter(Boolean))].sort((a, b) => a - b);
+  years.forEach(yr => {
+    const y = yearScale(yr);
+    gridSel.append('line').attr('x1', 0).attr('x2', graphW).attr('y1', y).attr('y2', y);
+    gridSel.append('text').attr('x', 8).attr('y', y - 4).text(yr);
+  });
+}
+
+const hoverCard = document.getElementById('hoverCard');
+function positionHoverCard(event){
+  const contentRect = document.getElementById('content').getBoundingClientRect();
+  const cardW = hoverCard.offsetWidth, cardH = hoverCard.offsetHeight;
+  let x = event.clientX - contentRect.left + 14;
+  let y = event.clientY - contentRect.top + 14;
+  if (x + cardW > contentRect.width) x = event.clientX - contentRect.left - cardW - 14;
+  if (y + cardH > contentRect.height) y = event.clientY - contentRect.top - cardH - 14;
+  hoverCard.style.left = Math.max(0, x) + 'px';
+  hoverCard.style.top = Math.max(0, y) + 'px';
+}
+function showHoverCard(d, event, hop){
+  const first = (d.authorships || [])[0];
+  const authorsText = first && first.author ? esc(first.author.display_name) + ((d.authorships || []).length > 1 ? ' et al.' : '') : 'Unknown authors';
+  const oa = d.open_access && d.open_access.is_oa ? ' · OA' : '';
+  hoverCard.innerHTML =
+    '<div class="hc-title">' + esc(d.display_name || '(untitled)') + '</div>' +
+    '<div class="hc-authors">' + authorsText + '</div>' +
+    '<div class="hc-meta">' + (d.publication_year || '?') + ' · cited ' + (d.cited_by_count || 0) + '× · hop ' + (hop == null ? '?' : hop) + oa + '</div>';
+  hoverCard.hidden = false;
+  positionHoverCard(event);
+}
+
 function renderGraph(nodes, edges, seedId){
   const container = document.getElementById('graphView');
   container.innerHTML = '';
   const rect = container.getBoundingClientRect();
   const w = rect.width || 800, h = rect.height || 600;
+  graphW = w; graphH = h;
 
   const years = nodes.map(n => n.publication_year).filter(Boolean);
   const yMin = years.length ? Math.min(...years) : 0, yMax = years.length ? Math.max(...years) : 0;
-  const colorFor = n => n.id === seedId ? '#eb6c36' :
-    d3.interpolateLab('#bfc0c0', '#4f5d75')(!n.publication_year || yMax === yMin ? 0.5 : (n.publication_year - yMin) / (yMax - yMin));
+  const colorFor = n => n.id === seedId ? cssVar('--accent') :
+    d3.interpolateLab(cssVar('--ramp-lo'), cssVar('--ramp-hi'))(!n.publication_year || yMax === yMin ? 0.5 : (n.publication_year - yMin) / (yMax - yMin));
   const rFor = n => Math.max(5, Math.min(34, 4 + 3.2 * Math.sqrt(n.cited_by_count || 0)));
   nodes.forEach(n => { n.r = rFor(n); });
 
+  const dist = hops(seedId, nodes, edges, nodes.length + 1);
+  const hopFor = d => Math.max(dist.get(eid(d.source)) ?? Infinity, dist.get(eid(d.target)) ?? Infinity);
+
   const svg = d3.select(container).append('svg');
+  const defs = svg.append('defs');
+  [1, 2, 3, 4].forEach(b => {
+    defs.append('marker')
+      .attr('id', 'arrow-h' + b)
+      .attr('viewBox', '0 0 7 5')
+      .attr('markerWidth', 7).attr('markerHeight', 5)
+      .attr('refX', 7).attr('refY', 2.5)
+      .attr('orient', 'auto')
+      .append('polygon').attr('points', '0 0, 7 2.5, 0 5').attr('fill', hopColor(b));
+  });
+  defs.append('marker').attr('id', 'arrow-cite')
+    .attr('viewBox', '0 0 7 5')
+    .attr('markerWidth', 7).attr('markerHeight', 5).attr('refX', 7).attr('refY', 2.5)
+    .attr('orient', 'auto')
+    .append('polygon').attr('points', '0 0, 7 2.5, 0 5').attr('fill', cssVar('--muted'));
   const g = svg.append('g');
   svg.call(d3.zoom().scaleExtent([0.2, 4]).on('zoom', e => g.attr('transform', e.transform)));
 
+  pinnedId = null;
+  gridSel = g.append('g').attr('class', 'year-grid');
+
+  const citeData = citationEdges(nodes);
+  const byId = new Map(nodes.map(n => [n.id, n]));
+  citeData.forEach(c => { c.a = byId.get(c.from); c.b = byId.get(c.to); });
+  positionCiteLinks = function(){
+    if (!citeLayerSel) return;
+    citeLayerSel.each(function(c){
+      if (!c.a || !c.b || c.a.x == null || c.b.x == null) return;
+      const dx = c.b.x - c.a.x, dy = c.b.y - c.a.y;
+      const L = Math.sqrt(dx * dx + dy * dy) || 1;
+      const t = Math.max(0, (L - (c.b.r + 7)) / L);
+      this.setAttribute('x1', c.a.x); this.setAttribute('y1', c.a.y);
+      this.setAttribute('x2', c.a.x + dx * t); this.setAttribute('y2', c.a.y + dy * t);
+    });
+  };
+  citeGroupSel = g.append('g').attr('class', 'cite-layer')
+    .style('display', document.getElementById('showCiteLinks').checked ? null : 'none');
+  citeLayerSel = citeGroupSel
+    .selectAll('line').data(citeData).join('line')
+    .attr('stroke', cssVar('--muted')).attr('stroke-width', 0.7).attr('stroke-opacity', 0.55)
+    .attr('stroke-dasharray', '3,2')
+    .attr('marker-end', 'url(#arrow-cite)');
+
   const link = g.append('g').selectAll('line').data(edges).join('line')
     .attr('class', 'link')
+    .each(d => { d.hopB = hopBucket(hopFor(d)); })
+    .attr('stroke', d => hopColor(d.hopB))
     .attr('stroke-width', d => 0.5 + d.sim * 4)
-    .attr('stroke-opacity', d => Math.min(0.85, 0.15 + d.sim * 0.6));
+    .attr('stroke-opacity', d => Math.min(0.95, 0.45 + d.sim * 0.5))
+    .attr('marker-end', d => d.dir ? 'url(#arrow-h' + d.hopB + ')' : null);
 
   const node = g.append('g').selectAll('g').data(nodes).join('g')
     .attr('cursor', 'pointer')
@@ -399,8 +942,8 @@ function renderGraph(nodes, edges, seedId){
 
   node.append('circle')
     .attr('r', d => d.r)
-    .attr('fill', d => d.id === seedId ? 'rgba(235,108,54,0.55)' : colorFor(d))
-    .attr('stroke', d => d.id === seedId ? '#eb6c36' : 'none')
+    .attr('fill', d => d.id === seedId ? cssVar('--accent-strong') : colorFor(d))
+    .attr('stroke', d => d.id === seedId ? cssVar('--accent') : 'none')
     .attr('stroke-width', d => d.id === seedId ? 3 : 0);
 
   const label = node.append('text')
@@ -410,44 +953,166 @@ function renderGraph(nodes, edges, seedId){
     .style('display', d => d.r > 10 ? 'block' : 'none')
     .text(d => (d.display_name || '').replace(/<[^>]+>/g, '').slice(0, 34));
 
-  node.on('click', (e, d) => renderDetail(d));
-  node.on('mouseenter', (e, d) => {
-    const neighborIds = new Set(edges.filter(l => l.source.id === d.id || l.target.id === d.id)
-      .flatMap(l => [l.source.id, l.target.id]));
+  const highlight = d => {
+    const neighborIds = new Set(edges.filter(l => eid(l.source) === d.id || eid(l.target) === d.id)
+      .flatMap(l => [eid(l.source), eid(l.target)]));
     node.classed('dim', n => n.id !== d.id && !neighborIds.has(n.id));
-    link.classed('dim', l => l.source.id !== d.id && l.target.id !== d.id);
+    link.classed('dim', l => eid(l.source) !== d.id && eid(l.target) !== d.id);
     label.style('display', n => (n.r > 10 || n.id === d.id || neighborIds.has(n.id)) ? 'block' : 'none');
-  });
-  node.on('mouseleave', () => {
+  };
+  const clearHighlight = () => {
     node.classed('dim', false);
     link.classed('dim', false);
     label.style('display', d => d.r > 10 ? 'block' : 'none');
+  };
+
+  // clicking a node pins its highlight; clicking empty canvas releases it
+  node.on('click', (e, d) => {
+    e.stopPropagation();
+    pinnedId = d.id;
+    highlight(d);
+    renderDetail(d);
+  });
+  svg.on('click', () => { pinnedId = null; clearHighlight(); });
+
+  node.on('mouseenter', (e, d) => {
+    if (!pinnedId) highlight(d);
+    showHoverCard(d, e, dist.get(d.id));
+  });
+  node.on('mousemove', (e) => { if (!hoverCard.hidden) positionHoverCard(e); });
+  node.on('mouseleave', () => {
+    if (!pinnedId) clearHighlight();
+    hoverCard.hidden = true;
   });
 
+  nodeSel = node; linkSel = link;
+
   sim3 = d3.forceSimulation(nodes)
+    .velocityDecay(0.35)
     .force('link', d3.forceLink(edges).id(d => d.id))
     .force('charge', d3.forceManyBody())
-    .force('center', d3.forceCenter(w / 2, h / 2))
-    .force('collide', d3.forceCollide().radius(d => d.r + 6))
+    .force('collide', d3.forceCollide().radius(d => d.r + 8).strength(1).iterations(3))
     .on('tick', () => {
-      link.attr('x1', d => d.source.x).attr('y1', d => d.source.y)
-          .attr('x2', d => d.target.x).attr('y2', d => d.target.y);
+      link.each(function(d){
+        let x1 = d.source.x, y1 = d.source.y, x2 = d.target.x, y2 = d.target.y;
+        if (d.dir === 'st' || d.dir === 'ts') {
+          const tail = d.dir === 'st' ? d.source : d.target;
+          const head = d.dir === 'st' ? d.target : d.source;
+          const dx = head.x - tail.x, dy = head.y - tail.y;
+          const segLen = Math.sqrt(dx * dx + dy * dy) || 1;
+          const t = Math.max(0, (segLen - (head.r + 7)) / segLen);
+          x1 = tail.x; y1 = tail.y; x2 = tail.x + dx * t; y2 = tail.y + dy * t;
+        }
+        this.setAttribute('x1', x1); this.setAttribute('y1', y1);
+        this.setAttribute('x2', x2); this.setAttribute('y2', y2);
+      });
+      positionCiteLinks();
       node.attr('transform', d => 'translate(' + d.x + ',' + d.y + ')');
     });
+  const lgy = nodes.map(n => n.publication_year).filter(Boolean);
+  document.getElementById('lgYears').textContent =
+    lgy.length ? Math.min(...lgy) + ' \u2192 ' + Math.max(...lgy) : 'older to newer';
+  drawYearGrid(nodes);
   applySpacing();
 }
 
 // one knob scales both repulsion and link rest-length; d3 needs an alpha kick to re-settle
 function applySpacing(){
   if (!sim3) return;
-  sim3.force('link').distance(d => Math.max(20, 140 / (d.sim + 0.15)) * spacing);
-  sim3.force('charge').strength(-130 * spacing * spacing);
+  sim3.force('link').distance(d =>
+    Math.max(20, 140 / (d.sim + 0.15)) * spacing + (d.source.r || 0) + (d.target.r || 0));
+  sim3.force('collide').radius(d => d.r + 8 * spacing).iterations(3);
+  sim3.force('charge').distanceMax(420);
+  if (layoutMode === 'timeline') {
+    const yearScale = yearScaleFor(state.nodes);
+    const hi = yearScale.domain()[1];
+    sim3.force('center', null);
+    sim3.force('y', d3.forceY(d => yearScale(d.publication_year || hi)).strength(1));
+    sim3.force('x', d3.forceX(graphW / 2).strength(0.18));
+    sim3.force('charge').strength(-40 * spacing);
+  } else {
+    sim3.force('y', null);
+    sim3.force('x', null);
+    sim3.force('center', d3.forceCenter(graphW / 2, graphH / 2));
+    sim3.force('charge').strength(-130 * spacing * spacing);
+  }
   sim3.alpha(0.6).restart();
 }
 
 document.getElementById('spacing').addEventListener('input', e => {
   spacing = +e.target.value;
   applySpacing();
+});
+
+document.getElementById('layoutCtl').addEventListener('click', e => {
+  const btn = e.target.closest('.layoutBtn');
+  if (!btn || btn.classList.contains('active')) return;
+  document.querySelectorAll('.layoutBtn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  layoutMode = btn.dataset.layout;
+  applySpacing();
+  drawYearGrid(state.nodes);
+  sim3.alpha(0.8).restart();
+});
+
+// ---- filter bar (visual only -- never touches graph data or the simulation) ----
+// pure: does node n pass the given filter set (seed handling is the caller's job)
+function nodeMatchesFilters(n, f){
+  if (f.keyword) {
+    const inTitle = (n.display_name || '').toLowerCase().includes(f.keyword);
+    const inAuthors = (n.authorships || []).some(a => a.author && (a.author.display_name || '').toLowerCase().includes(f.keyword));
+    if (!inTitle && !inAuthors) return false;
+  }
+  if (n.publication_year) {
+    if (f.yearFrom != null && n.publication_year < f.yearFrom) return false;
+    if (f.yearTo != null && n.publication_year > f.yearTo) return false;
+  }
+  if (f.minCites != null && (n.cited_by_count || 0) < f.minCites) return false;
+  if (f.oaOnly && !(n.open_access && n.open_access.is_oa)) return false;
+  if (f.journal === 'top25' && n.journalTier !== 'top25') return false;
+  if (f.journal === 'top50' && n.journalTier !== 'top25' && n.journalTier !== 'top50') return false;
+  return true;
+}
+
+function currentFilters(){
+  return {
+    keyword: document.getElementById('fKeyword').value.trim().toLowerCase(),
+    yearFrom: document.getElementById('fYearFrom').value ? +document.getElementById('fYearFrom').value : null,
+    yearTo: document.getElementById('fYearTo').value ? +document.getElementById('fYearTo').value : null,
+    minCites: document.getElementById('fMinCites').value ? +document.getElementById('fMinCites').value : null,
+    oaOnly: document.getElementById('fOA').checked,
+    journal: document.getElementById('fJournal').value
+  };
+}
+
+function applyFilters(){
+  if (!nodeSel || !state.seed) return;
+  const f = currentFilters();
+  const visible = new Map();
+  state.nodes.forEach(n => visible.set(n.id, n.id === state.seed.id || nodeMatchesFilters(n, f)));
+  nodeSel.style('display', n => visible.get(n.id) ? null : 'none');
+  // ponytail: hidden nodes still occupy the force layout; re-run the simulation on filtered data if the empty space becomes a problem
+  linkSel.style('display', d => (visible.get(eid(d.source)) && visible.get(eid(d.target))) ? null : 'none');
+  const shown = [...visible.values()].filter(Boolean).length;
+  document.getElementById('fCount').textContent = shown + ' / ' + state.nodes.length + ' shown';
+}
+
+['fKeyword', 'fYearFrom', 'fYearTo', 'fMinCites'].forEach(id =>
+  document.getElementById(id).addEventListener('input', applyFilters));
+document.getElementById('fOA').addEventListener('change', applyFilters);
+document.getElementById('fJournal').addEventListener('change', applyFilters);
+function resetFilterInputs(){
+  document.getElementById('fKeyword').value = '';
+  document.getElementById('fYearFrom').value = document.getElementById('fYearFrom').placeholder || '';
+  document.getElementById('fYearTo').value = document.getElementById('fYearTo').placeholder || '';
+  document.getElementById('fMinCites').value = '';
+  document.getElementById('fOA').checked = false;
+  document.getElementById('fJournal').value = 'all';
+}
+document.getElementById('fReset').addEventListener('click', () => { resetFilterInputs(); applyFilters(); });
+
+document.getElementById('titleBtn').addEventListener('click', () => {
+  if (state.seed) loadAndBuildGraph(state.seed.id);
 });
 
 // ---- orchestration ----
@@ -465,18 +1130,91 @@ async function loadAndBuildGraph(seedId){
       if (!seen.has(w.id)) { seen.add(w.id); pool.push(w); }
     }
     const { nodes, edges } = computeGraph(seed.id, pool);
+
+    state.sourceImpact = await fetchSourceImpact(nodes);
+    const impactValues = [...new Set(nodes.map(nodeSourceId).filter(Boolean))]
+      .map(id => state.sourceImpact.get(id)).filter(v => typeof v === 'number');
+    const { p75, p50 } = computePercentiles(impactValues);
+    state.journalP75 = p75; state.journalP50 = p50;
+    nodes.forEach(n => { n.journalTier = journalTier(state.sourceImpact.get(nodeSourceId(n)), p75, p50); });
+
+    const graphYears = nodes.map(n => n.publication_year).filter(Boolean);
+    const yLo = graphYears.length ? Math.min(...graphYears) : '';
+    const yHi = graphYears.length ? Math.max(...graphYears) : '';
+    for (const [id, ph] of [['fYearFrom', yLo], ['fYearTo', yHi]]) {
+      const el = document.getElementById(id);
+      el.placeholder = ph;
+      if (yLo !== '') { el.min = yLo; el.max = yHi; el.step = 1; el.value = ph; }
+    }
+
+    resetFilterInputs();   // a filter set on the previous graph would silently hide nodes here
     state.seed = seed; state.refs = refs; state.citers = citers; state.nodes = nodes; state.edges = edges;
     renderGraph(nodes, edges, seed.id);
+    applyFilters();
     renderList(document.getElementById('refsView'), refs);
     renderList(document.getElementById('citersView'), citers);
     renderDetail(seed);
     updateFreshness();
+    setStatus('');
     if (!document.getElementById('promptPanel').hidden) refreshPrompt();
+    if (!document.getElementById('citePanel').hidden) refreshCitePanel();
   } catch (err) {
     setStatus('');
     setError(netMessage(err));
   }
 }
+
+const legendEl = document.getElementById('legend');
+document.getElementById('legendBtn').onclick = e => { e.stopPropagation(); legendEl.hidden = !legendEl.hidden; };
+document.addEventListener('click', e => { if (!e.target.closest('#legend')) legendEl.hidden = true; });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') legendEl.hidden = true; });
+
+document.getElementById('showCiteLinks').onchange = e => {
+  if (citeGroupSel) citeGroupSel.style('display', e.target.checked ? null : 'none');
+  if (e.target.checked) positionCiteLinks();
+};
+
+// a force layout settles into whichever local arrangement its start positions lead to;
+// re-throwing the nodes is the only reliable way out of a tangled one
+document.getElementById('reshuffleBtn').onclick = () => {
+  if (!sim3 || !state.nodes.length) return;
+  for (const n of state.nodes) {
+    n.fx = null; n.fy = null;
+    n.x = Math.random() * graphW;
+    if (layoutMode !== 'timeline') n.y = Math.random() * graphH;   // timeline y is the year, never randomise it
+    n.vx = 0; n.vy = 0;
+  }
+  sim3.alpha(1).restart();
+};
+
+// ---- palette ----
+function applyPalette(name){
+  document.documentElement.dataset.palette = name;
+  try { localStorage.setItem('gp-palette', name); } catch (e) { /* private mode */ }
+  if (!nodeSel || !state.seed) return;
+  const seedId = state.seed.id;
+  const years = state.nodes.map(n => n.publication_year).filter(Boolean);
+  const lo = years.length ? Math.min(...years) : 0, hi = years.length ? Math.max(...years) : 0;
+  const ramp = d3.interpolateLab(cssVar('--ramp-lo'), cssVar('--ramp-hi'));
+  nodeSel.select('circle')
+    .attr('fill', d => d.id === seedId ? cssVar('--accent-strong')
+      : ramp(!d.publication_year || hi === lo ? 0.5 : (d.publication_year - lo) / (hi - lo)))
+    .attr('stroke', d => d.id === seedId ? cssVar('--accent') : 'none');
+  linkSel.attr('stroke', d => hopColor(d.hopB));
+  if (citeLayerSel) citeLayerSel.attr('stroke', cssVar('--muted'));
+  const cm = document.querySelector('#arrow-cite polygon');
+  if (cm) cm.setAttribute('fill', cssVar('--muted'));
+  for (const b of [1, 2, 3, 4]) {
+    const m = document.querySelector('#arrow-h' + b + ' polygon');
+    if (m) m.setAttribute('fill', hopColor(b));
+  }
+}
+const paletteSel = document.getElementById('palette');
+paletteSel.onchange = () => applyPalette(paletteSel.value);
+try {
+  const saved = localStorage.getItem('gp-palette');
+  if (saved) { paletteSel.value = saved; document.documentElement.dataset.palette = saved; }
+} catch (e) { /* private mode */ }
 
 // ---- connectivity ----
 const netBar = document.getElementById('netBar');
@@ -576,7 +1314,7 @@ section('PRIOR WORKS (cited by the center paper)', prior) +
 section('LATER WORKS (citing the center paper)', deriv) +
 section('RELATED WORKS (linked through the similarity graph)', other),
 '---',
-'Generated by GraphPapers v1.1.',
+'Generated by GraphPapers v1.3.',
 picked.length + ' papers ' + (depth > 9 ? 'from the whole graph around the center' : 'within ' + depth + ' hop(s) of the center') + '. Source: OpenAlex, fetched ' +
   new Date().toISOString().slice(0, 16).replace('T', ' ') + '.',
 '',
@@ -595,6 +1333,7 @@ function refreshPrompt(){
 
 document.getElementById('storyBtn').onclick = () => {
   if (!state.seed) { setError('Load a graph first.'); return; }
+  document.getElementById('citePanel').hidden = true;
   document.getElementById('promptPanel').hidden = false;
   refreshPrompt();
 };
@@ -609,6 +1348,71 @@ document.getElementById('promptCopy').onclick = () => {
                                    : Promise.resolve(document.execCommand('copy'));
   const btn = document.getElementById('promptCopy');
   done.then(ok => { btn.textContent = ok ? 'Copied' : 'Press Cmd+C'; setTimeout(() => { btn.textContent = 'Copy'; }, 2000); });
+};
+
+// ---- citation export panel ----
+let citeSinglePaper = null;
+
+function citeScopeWorks(scope){
+  if (scope === 'single') return citeSinglePaper ? [citeSinglePaper] : [];
+  if (scope === 'visible') {
+    const f = currentFilters();
+    return state.nodes.filter(n => n.id === state.seed.id || nodeMatchesFilters(n, f));
+  }
+  return state.nodes; // 'all'
+}
+
+// sort ascending by year, then first-author family name
+function sortedWorks(works){
+  return works.slice().sort((a, b) => {
+    const ay = a.publication_year || 0, by = b.publication_year || 0;
+    if (ay !== by) return ay - by;
+    const af = authorNames(a)[0] ? splitName(authorNames(a)[0]).family : '';
+    const bf = authorNames(b)[0] ? splitName(authorNames(b)[0]).family : '';
+    return af.localeCompare(bf);
+  });
+}
+
+function refreshCitePanel(){
+  if (!state.seed) return;
+  const format = document.getElementById('citeFormat').value;
+  const scope = document.getElementById('citeScope').value;
+  const entries = sortedWorks(citeScopeWorks(scope)).map(w => formatCitation(w, format));
+  document.getElementById('citeText').value = entries.join('\n\n');
+  document.getElementById('citeCount').textContent = entries.length + ' entries';
+}
+
+function openCitePanel(scope, work){
+  document.getElementById('promptPanel').hidden = true;
+  citeSinglePaper = work || null;
+  document.getElementById('citeScope').value = scope;
+  document.getElementById('citePanel').hidden = false;
+  refreshCitePanel();
+}
+
+document.getElementById('citeToolbarBtn').onclick = () => {
+  if (!state.seed) { setError('Load a graph first.'); return; }
+  openCitePanel('visible');
+};
+document.getElementById('citeClose').onclick = () => { document.getElementById('citePanel').hidden = true; };
+document.getElementById('citeFormat').onchange = refreshCitePanel;
+document.getElementById('citeScope').onchange = refreshCitePanel;
+document.getElementById('citeCopy').onclick = () => {
+  const text = document.getElementById('citeText').value;
+  const btn = document.getElementById('citeCopy');
+  const done = navigator.clipboard ? navigator.clipboard.writeText(text).then(() => true).catch(() => fallbackCopy(text))
+                                   : Promise.resolve(fallbackCopy(text));
+  done.then(ok => { btn.textContent = ok ? 'Copied' : 'Press Cmd+C'; setTimeout(() => { btn.textContent = 'Copy'; }, 2000); });
+};
+document.getElementById('citeDownload').onclick = () => {
+  const format = document.getElementById('citeFormat').value;
+  const ext = format === 'bibtex' ? 'bib' : format === 'ris' ? 'ris' : 'txt';
+  const blob = new Blob([document.getElementById('citeText').value], { type: 'text/plain' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'graphpapers-citations.' + ext;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
 };
 
 document.getElementById('ackBtn').onclick = () => document.getElementById('ackDlg').showModal();
@@ -651,6 +1455,9 @@ document.getElementById('tabs').addEventListener('click', e => {
   btn.classList.add('active');
   const tab = btn.dataset.tab;
   document.getElementById('graphView').hidden = tab !== 'graph';
+  document.getElementById('legendBtn').hidden = tab !== 'graph';
+  document.getElementById('graphTools').hidden = tab !== 'graph';
+  if (tab !== 'graph') document.getElementById('legend').hidden = true;
   document.getElementById('refsView').hidden = tab !== 'refs';
   document.getElementById('citersView').hidden = tab !== 'citers';
 });
@@ -676,6 +1483,59 @@ function selfTest(){
   const { nodes } = computeGraph('S', pool);
   assert('buildGraph caps at 40 nodes', nodes.length <= 40);
   assert('buildGraph seed is index 0', nodes[0].id === 'S');
+
+  assert('journalTier: top25 boundary', journalTier(90, 80, 50) === 'top25');
+  assert('journalTier: top50 boundary', journalTier(60, 80, 50) === 'top50');
+  assert('journalTier: rest below both thresholds', journalTier(10, 80, 50) === 'rest');
+  assert('journalTier: unknown with no impact value', journalTier(null, 80, 50) === 'unknown');
+  assert('journalTier: unknown with no thresholds', journalTier(10, null, null) === 'unknown');
+  const pct = computePercentiles([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+  assert('computePercentiles: p75 >= p50', pct.p75 >= pct.p50);
+  assert('journalTier end-to-end: highest value is top25', journalTier(10, pct.p75, pct.p50) === 'top25');
+  assert('journalTier end-to-end: lowest value is rest', journalTier(1, pct.p75, pct.p50) === 'rest');
+
+  const citeRefs = new Map([['A', new Set(['B'])], ['B', new Set()]]);
+  assert('edgeDirection: A cites B => st', edgeDirection('A', 'B', citeRefs) === 'st');
+  assert('edgeDirection: B cites A => ts', edgeDirection('B', 'A', citeRefs) === 'ts');
+  const noRefs = new Map([['A', new Set()], ['B', new Set()]]);
+  assert('edgeDirection: neither cites => null', edgeDirection('A', 'B', noRefs) === null);
+  const bothRefs = new Map([['A', new Set(['B'])], ['B', new Set(['A'])]]);
+  assert('edgeDirection: both cite => null', edgeDirection('A', 'B', bothRefs) === null);
+
+  // ---- citation formatting ----
+  const fixtureWork = {
+    display_name: 'Attention Is All You Need',
+    publication_year: 2017,
+    authorships: [
+      { author: { display_name: 'Ashish Vaswani' } },
+      { author: { display_name: 'Noam Shazeer' } }
+    ],
+    primary_location: { source: { display_name: 'Advances in Neural Information Processing Systems' } },
+    biblio: { volume: '30', issue: '1', first_page: '5998', last_page: '6008' },
+    doi: 'https://doi.org/10.48550/arxiv.1706.03762',
+    type: 'article'
+  };
+  const bibOut = formatCitation(fixtureWork, 'bibtex');
+  assert('formatCitation bibtex starts with @article{', bibOut.startsWith('@article{'));
+  assert('formatCitation bibtex has " and " between authors', bibOut.includes(' and '));
+
+  const risOut = formatCitation(fixtureWork, 'ris');
+  assert('formatCitation ris has a "TY  - JOUR" line', risOut.split('\n').includes('TY  - JOUR'));
+  assert('formatCitation ris ends with "ER  - "', risOut.endsWith('ER  - '));
+
+  const apaOut = formatCitation(fixtureWork, 'apa');
+  assert('formatCitation apa has "(2017)."', apaOut.includes('(2017).'));
+  assert('formatCitation apa has no "undefined"', !apaOut.includes('undefined'));
+
+  const bareWork = { display_name: 'Bare Paper', publication_year: 2020, authorships: [{ author: { display_name: 'Jane Doe' } }] };
+  ['bibtex', 'ris', 'apa', 'mla', 'chicago'].forEach(style => {
+    const out = formatCitation(bareWork, style);
+    assert('formatCitation ' + style + ' on a bare work has no undefined/null/doubled comma',
+      !/undefined|null/.test(out) && !out.includes(', ,'));
+  });
+
+  const sn = splitName('Ashish Vaswani');
+  assert('splitName splits on the last space', sn.family === 'Vaswani' && sn.given === 'Ashish');
 
   const out = document.createElement('pre');
   out.style.cssText = 'font-family:monospace;font-size:12px;padding:16px;white-space:pre-wrap';

@@ -1,6 +1,6 @@
 # GraphPapers
 
-**v1.1**
+**v1.3**
 
 A free, single-file alternative to Connected Papers. Enter a paper, get a
 force-directed graph of the ~40 works most related to it, then export a ready-made
@@ -43,6 +43,13 @@ coupling is Kessler (1963), co-citation is Small (1973).
 The 40 highest-scoring papers become the graph. Each node connects to its three
 nearest neighbours, so clusters emerge on their own.
 
+**An edge means similarity, not citation.** Two papers are joined because they cite
+the same works or are cited together — they need not cite each other at all. Where a
+real citation does exist between two joined papers, the edge carries an arrowhead
+pointing at the older work. To see citations on their own terms, tick **Citation links**:
+that overlays every real citation between the papers on screen, on top of the
+similarity layout, without moving anything.
+
 | Encoding | Meaning |
 |---|---|
 | Node size | Citation count |
@@ -50,14 +57,43 @@ nearest neighbours, so clusters emerge on their own.
 | Coral ring | The seed paper |
 | Edge weight | Similarity between the two papers |
 
+Everything that changes the graph lives in one panel at its top-left; everything that
+only reads from it — **Story prompt**, **Export citations** — stays in the tab bar. The
+**i** button at the top-right opens the full legend.
+
 Drag nodes, scroll to zoom, and use the **Spacing** slider to loosen or tighten the
-layout. Click any node to see its abstract, authors, and DOI — and to rebuild the
+layout. **Reshuffle** throws the nodes to new starting positions and lets the layout
+settle again — a force layout falls into whichever arrangement its start positions
+lead to, so a tangled graph often untangles on the second try. **Timeline** stacks the
+papers by year instead, oldest at the top, so citation arrows all point upward into
+the past; each year that actually occurs gets an equal band, so a single old reference
+cannot squash the recent decade into a sliver. Three colour palettes sit in the header.
+
+Click a node to pin its neighbourhood; click empty canvas to release it. Click any node to see its abstract, authors, and DOI — and to rebuild the
 whole graph around it.
 
 ### Prior and derivative works
 
 Two tabs beside the graph list what the seed paper cites and what cites it, ranked
 by citation count.
+
+### Citation export
+
+**Export citations** writes the papers out as BibTeX, RIS, APA, MLA, or Chicago —
+one paper, everything the filters currently show, or all 40. Copy it, or download a
+`.bib` / `.ris` file and drag it straight into Zotero, EndNote, or Overleaf.
+
+Author names come from OpenAlex as single strings, so the family name is taken as
+everything after the last space. That is right for most Western names and wrong for
+some; check the names before submitting.
+
+### Filtering
+
+In the same left-hand panel: keyword (title and authors), year range, minimum
+citations, open access, and journal impact. The journal filter uses OpenAlex's 2-year mean citedness, ranked among the
+journals present in the current graph — it is **not** a JCR quartile, which is not
+open data. Filtering hides papers without moving the layout, and resets whenever you
+build a new graph.
 
 ### LLM story prompt
 
@@ -106,9 +142,11 @@ falls back to system fonts and works normally.
 
 ## Credits
 
-Sangin Kim — <kimsanginn@gmail.com>
+Sangin Kim — <kimsanginn@gmail.com>  
+Sehwan Cheon — <thousandsh2@gmail.com>
 
-Acknowledgements are listed in the app, under the link in the bottom-right corner.
+Ideas, bug reports, and pull requests are welcome; contributors are credited in the
+app, under the Acknowledgements link in the bottom-right corner.
 
 Paper data from [OpenAlex](https://openalex.org). Graph layout by
 [d3](https://d3js.org).
