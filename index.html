@@ -124,6 +124,47 @@ main{flex:1; display:flex; overflow:hidden; min-height:0}
 .gt-foot{display:flex; align-items:center; justify-content:space-between; gap:8px; margin-top:4px}
 .gt-foot .btn{width:auto}
 #fCount{white-space:nowrap; font-size:9px}
+#toolsBtn{display:none}
+@media (max-width: 760px){
+  header{flex-wrap:wrap; gap:8px 12px; padding:8px 12px}
+  h1{font-size:1.35rem}
+  .search-wrap{order:3; flex:1 1 100%; max-width:none}
+  #statusLine{order:4; flex:1 1 100%}
+  #paletteCtl{margin-left:auto}
+
+  /* a 68/32 split leaves neither half usable on a phone -- stack them instead */
+  main{flex-direction:column}
+  #leftPanel{flex:1 1 auto; min-height:58vh; border-right:none; border-bottom:1px solid var(--rule)}
+  #detailPanel{flex:0 0 auto; max-height:42vh; width:100%; padding:12px}
+
+  #tabs{gap:12px; padding:0 12px; overflow-x:auto}
+  .tab{white-space:nowrap; padding:10px 2px}
+  #graphCtls{gap:8px; padding:8px 12px; flex:1 1 100%; justify-content:flex-start;
+    margin-left:0; border-top:1px solid var(--rule)}
+
+  /* the control panel covers 44% of a phone screen, so put it behind a button */
+  #toolsBtn{
+    display:block; position:absolute; left:12px; top:12px; z-index:5;
+    width:32px; height:32px; border:1px solid var(--rule-solid); border-radius:6px;
+    background:var(--paper); color:var(--muted); font-size:16px; line-height:1;
+    cursor:pointer; padding:0;
+  }
+  #graphTools{display:none; left:12px; top:52px; width:calc(100% - 24px); max-width:280px}
+  #graphTools.open{display:flex}
+  #toolsBtn[hidden]{display:none}
+  #legendBtn{width:32px; height:32px; font-size:17px}
+  #legend{top:52px; width:calc(100% - 24px)}
+
+  /* finger-sized targets */
+  #graphTools input[type=text], #graphTools input[type=number], #graphTools select,
+  #graphTools .btn, #layoutCtl .layoutBtn{font-size:13px; padding:8px}
+  #spacing{height:24px}
+  #showCiteLinks, #fOA{width:18px; height:18px}
+  .lg-key{width:64px}
+
+  #promptPanel, #citePanel{height:70%}
+  #colophon{position:static; text-align:left; padding:12px; border-top:1px solid var(--rule)}
+}
 #legendBtn{
   position:absolute; right:12px; top:12px; z-index:5; width:24px; height:24px;
   border:1px solid var(--rule-solid); border-radius:50%; background:var(--paper);
@@ -255,6 +296,7 @@ a{color:var(--link)}
       <div id="hoverCard" hidden></div>
       <div id="refsView" class="listView" hidden></div>
       <div id="citersView" class="listView" hidden></div>
+      <button id="toolsBtn" title="Graph controls" aria-label="Graph controls">≡</button>
       <div id="graphTools">
         <p class="gt-head">Layout</p>
         <div id="layoutCtl">
@@ -1164,10 +1206,16 @@ async function loadAndBuildGraph(seedId){
   }
 }
 
+const toolsEl = document.getElementById('graphTools');
+document.getElementById('toolsBtn').onclick = e => { e.stopPropagation(); toolsEl.classList.toggle('open'); };
+document.addEventListener('click', e => {
+  if (!e.target.closest('#graphTools') && !e.target.closest('#toolsBtn')) toolsEl.classList.remove('open');
+});
+
 const legendEl = document.getElementById('legend');
 document.getElementById('legendBtn').onclick = e => { e.stopPropagation(); legendEl.hidden = !legendEl.hidden; };
 document.addEventListener('click', e => { if (!e.target.closest('#legend')) legendEl.hidden = true; });
-document.addEventListener('keydown', e => { if (e.key === 'Escape') legendEl.hidden = true; });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') { legendEl.hidden = true; toolsEl.classList.remove('open'); } });
 
 document.getElementById('showCiteLinks').onchange = e => {
   if (citeGroupSel) citeGroupSel.style('display', e.target.checked ? null : 'none');
@@ -1457,6 +1505,8 @@ document.getElementById('tabs').addEventListener('click', e => {
   document.getElementById('graphView').hidden = tab !== 'graph';
   document.getElementById('legendBtn').hidden = tab !== 'graph';
   document.getElementById('graphTools').hidden = tab !== 'graph';
+  document.getElementById('toolsBtn').hidden = tab !== 'graph';
+  if (tab !== 'graph') document.getElementById('graphTools').classList.remove('open');
   if (tab !== 'graph') document.getElementById('legend').hidden = true;
   document.getElementById('refsView').hidden = tab !== 'refs';
   document.getElementById('citersView').hidden = tab !== 'citers';

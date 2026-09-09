@@ -53,9 +53,10 @@ similarity layout, without moving anything.
 | Encoding | Meaning |
 |---|---|
 | Node size | Citation count |
-| Node colour | Publication year — silver (older) to blue-slate (newer) |
-| Coral ring | The seed paper |
+| Node colour | Publication year — pale (older) to dark (newer) |
+| Accent ring | The seed paper |
 | Edge weight | Similarity between the two papers |
+| Edge colour | Distance from the seed — the accent, fading with each hop |
 
 Everything that changes the graph lives in one panel at its top-left; everything that
 only reads from it — **Story prompt**, **Export citations** — stays in the tab bar. The
@@ -134,6 +135,10 @@ one it opens and renders, but cannot fetch papers, and says so.
 ## Requirements
 
 A modern browser. That is all.
+
+The layout adapts below 760px: the graph and the detail panel stack instead of sitting
+side by side, and the control panel collapses behind a button so it does not cover the
+graph. Pinch to zoom and drag nodes work on touch.
 
 Google Fonts is the only other external reference; if it is unreachable the app
 falls back to system fonts and works normally.
