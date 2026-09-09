@@ -175,6 +175,13 @@ record, so you know exactly what you are looking at.
 The cost of that guarantee is that **the app needs an internet connection**. Without
 one it opens and renders, but cannot fetch papers, and says so.
 
+OpenAlex allows 1,000 requests a day, counted per IP address — your own, not shared with
+anyone else using GraphPapers. A graph costs four to eight requests and a Quantum Jump one
+to six, so the ceiling is somewhere above a hundred graphs a day and most people will never
+approach it. The bottom-right corner shows what you have left and when it resets, and turns
+the accent colour as it runs low, so the limit is visible before it is reached rather than
+arriving as an unexplained failure.
+
 ---
 
 ## Requirements

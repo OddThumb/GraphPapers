@@ -622,7 +622,8 @@ const I18N = {
     ack: 'Acknowledgements', ackNoEntries: 'No entries yet.',
     ackBody: 'GraphPapers is a small open project. Ideas, bug reports, and pull requests are all welcome — contributors will be credited here.',
     freshnessTitle: 'No local cache — every lookup is fetched live from OpenAlex',
-    freshnessLine: 'OpenAlex · live fetch · {ts}', recordUpdated: 'Record updated: {date}'
+    freshnessLine: 'OpenAlex · live fetch · {ts}', recordUpdated: 'Record updated: {date}',
+    quotaLine: 'Your daily OpenAlex quota: {left} of {total} left · resets in {reset}'
   },
   ko: {
     uiLanguage: '언어', palette: '팔레트', paletteSystem: '시스템', paletteEditorial: '에디토리얼',
@@ -688,7 +689,8 @@ const I18N = {
     ack: '감사의 글', ackNoEntries: '아직 등록된 항목이 없습니다.',
     ackBody: 'GraphPapers는 작은 오픈소스 프로젝트입니다. 아이디어, 버그 제보, 풀 리퀘스트를 환영하며 기여자는 이곳에 기록됩니다.',
     freshnessTitle: '로컬 캐시 없음 — 모든 조회는 OpenAlex에서 실시간으로 가져옵니다',
-    freshnessLine: 'OpenAlex · 실시간 조회 · {ts}', recordUpdated: '레코드 업데이트: {date}'
+    freshnessLine: 'OpenAlex · 실시간 조회 · {ts}', recordUpdated: '레코드 업데이트: {date}',
+    quotaLine: '오늘 남은 OpenAlex 요청: {total}회 중 {left}회 · {reset} 후 초기화'
   }
 };
 let lang = 'en';
@@ -723,8 +725,20 @@ function applyLang(){
   if (!document.getElementById('citePanel').hidden) refreshCitePanel();
 }
 
+let quota = { remaining: null, limit: null, resetAt: null };
+function noteQuota(res){
+  const rem = res.headers.get('x-ratelimit-remaining');
+  const lim = res.headers.get('x-ratelimit-limit');
+  const rst = res.headers.get('x-ratelimit-reset');
+  if (rem != null) quota.remaining = +rem;
+  if (lim != null) quota.limit = +lim;
+  if (rst != null) quota.resetAt = new Date(Date.now() + (+rst) * 1000);
+  updateFreshness();
+}
+
 async function fetchJSON(url){
   const res = await fetch(url + (url.includes('?') ? '&' : '?') + 'mailto=' + MAILTO);
+  noteQuota(res);
   if (!res.ok) throw new Error('HTTP ' + res.status);
   return res.json();
 }
@@ -1542,7 +1556,15 @@ function updateFreshness(){
   const now = state.fetchedAt || new Date();
   const pad = n => String(n).padStart(2, '0');
   const ts = now.getFullYear() + '-' + pad(now.getMonth() + 1) + '-' + pad(now.getDate()) + ' ' + pad(now.getHours()) + ':' + pad(now.getMinutes());
-  freshnessEl.innerHTML = tf('freshnessLine', { ts }) + '<br>' + tf('recordUpdated', { date: state.seed ? state.seed.updated_date : '-' });
+  let q = '';
+  if (quota.remaining != null && quota.limit != null) {
+    const mins = quota.resetAt ? Math.max(0, Math.round((quota.resetAt - Date.now()) / 60000)) : null;
+    const inWords = mins == null ? '' : (mins >= 60 ? Math.floor(mins / 60) + 'h ' + (mins % 60) + 'm' : mins + 'm');
+    q = '<br><span' + (quota.remaining < 60 ? ' style="color:var(--accent)"' : '') + '>' +
+        esc(tf('quotaLine', { left: quota.remaining, total: quota.limit, reset: inWords })) + '</span>';
+  }
+  freshnessEl.innerHTML = tf('freshnessLine', { ts }) + '<br>' +
+    tf('recordUpdated', { date: state.seed ? state.seed.updated_date : '-' }) + q;
 }
 
 // ---- graph rendering (d3-force) ----
