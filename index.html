@@ -33,6 +33,7 @@
   --ramp-lo:#cccccc; --ramp-hi:#333333;
 }
 *{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%; text-size-adjust:100%}
 html,body{margin:0;height:100%}
 body{
   display:flex; flex-direction:column; background:var(--paper); color:var(--ink);
@@ -157,8 +158,11 @@ main{flex:1; display:flex; overflow:hidden; min-height:0}
   #legend{top:52px; width:calc(100% - 24px)}
 
   /* finger-sized targets */
-  #graphTools input[type=text], #graphTools input[type=number], #graphTools select,
+  #searchInput, #graphTools input[type=text], #graphTools input[type=number],
+  #graphTools select, #palette, #promptPanel select, #citePanel select,
+  #promptText, #citeText{font-size:16px}
   #graphTools .btn, #layoutCtl .layoutBtn{font-size:13px; padding:8px}
+  #graphTools input[type=text], #graphTools input[type=number], #graphTools select{padding:8px}
   #spacing{height:24px}
   #showCiteLinks, #fOA{width:18px; height:18px}
   .lg-key{width:64px}
