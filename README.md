@@ -15,6 +15,7 @@ force-directed graph of the ~40 works most related to it, then export a ready-ma
 prompt that turns that graph into a narrative history — in your own LLM, at no cost.
 
 No install. No account. No API key. No backend. One HTML file.
+Works on a phone as well as a desktop — the layout rearranges itself rather than shrinking.
 
 ---
 
@@ -188,9 +189,14 @@ arriving as an unexplained failure.
 
 A modern browser. That is all.
 
-The layout adapts below 760px: the graph and the detail panel stack instead of sitting
-side by side, and the control panel collapses behind a button so it does not cover the
-graph. Pinch to zoom and drag nodes work on touch.
+### On a phone
+
+The layout rearranges below 760px rather than scaling down. The graph and the detail
+panel stop sitting side by side and the panel becomes a sheet that slides up when you
+tap a node, since a strip under a full-height graph cannot be read and cannot be
+scrolled to — dragging over the canvas pans the graph. The control panel folds behind a
+button so it does not cover what it controls, and the header wraps to give the search
+box a full row. Pinch to zoom and drag nodes work on touch.
 
 Google Fonts is the only other external reference; if it is unreachable the app
 falls back to system fonts and works normally.
