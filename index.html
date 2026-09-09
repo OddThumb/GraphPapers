@@ -127,6 +127,7 @@ main{flex:1; display:flex; overflow:hidden; min-height:0}
 .gt-foot .btn{width:auto}
 #fCount{white-space:nowrap; font-size:9px}
 #toolsBtn{display:none}
+#sheetClose{display:none}
 @media (max-width: 760px){
   header{flex-wrap:wrap; gap:8px 12px; padding:8px 12px}
   h1{font-size:1.35rem}
@@ -268,12 +269,27 @@ a{color:var(--link)}
 
 /* must stay last: these override rules declared further down the sheet */
 @media (max-width: 760px){
-  /* fixed to the viewport, the colophon printed straight over the detail text */
-  #colophon{
-    position:static; text-align:left; padding:12px 0 0;
-    margin-top:12px; border-top:1px solid var(--rule);
+  /* a strip under a full-height graph is unreadable, and you cannot scroll to it
+     because dragging over the canvas pans the graph. Make it a bottom sheet. */
+  #leftPanel{min-height:0; flex:1 1 auto; border-bottom:none}
+  #detailPanel{
+    position:fixed; left:0; right:0; bottom:0; z-index:30;
+    width:100%; max-height:82vh; overflow-y:auto;
+    padding:16px 12px 24px; background:var(--paper);
+    border-top:1px solid var(--rule-solid); border-radius:10px 10px 0 0;
+    transform:translateY(100%); transition:transform 0.18s ease;
   }
-  #detailPanel{padding-bottom:12px}
+  #detailPanel.open{transform:translateY(0)}
+  #sheetClose{
+    display:block; position:absolute; right:8px; top:8px; width:32px; height:32px;
+    border:none; background:none; color:var(--muted); font-size:24px; line-height:1;
+    cursor:pointer; padding:0;
+  }
+  /* a tap fires mouseenter, so the hover card would stick; the sheet replaces it */
+  #hoverCard{display:none !important}
+  #colophon{position:static; text-align:left; padding:16px 0 0; margin-top:16px;
+    border-top:1px solid var(--rule)}
+
   /* let the toolbar drop to its own row instead of being clipped by the tab strip */
   #tabs{flex-wrap:wrap}
   #graphCtls{flex:1 1 100%; margin-left:0; justify-content:flex-start;
@@ -310,7 +326,7 @@ a{color:var(--link)}
       </div>
     </div>
     <div id="content">
-      <div id="graphView"></div>
+      <div id="graphView"><div class="status-line">Search for a paper above to build a graph.</div></div>
       <div id="hoverCard" hidden></div>
       <div id="refsView" class="listView" hidden></div>
       <div id="citersView" class="listView" hidden></div>
@@ -418,6 +434,7 @@ a{color:var(--link)}
     </div>
   </div>
   <div id="detailPanel">
+    <button id="sheetClose" aria-label="Close details">&times;</button>
     <p class="eyebrow">Detail</p>
     <div id="detailBody" class="status-line">Search for a paper to begin.</div>
   </div>
@@ -847,7 +864,7 @@ function renderList(container, works){
     row.className = 'paper-row';
     row.innerHTML = '<div class="res-title">' + esc(w.display_name || '(untitled)') + '</div>' +
       '<div class="res-meta">' + (w.publication_year || '?') + ' · cited ' + (w.cited_by_count || 0) + '&times;</div>';
-    row.onclick = () => renderDetail(w);
+    row.onclick = () => { renderDetail(w); openSheet(); };
     container.appendChild(row);
   });
 }
@@ -1032,6 +1049,7 @@ function renderGraph(nodes, edges, seedId){
     pinnedId = d.id;
     highlight(d);
     renderDetail(d);
+    openSheet();
   });
   svg.on('click', () => { pinnedId = null; clearHighlight(); });
 
@@ -1230,10 +1248,23 @@ document.addEventListener('click', e => {
   if (!e.target.closest('#graphTools') && !e.target.closest('#toolsBtn')) toolsEl.classList.remove('open');
 });
 
+const detailPanelEl = document.getElementById('detailPanel');
+const isNarrow = () => window.matchMedia('(max-width: 760px)').matches;
+const openSheet = () => { if (isNarrow()) detailPanelEl.classList.add('open'); };
+document.getElementById('sheetClose').onclick = () => detailPanelEl.classList.remove('open');
+
+// on a phone the sheet floats over the graph, so the credits have to travel with it
+function placeColophon(){
+  const c = document.getElementById('colophon');
+  (isNarrow() ? detailPanelEl : document.body).appendChild(c);
+}
+placeColophon();
+window.matchMedia('(max-width: 760px)').addEventListener('change', placeColophon);
+
 const legendEl = document.getElementById('legend');
 document.getElementById('legendBtn').onclick = e => { e.stopPropagation(); legendEl.hidden = !legendEl.hidden; };
 document.addEventListener('click', e => { if (!e.target.closest('#legend')) legendEl.hidden = true; });
-document.addEventListener('keydown', e => { if (e.key === 'Escape') { legendEl.hidden = true; toolsEl.classList.remove('open'); } });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') { legendEl.hidden = true; toolsEl.classList.remove('open'); detailPanelEl.classList.remove('open'); } });
 
 document.getElementById('showCiteLinks').onchange = e => {
   if (citeGroupSel) citeGroupSel.style('display', e.target.checked ? null : 'none');
