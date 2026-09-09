@@ -41,6 +41,7 @@ body{
 h1{font-family:'Instrument Serif',serif; font-size:1.75rem; font-weight:400; margin:0}
 #version{font-family:'Geist Mono',monospace; font-size:9px; color:var(--soft); letter-spacing:0.08em; margin-left:-16px; align-self:flex-start; padding-top:4px}
 header{
+  position:relative; z-index:20;
   display:flex; align-items:center; gap:24px; padding:12px 24px;
   border-bottom:1px solid var(--rule); flex:0 0 auto;
 }
@@ -1496,7 +1497,14 @@ searchInput.addEventListener('input', () => {
         const row = document.createElement('div');
         row.innerHTML = '<div class="res-title">' + esc(w.display_name || '(untitled)') + '</div>' +
           '<div class="res-meta">' + (w.publication_year || '?') + ' · cited ' + (w.cited_by_count || 0) + '&times; · ' + esc(fmtAuthors(w.authorships)) + '</div>';
-        row.onclick = () => { dropdown.hidden = true; searchInput.value = w.display_name || ''; loadAndBuildGraph(w.id); };
+        const choose = ev => {
+          ev.preventDefault();
+          dropdown.hidden = true;
+          searchInput.value = w.display_name || '';
+          searchInput.blur();
+          loadAndBuildGraph(w.id);
+        };
+        row.addEventListener('pointerdown', choose);
         dropdown.appendChild(row);
       });
       dropdown.hidden = false;
