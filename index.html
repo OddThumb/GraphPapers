@@ -168,7 +168,7 @@ main{flex:1; display:flex; overflow:hidden; min-height:0}
   #showCiteLinks, #fOA{width:18px; height:18px}
   .lg-key{width:64px}
 
-  #promptPanel, #citePanel{height:70%}
+
 }
 #legendBtn{
   position:absolute; right:12px; top:12px; z-index:5; width:24px; height:24px;
@@ -294,6 +294,13 @@ a{color:var(--link)}
   #tabs{flex-wrap:wrap}
   #graphCtls{flex:1 1 100%; margin-left:0; justify-content:flex-start;
     gap:8px; padding:8px 12px 8px 0; border-top:1px solid var(--rule)}
+
+  /* the single-row header ran off-screen, taking Copy/Download/Close with it */
+  #promptPanel, #citePanel{height:76%}
+  #promptHead, #citeHead{flex-wrap:wrap; gap:8px 12px; padding:12px}
+  #promptHead .grow, #citeHead .grow{display:none}
+  #promptHead .btn, #citeHead .btn{flex:1 1 0; min-width:76px}
+  #promptHead label, #citeHead label{display:flex; flex-direction:column; gap:4px}
 }
 </style>
 </head>
@@ -1264,7 +1271,9 @@ window.matchMedia('(max-width: 760px)').addEventListener('change', placeColophon
 const legendEl = document.getElementById('legend');
 document.getElementById('legendBtn').onclick = e => { e.stopPropagation(); legendEl.hidden = !legendEl.hidden; };
 document.addEventListener('click', e => { if (!e.target.closest('#legend')) legendEl.hidden = true; });
-document.addEventListener('keydown', e => { if (e.key === 'Escape') { legendEl.hidden = true; toolsEl.classList.remove('open'); detailPanelEl.classList.remove('open'); } });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') { legendEl.hidden = true; toolsEl.classList.remove('open'); detailPanelEl.classList.remove('open');
+    document.getElementById('promptPanel').hidden = true;
+    document.getElementById('citePanel').hidden = true; } });
 
 document.getElementById('showCiteLinks').onchange = e => {
   if (citeGroupSel) citeGroupSel.style('display', e.target.checked ? null : 'none');
