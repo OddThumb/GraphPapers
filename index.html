@@ -72,7 +72,7 @@ header{
   letter-spacing:0.04em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
 #langCtl{margin-left:auto; display:flex; align-items:center; gap:8px}
 #paletteCtl{display:flex; align-items:center; gap:8px}
-#langCtl span, #paletteCtl span{font-family:'Geist Mono',monospace; font-size:8px; text-transform:uppercase;
+#langCtl span, #paletteCtl span{font-family:'Geist Mono',monospace; font-size:9px; text-transform:uppercase;
   letter-spacing:0.18em; color:var(--soft)}
 #uiLang, #palette{font:inherit; font-size:11px; padding:4px 8px; border:1px solid var(--rule);
   border-radius:4px; background:var(--paper); color:var(--ink); cursor:pointer}
@@ -89,14 +89,14 @@ main{flex:1; display:flex; overflow:hidden; min-height:0}
   cursor:pointer; border-bottom:2px solid transparent;
 }
 .tab.active{color:var(--ink); border-bottom-color:var(--accent)}
-#spacingCtl span{font-family:'Geist Mono',monospace; font-size:8px; text-transform:uppercase; letter-spacing:0.18em; color:var(--soft)}
+#spacingCtl span{font-family:'Geist Mono',monospace; font-size:9px; text-transform:uppercase; letter-spacing:0.18em; color:var(--soft)}
 #spacing{width:96px; accent-color:var(--muted); cursor:pointer}
-#citeLinkCtl span{font-family:'Geist Mono',monospace; font-size:8px; text-transform:uppercase;
+#citeLinkCtl span{font-family:'Geist Mono',monospace; font-size:9px; text-transform:uppercase;
   letter-spacing:0.18em; color:var(--soft)}
 #showCiteLinks{accent-color:var(--muted); cursor:pointer}
 #graphCtls{margin-left:auto; display:flex; align-items:center; gap:16px; padding-right:4px}
 #graphTools{
-  position:absolute; left:12px; top:12px; z-index:5; width:172px;
+  position:absolute; left:12px; top:12px; z-index:5; width:190px;
   max-height:calc(100% - 24px); overflow-y:auto;
   background:var(--paper);
   background:color-mix(in srgb, var(--paper) 65%, transparent);
@@ -106,21 +106,21 @@ main{flex:1; display:flex; overflow:hidden; min-height:0}
 }
 #graphTools:hover{background:color-mix(in srgb, var(--paper) 96%, transparent)}
 #graphTools[hidden]{display:none}
-.gt-head{margin:0; font-family:'Geist Mono',monospace; font-size:8px; text-transform:uppercase;
+.gt-head{margin:0; font-family:'Geist Mono',monospace; font-size:9px; text-transform:uppercase;
   letter-spacing:0.18em; color:var(--soft)}
 .gt-head + *{margin-top:-2px}
 .gt-head:not(:first-child){margin-top:8px; padding-top:12px; border-top:1px solid var(--rule)}
-#graphTools .btn{width:100%; font-size:11px; padding:6px 8px}
+#graphTools .btn{width:100%; font-size:12.5px; padding:7px 8px}
 #layoutCtl{display:grid; grid-template-columns:1fr 1fr; width:100%}
 #layoutCtl .layoutBtn{-webkit-appearance:none; appearance:none; min-width:0;
-  font:inherit; font-size:11px; padding:6px 4px; cursor:pointer;
+  font:inherit; font-size:12.5px; padding:7px 4px; cursor:pointer;
   background:transparent; color:var(--muted); border:1px solid var(--rule)}
 #layoutCtl .layoutBtn:first-child{border-radius:4px 0 0 4px}
 #layoutCtl .layoutBtn:last-child{border-radius:0 4px 4px 0; border-left:none}
 #layoutCtl .layoutBtn.active{background:var(--paper-2); color:var(--ink)}
 #spacingCtl{display:flex; flex-direction:column; gap:4px}
 #spacingCtl span, .gt-field > span, #citeLinkCtl span, #oaCtl span{
-  font-family:'Geist Mono',monospace; font-size:8px; text-transform:uppercase;
+  font-family:'Geist Mono',monospace; font-size:9px; text-transform:uppercase;
   letter-spacing:0.14em; color:var(--soft)}
 #spacing{width:100%; accent-color:var(--muted); cursor:pointer}
 #citeLinkCtl, #oaCtl{display:flex; align-items:center; gap:6px; cursor:pointer}
@@ -136,7 +136,7 @@ main{flex:1; display:flex; overflow:hidden; min-height:0}
 .gt-row{display:flex; justify-content:space-between; align-items:baseline; gap:6px}
 #graphTools .gt-val{font-family:'Geist Mono',monospace; text-transform:none; letter-spacing:normal; color:var(--soft)}
 #graphTools input[type=text], #graphTools input[type=number], #graphTools select{
-  width:100%; min-width:0; font:inherit; font-size:11px; padding:4px 6px;
+  width:100%; min-width:0; font:inherit; font-size:12.5px; padding:5px 6px;
   border:1px solid var(--rule); border-radius:4px; background:var(--paper); color:var(--ink);
 }
 #graphTools input:focus, #graphTools select:focus{outline:none; border-color:var(--soft)}
@@ -231,7 +231,7 @@ main{flex:1; display:flex; overflow:hidden; min-height:0}
 .paper-row:hover{background:var(--paper-2)}
 .paper-row .res-title{font-size:13px; margin-bottom:2px}
 #detailPanel{flex:0 0 32%; padding:16px; overflow:auto; min-width:0}
-.eyebrow{font-family:'Geist Mono',monospace; font-size:8px; text-transform:uppercase; letter-spacing:0.18em; color:var(--soft); margin:0 0 6px}
+.eyebrow{font-family:'Geist Mono',monospace; font-size:9px; text-transform:uppercase; letter-spacing:0.18em; color:var(--soft); margin:0 0 6px}
 /* Hangul goes muddy at 8px Geist Mono; Korean labels switch register instead of shrinking */
 :root[lang="ko"] .eyebrow, :root[lang="ko"] #langCtl span, :root[lang="ko"] #paletteCtl span,
 :root[lang="ko"] #spacingCtl span, :root[lang="ko"] #citeLinkCtl span, :root[lang="ko"] .gt-head,
@@ -279,11 +279,15 @@ main{flex:1; display:flex; overflow:hidden; min-height:0}
 }
 .qt-chip.selected{background:var(--accent-tint); border-color:var(--accent); color:var(--accent)}
 a{color:var(--link)}
-.status-line{font-family:'Geist Mono',monospace; font-size:10px; color:var(--soft); padding:16px}
+.status-line{font-family:'Geist Mono',monospace; font-size:11px; color:var(--soft); padding:16px}
+#graphView > .status-line{
+  position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+  text-align:center; padding:24px 24px 24px 220px; pointer-events:none;
+}
 .error-box{font-size:12px; color:var(--ink); padding:16px; border:1px solid var(--rule); border-radius:6px; margin:16px}
 #colophon{
   margin-top:20px; padding-top:12px; border-top:1px solid var(--rule); text-align:right;
-  font-family:'Geist Mono',monospace; font-size:9px; color:var(--soft); line-height:1.5;
+  font-family:'Geist Mono',monospace; font-size:11px; color:var(--soft); line-height:1.5;
 }
 #freshness{cursor:help}
 #credit{margin-top:4px; padding-top:4px; border-top:1px solid var(--rule)}
