@@ -883,7 +883,10 @@ function updateFreshness(){
 
 // ---- graph rendering (d3-force) ----
 let sim3, spacing = 1, layoutMode = 'force', pinnedId = null, citeLayerSel = null;
-let citeGroupSel = null;
+let citeGroupSel = null, labelSel = null;
+const narrowScreen = () => window.matchMedia('(max-width: 760px)').matches;
+// labels cannot move out of each other's way when y is pinned to the year
+const labelShown = d => d.r > (narrowScreen() ? 20 : (layoutMode === 'timeline' ? 14 : 10));
 let positionCiteLinks = () => {};
 let nodeSel, linkSel, gridSel, graphW = 800, graphH = 600;
 const cssVar = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
@@ -919,6 +922,8 @@ function drawYearGrid(nodes){
   years.forEach(yr => {
     const y = yearScale(yr);
     gridSel.append('line').attr('x1', 0).attr('x2', graphW).attr('y1', y).attr('y2', y);
+    gridSel.append('rect').attr('x', 4).attr('y', y - 13).attr('width', 30).attr('height', 12)
+      .attr('fill', cssVar('--paper')).attr('opacity', 0.85);
     gridSel.append('text').attr('x', 8).attr('y', y - 4).text(yr);
   });
 }
@@ -1032,7 +1037,7 @@ function renderGraph(nodes, edges, seedId){
     .attr('class', 'node-label')
     .attr('dy', d => d.r + 10)
     .attr('text-anchor', 'middle')
-    .style('display', d => d.r > 10 ? 'block' : 'none')
+    .style('display', d => labelShown(d) ? 'block' : 'none')
     .text(d => (d.display_name || '').replace(/<[^>]+>/g, '').slice(0, 34));
 
   const highlight = d => {
@@ -1040,12 +1045,12 @@ function renderGraph(nodes, edges, seedId){
       .flatMap(l => [eid(l.source), eid(l.target)]));
     node.classed('dim', n => n.id !== d.id && !neighborIds.has(n.id));
     link.classed('dim', l => eid(l.source) !== d.id && eid(l.target) !== d.id);
-    label.style('display', n => (n.r > 10 || n.id === d.id || neighborIds.has(n.id)) ? 'block' : 'none');
+    label.style('display', n => (labelShown(n) || n.id === d.id || neighborIds.has(n.id)) ? 'block' : 'none');
   };
   const clearHighlight = () => {
     node.classed('dim', false);
     link.classed('dim', false);
-    label.style('display', d => d.r > 10 ? 'block' : 'none');
+    label.style('display', d => labelShown(d) ? 'block' : 'none');
   };
 
   // clicking a node pins its highlight; clicking empty canvas releases it
@@ -1068,7 +1073,7 @@ function renderGraph(nodes, edges, seedId){
     hoverCard.hidden = true;
   });
 
-  nodeSel = node; linkSel = link;
+  nodeSel = node; linkSel = link; labelSel = label;
 
   sim3 = d3.forceSimulation(nodes)
     .velocityDecay(0.35)
@@ -1089,6 +1094,9 @@ function renderGraph(nodes, edges, seedId){
         this.setAttribute('x1', x1); this.setAttribute('y1', y1);
         this.setAttribute('x2', x2); this.setAttribute('y2', y2);
       });
+      if (layoutMode === 'timeline') {
+        for (const n of nodes) n.x = Math.max(n.r + 4, Math.min(graphW - n.r - 4, n.x));
+      }
       positionCiteLinks();
       node.attr('transform', d => 'translate(' + d.x + ',' + d.y + ')');
     });
@@ -1111,8 +1119,8 @@ function applySpacing(){
     const hi = yearScale.domain()[1];
     sim3.force('center', null);
     sim3.force('y', d3.forceY(d => yearScale(d.publication_year || hi)).strength(1));
-    sim3.force('x', d3.forceX(graphW / 2).strength(0.18));
-    sim3.force('charge').strength(-40 * spacing);
+    sim3.force('x', d3.forceX(graphW / 2).strength(0.09));
+    sim3.force('charge').strength(-160 * spacing);
   } else {
     sim3.force('y', null);
     sim3.force('x', null);
@@ -1133,6 +1141,7 @@ document.getElementById('layoutCtl').addEventListener('click', e => {
   document.querySelectorAll('.layoutBtn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
   layoutMode = btn.dataset.layout;
+  if (labelSel) labelSel.style('display', d => labelShown(d) ? 'block' : 'none');
   applySpacing();
   drawYearGrid(state.nodes);
   sim3.alpha(0.8).restart();
