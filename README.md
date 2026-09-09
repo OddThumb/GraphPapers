@@ -1,11 +1,13 @@
-![GraphPapers](docs/hero.png)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/hero-dark.png">
+  <img src="docs/hero.png" alt="GraphPapers — a similarity graph built around the GW150914 detection paper">
+</picture>
 
-<sub>Illustrative data — the papers above are placeholders, so the screenshot stays
-stable between releases. The live app reads real records from OpenAlex.</sub>
+<sub>Built around the 2016 detection of GW150914. Live data, as the app always shows it.</sub>
 
 # GraphPapers
 
-**v1.5** · [Open it in a browser](https://oddthumb.github.io/GraphPapers/)
+**v1.7** · [Open it in a browser](https://oddthumb.github.io/GraphPapers/)
 
 A free, single-file alternative to Connected Papers. Enter a paper, get a
 force-directed graph of the ~40 works most related to it, then export a ready-made
@@ -68,7 +70,9 @@ only reads from it — **Story prompt**, **Export citations** — stays in the t
 **i** button at the top-right opens the full legend.
 
 Drag nodes, scroll to zoom, and use the **Spacing** slider to loosen or tighten the
-layout. **Reshuffle** throws the nodes to new starting positions and lets the layout
+layout, or open **Advanced** for the four forces underneath it — link distance, pull,
+push and collision gap, each slider centred on the value the layout was tuned to.
+**Reshuffle** throws the nodes to new starting positions and lets the layout
 settle again — a force layout falls into whichever arrangement its start positions
 lead to, so a tangled graph often untangles on the second try. **Timeline** stacks the
 papers by year instead, oldest at the top, so citation arrows all point upward into
