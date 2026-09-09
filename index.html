@@ -366,7 +366,7 @@ a{color:var(--link)}
 </head>
 <body>
 <header>
-  <h1 id="titleBtn" data-i18n-attr="title:reloadTitle" title="Reload the current graph with fresh data">GraphPapers</h1><span id="version">v0.8</span>
+  <h1 id="titleBtn" data-i18n-attr="title:resetTitle" title="Start over">GraphPapers</h1><span id="version">v0.8</span>
   <div class="search-wrap">
     <input id="searchInput" type="text" data-i18n-attr="placeholder:searchPlaceholder" placeholder="Search by title, DOI, or OpenAlex ID">
     <div id="dropdown" hidden></div>
@@ -565,7 +565,7 @@ const I18N = {
   en: {
     uiLanguage: 'Language', palette: 'Palette', paletteSystem: 'System', paletteEditorial: 'Editorial',
     paletteDark: 'Dark', paletteInk: 'Ink', paletteNoir: 'Noir',
-    reloadTitle: 'Reload the current graph with fresh data',
+    resetTitle: 'Start over',
     searchPlaceholder: 'Search by title, DOI, or OpenAlex ID',
     offlineBanner: 'Offline — GraphPapers needs an internet connection to fetch papers from OpenAlex.',
     tabGraph: 'Similarity graph', tabRefs: 'Prior works', tabCiters: 'Derivative works',
@@ -632,7 +632,7 @@ const I18N = {
   ko: {
     uiLanguage: '언어', palette: '팔레트', paletteSystem: '시스템', paletteEditorial: '에디토리얼',
     paletteDark: '다크', paletteInk: '잉크', paletteNoir: '느와르',
-    reloadTitle: '새로운 데이터로 현재 그래프를 새로고침합니다',
+    resetTitle: '처음부터 다시 시작합니다',
     searchPlaceholder: '제목, DOI, OpenAlex ID로 검색',
     offlineBanner: '오프라인 상태입니다 — GraphPapers는 OpenAlex에서 논문을 가져오려면 인터넷 연결이 필요합니다.',
     tabGraph: '유사도 그래프', tabRefs: '선행 논문', tabCiters: '후행 논문',
@@ -2142,9 +2142,32 @@ function resetFilterInputs(){
 }
 document.getElementById('fReset').addEventListener('click', () => { resetFilterInputs(); applyFilters(); });
 
-document.getElementById('titleBtn').addEventListener('click', () => {
-  if (state.seed) loadAndBuildGraph(state.seed.id);
-});
+function resetApp(){
+  state.seed = null; state.refs = []; state.citers = []; state.pool = [];
+  state.nodes = []; state.edges = []; state.baseNodes = []; state.trailEdges = [];
+  state.trail = []; state.tried = new Map(); state.history = [];
+  state.jumpPool = new Map(); state.trailEvidence = new Map();
+  state.sourceImpact = new Map(); state.fetchedAt = null;
+  pinnedId = null; nodeSel = linkSel = labelSel = citeGroupSel = citeLayerSel = null;
+  stopRingLoop();
+  resetFilterInputs();
+  document.getElementById('searchInput').value = '';
+  document.getElementById('dropdown').hidden = true;
+  document.getElementById('promptPanel').hidden = true;
+  document.getElementById('citePanel').hidden = true;
+  document.getElementById('legend').hidden = true;
+  detailPanelEl.classList.remove('open');
+  document.getElementById('graphView').innerHTML =
+    '<div class="status-line" data-i18n="graphEmpty">' + esc(t('graphEmpty')) + '</div>';
+  document.getElementById('refsView').innerHTML = '';
+  document.getElementById('citersView').innerHTML = '';
+  detailBody.classList.add('status-line');
+  detailBody.setAttribute('data-i18n', 'detailEmpty');
+  detailBody.textContent = t('detailEmpty');
+  setStatus('');
+  updateFreshness();
+}
+document.getElementById('titleBtn').addEventListener('click', resetApp);
 
 // ---- orchestration ----
 async function loadAndBuildGraph(seedId, opts){
