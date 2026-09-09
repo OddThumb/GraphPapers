@@ -1,6 +1,11 @@
+![GraphPapers](docs/hero.png)
+
+<sub>Illustrative data — the papers above are placeholders, so the screenshot stays
+stable between releases. The live app reads real records from OpenAlex.</sub>
+
 # GraphPapers
 
-**v1.3**
+**v1.3** · [Open it in a browser](https://oddthumb.github.io/GraphPapers/)
 
 A free, single-file alternative to Connected Papers. Enter a paper, get a
 force-directed graph of the ~40 works most related to it, then export a ready-made

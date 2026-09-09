@@ -816,6 +816,7 @@ function setStatus(msg){
   document.getElementById('statusLine').textContent = msg || '';
 }
 function setError(msg){
+  detailBody.classList.remove('status-line');
   detailBody.innerHTML = '<div class="error-box">' + msg + '</div>';
 }
 
@@ -829,6 +830,7 @@ function fallbackCopy(text){
 }
 
 function renderDetail(work){
+  detailBody.classList.remove('status-line');
   const abstract = reconstructAbstract(work.abstract_inverted_index);
   const doi = work.doi ? '<a href="' + esc(work.doi) + '" target="_blank" rel="noopener">' + esc(work.doi) + '</a>' : '<span class="mono">No DOI</span>';
   detailBody.innerHTML =

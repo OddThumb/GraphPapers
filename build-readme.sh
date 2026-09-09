@@ -7,6 +7,7 @@ cd "$(dirname "$0")"
 CHROME="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
 TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
+cp -R docs "$TMP/" 2>/dev/null || true
 
 # markdown -> standalone HTML, skinned to match the app
 pandoc README.md -f gfm -t html5 --standalone --metadata pagetitle="GraphPapers" \
@@ -25,6 +26,7 @@ p,li{margin:0 0 7pt}
 strong{font-weight:600}
 a{color:var(--muted);text-decoration:none;border-bottom:1px solid var(--rule)}
 code{font-family:'Geist Mono',monospace;font-size:9pt;color:var(--muted)}
+img{max-width:100%;height:auto;border:1px solid var(--rule);border-radius:4px}
 hr{border:none;border-top:1px solid var(--rule);margin:20pt 0}
 table{border-collapse:collapse;width:100%;margin:8pt 0 12pt;font-size:9.5pt}
 th{font-family:'Geist Mono',monospace;font-size:7.5pt;text-transform:uppercase;letter-spacing:0.14em;
