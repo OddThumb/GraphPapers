@@ -12,14 +12,15 @@ No install. No account. No API key. No backend. One HTML file.
 
 ## Running it
 
-Double-click `GraphPapers.html`. That is the whole procedure.
+Open it at **https://oddthumb.github.io/GraphPapers/**, or download `index.html`
+and double-click it. Either way works, and both are the whole procedure.
 
 Everything the app needs to run is inside that file, including the d3 graph library.
 The only thing it fetches from the network is the paper data itself, live from
 [OpenAlex](https://openalex.org) — a free, open catalogue of 250M+ works that needs
 no key and imposes no cost.
 
-Sharing it means sending one file. The recipient double-clicks it and is working.
+Sharing it means sending a link, or one file. Either way the recipient is working immediately.
 
 ---
 
