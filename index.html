@@ -229,7 +229,7 @@ a{color:var(--link)}
 .status-line{font-family:'Geist Mono',monospace; font-size:10px; color:var(--soft); padding:16px}
 .error-box{font-size:12px; color:var(--ink); padding:16px; border:1px solid var(--rule); border-radius:6px; margin:16px}
 #colophon{
-  position:fixed; bottom:8px; right:12px; text-align:right;
+  margin-top:20px; padding-top:12px; border-top:1px solid var(--rule); text-align:right;
   font-family:'Geist Mono',monospace; font-size:9px; color:var(--soft); line-height:1.5;
 }
 #freshness{cursor:help}
@@ -286,8 +286,7 @@ a{color:var(--link)}
   }
   /* a tap fires mouseenter, so the hover card would stick; the sheet replaces it */
   #hoverCard{display:none !important}
-  #colophon{position:static; text-align:left; padding:16px 0 0; margin-top:16px;
-    border-top:1px solid var(--rule)}
+  #colophon{text-align:left}
 
   /* let the toolbar drop to its own row instead of being clipped by the tab strip */
   #tabs{flex-wrap:wrap}
@@ -313,6 +312,7 @@ a{color:var(--link)}
   <span id="statusLine"></span>
   <label id="paletteCtl"><span>Palette</span>
     <select id="palette">
+      <option value="system">System</option>
       <option value="editorial">Editorial</option>
       <option value="dark">Dark</option>
       <option value="ink">Ink</option>
@@ -443,16 +443,16 @@ a{color:var(--link)}
     <button id="sheetClose" aria-label="Close details">&times;</button>
     <p class="eyebrow">Detail</p>
     <div id="detailBody" class="status-line">Search for a paper to begin.</div>
+  <div id="colophon">
+    <div id="freshness" title="No local cache — every lookup is fetched live from OpenAlex"></div>
+    <div id="credit">Sangin Kim · <a href="mailto:kimsanginn@gmail.com">kimsanginn@gmail.com</a><br>
+      Sehwan Cheon · <a href="mailto:thousandsh2@gmail.com">thousandsh2@gmail.com</a><br>
+      <a href="https://github.com/OddThumb/GraphPapers" target="_blank" rel="noopener">github.com/OddThumb/GraphPapers</a><br>
+      <button id="ackBtn">Acknowledgements</button><br>
+      &copy; 2026 Sangin Kim, Sehwan Cheon &middot; MIT License</div>
+  </div>
   </div>
 </main>
-<div id="colophon">
-  <div id="freshness" title="No local cache — every lookup is fetched live from OpenAlex"></div>
-  <div id="credit">Sangin Kim · <a href="mailto:kimsanginn@gmail.com">kimsanginn@gmail.com</a><br>
-    Sehwan Cheon · <a href="mailto:thousandsh2@gmail.com">thousandsh2@gmail.com</a><br>
-    <a href="https://github.com/OddThumb/GraphPapers" target="_blank" rel="noopener">github.com/OddThumb/GraphPapers</a><br>
-    <button id="ackBtn">Acknowledgements</button><br>
-    &copy; 2026 Sangin Kim, Sehwan Cheon &middot; MIT License</div>
-</div>
 
 <dialog id="ackDlg">
   <p class="eyebrow">Acknowledgements</p>
@@ -1290,13 +1290,6 @@ const isNarrow = () => window.matchMedia('(max-width: 760px)').matches;
 const openSheet = () => { if (isNarrow()) detailPanelEl.classList.add('open'); };
 document.getElementById('sheetClose').onclick = () => detailPanelEl.classList.remove('open');
 
-// on a phone the sheet floats over the graph, so the credits have to travel with it
-function placeColophon(){
-  const c = document.getElementById('colophon');
-  (isNarrow() ? detailPanelEl : document.body).appendChild(c);
-}
-placeColophon();
-window.matchMedia('(max-width: 760px)').addEventListener('change', placeColophon);
 
 const legendEl = document.getElementById('legend');
 document.getElementById('legendBtn').onclick = e => { e.stopPropagation(); legendEl.hidden = !legendEl.hidden; };
@@ -1325,7 +1318,7 @@ document.getElementById('reshuffleBtn').onclick = () => {
 
 // ---- palette ----
 function applyPalette(name){
-  document.documentElement.dataset.palette = name;
+  document.documentElement.dataset.palette = resolvePalette(name);
   try { localStorage.setItem('gp-palette', name); } catch (e) { /* private mode */ }
   if (!nodeSel || !state.seed) return;
   const seedId = state.seed.id;
@@ -1346,11 +1339,16 @@ function applyPalette(name){
   }
 }
 const paletteSel = document.getElementById('palette');
+const darkQuery = window.matchMedia('(prefers-color-scheme: dark)');
+// "System" is a choice, not a palette: resolve it to a real one on every application
+const resolvePalette = name => name === 'system' ? (darkQuery.matches ? 'dark' : 'editorial') : name;
 paletteSel.onchange = () => applyPalette(paletteSel.value);
+darkQuery.addEventListener('change', () => { if (paletteSel.value === 'system') applyPalette('system'); });
 try {
   const saved = localStorage.getItem('gp-palette');
-  if (saved) { paletteSel.value = saved; document.documentElement.dataset.palette = saved; }
+  if (saved) paletteSel.value = saved;
 } catch (e) { /* private mode */ }
+document.documentElement.dataset.palette = resolvePalette(paletteSel.value);
 
 // ---- connectivity ----
 const netBar = document.getElementById('netBar');
