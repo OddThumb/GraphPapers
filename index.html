@@ -253,6 +253,7 @@ a{color:var(--link)}
 
 .dim{opacity:0.12}
 #titleBtn{cursor:pointer}
+.year-grid{pointer-events:none}
 .year-grid line{stroke:var(--rule)}
 .year-grid text{font-family:'Geist Mono',monospace; font-size:8px; fill:var(--soft)}
 #hoverCard{
@@ -883,7 +884,7 @@ function updateFreshness(){
 
 // ---- graph rendering (d3-force) ----
 let sim3, spacing = 1, layoutMode = 'force', pinnedId = null, citeLayerSel = null;
-let citeGroupSel = null, labelSel = null;
+let citeGroupSel = null, labelSel = null, zoomT = d3.zoomIdentity, gridRows = [];
 const narrowScreen = () => window.matchMedia('(max-width: 760px)').matches;
 // labels cannot move out of each other's way when y is pinned to the year
 const labelShown = d => d.r > (narrowScreen() ? 20 : (layoutMode === 'timeline' ? 14 : 10));
@@ -919,13 +920,29 @@ function drawYearGrid(nodes){
   gridSel.style('display', null);
   const yearScale = yearScaleFor(nodes);
   const years = [...new Set(nodes.map(n => n.publication_year).filter(Boolean))].sort((a, b) => a - b);
-  years.forEach(yr => {
-    const y = yearScale(yr);
-    gridSel.append('line').attr('x1', 0).attr('x2', graphW).attr('y1', y).attr('y2', y);
-    gridSel.append('rect').attr('x', 4).attr('y', y - 13).attr('width', 30).attr('height', 12)
-      .attr('fill', cssVar('--paper')).attr('opacity', 0.85);
-    gridSel.append('text').attr('x', 8).attr('y', y - 4).text(yr);
-  });
+  gridRows = years.map(yr => ({
+    yr,
+    y: yearScale(yr),
+    line: gridSel.append('line').attr('x1', 0).attr('x2', graphW).node(),
+    plate: gridSel.append('rect').attr('x', 4).attr('width', 30).attr('height', 12)
+      .attr('fill', cssVar('--paper')).attr('opacity', 0.85).node(),
+    text: gridSel.append('text').attr('x', 8).text(yr).node(),
+  }));
+  layoutYearGrid();
+}
+
+// place the rows in screen space: y follows the zoom so rows stay on their nodes,
+// x always spans the full width and the type never scales
+function layoutYearGrid(){
+  for (const r of gridRows) {
+    const y = zoomT.applyY(r.y);
+    const off = y < -20 || y > graphH + 20 ? 'none' : null;
+    r.line.setAttribute('y1', y); r.line.setAttribute('y2', y);
+    r.line.setAttribute('x2', graphW);
+    r.line.style.display = off;
+    r.plate.setAttribute('y', y - 13); r.plate.style.display = off;
+    r.text.setAttribute('y', y - 4); r.text.style.display = off;
+  }
 }
 
 const hoverCard = document.getElementById('hoverCard');
@@ -985,10 +1002,16 @@ function renderGraph(nodes, edges, seedId){
     .attr('orient', 'auto')
     .append('polygon').attr('points', '0 0, 7 2.5, 0 5').attr('fill', cssVar('--muted'));
   const g = svg.append('g');
-  svg.call(d3.zoom().scaleExtent([0.2, 4]).on('zoom', e => g.attr('transform', e.transform)));
+  gridSel = svg.insert('g', () => g.node()).attr('class', 'year-grid');   // outside g: unaffected by zoom
+  svg.call(d3.zoom().scaleExtent([0.2, 4]).on('zoom', e => {
+    g.attr('transform', e.transform);
+    zoomT = e.transform;
+    layoutYearGrid();
+  }));
 
   pinnedId = null;
-  gridSel = g.append('g').attr('class', 'year-grid');
+  zoomT = d3.zoomIdentity;
+  gridRows = [];
 
   const citeData = citationEdges(nodes);
   const byId = new Map(nodes.map(n => [n.id, n]));
