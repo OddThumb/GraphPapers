@@ -137,7 +137,7 @@ main{flex:1; display:flex; overflow:hidden; min-height:0}
   #leftPanel{flex:1 1 auto; min-height:58vh; border-right:none; border-bottom:1px solid var(--rule)}
   #detailPanel{flex:0 0 auto; max-height:42vh; width:100%; padding:12px}
 
-  #tabs{gap:12px; padding:0 12px; overflow-x:auto}
+  #tabs{gap:12px; padding:0 12px; flex-wrap:wrap}
   .tab{white-space:nowrap; padding:10px 2px}
   #graphCtls{gap:8px; padding:8px 12px; flex:1 1 100%; justify-content:flex-start;
     margin-left:0; border-top:1px solid var(--rule)}
@@ -163,7 +163,6 @@ main{flex:1; display:flex; overflow:hidden; min-height:0}
   .lg-key{width:64px}
 
   #promptPanel, #citePanel{height:70%}
-  #colophon{position:static; text-align:left; padding:12px; border-top:1px solid var(--rule)}
 }
 #legendBtn{
   position:absolute; right:12px; top:12px; z-index:5; width:24px; height:24px;
@@ -261,6 +260,20 @@ a{color:var(--link)}
   display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden}
 .hc-authors{font-size:11px; color:var(--muted); margin-bottom:4px}
 .hc-meta{font-family:'Geist Mono',monospace; font-size:9px; color:var(--soft)}
+
+/* must stay last: these override rules declared further down the sheet */
+@media (max-width: 760px){
+  /* fixed to the viewport, the colophon printed straight over the detail text */
+  #colophon{
+    position:static; text-align:left; padding:12px 0 0;
+    margin-top:12px; border-top:1px solid var(--rule);
+  }
+  #detailPanel{padding-bottom:12px}
+  /* let the toolbar drop to its own row instead of being clipped by the tab strip */
+  #tabs{flex-wrap:wrap}
+  #graphCtls{flex:1 1 100%; margin-left:0; justify-content:flex-start;
+    gap:8px; padding:8px 12px 8px 0; border-top:1px solid var(--rule)}
+}
 </style>
 </head>
 <body>
