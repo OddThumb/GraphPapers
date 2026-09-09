@@ -891,7 +891,7 @@ const narrowScreen = () => window.matchMedia('(max-width: 760px)').matches;
 // labels cannot move out of each other's way when y is pinned to the year
 const labelShown = d => d.r > (narrowScreen() ? 20 : (layoutMode === 'timeline' ? 14 : 10));
 let positionCiteLinks = () => {};
-let nodeSel, linkSel, gridSel, graphW = 800, graphH = 600;
+let nodeSel, linkSel, gridSel, graphW = 800, graphH = 600, tlScale = null;
 const cssVar = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
 const HOP_MIX = { 1: 1, 2: 0.70, 3: 0.46, 4: 0.28 };
 const hopColor = b => d3.interpolateLab(cssVar('--paper'), cssVar('--accent'))(HOP_MIX[b] || 0.28);
@@ -920,7 +920,7 @@ function drawYearGrid(nodes){
   gridSel.selectAll('*').remove();
   if (layoutMode !== 'timeline') { gridSel.style('display', 'none'); return; }
   gridSel.style('display', null);
-  const yearScale = yearScaleFor(nodes);
+  const yearScale = tlScale = yearScaleFor(nodes);
   const years = [...new Set(nodes.map(n => n.publication_year).filter(Boolean))].sort((a, b) => a - b);
   gridRows = years.map(yr => ({
     yr,
@@ -1119,8 +1119,12 @@ function renderGraph(nodes, edges, seedId){
         this.setAttribute('x1', x1); this.setAttribute('y1', y1);
         this.setAttribute('x2', x2); this.setAttribute('y2', y2);
       });
-      if (layoutMode === 'timeline') {
-        for (const n of nodes) n.x = Math.max(n.r + 4, Math.min(graphW - n.r - 4, n.x));
+      if (layoutMode === 'timeline' && tlScale) {
+        const newest = tlScale.domain()[1];
+        for (const n of nodes) {
+          n.y = tlScale(n.publication_year || newest); n.vy = 0;
+          n.x = Math.max(n.r + 4, Math.min(graphW - n.r - 4, n.x));
+        }
       }
       positionCiteLinks();
       node.attr('transform', d => 'translate(' + d.x + ',' + d.y + ')');
@@ -1140,7 +1144,7 @@ function applySpacing(){
   sim3.force('collide').radius(d => d.r + 8 * spacing).iterations(3);
   sim3.force('charge').distanceMax(420);
   if (layoutMode === 'timeline') {
-    const yearScale = yearScaleFor(state.nodes);
+    const yearScale = tlScale = yearScaleFor(state.nodes);
     const hi = yearScale.domain()[1];
     sim3.force('center', null);
     sim3.force('y', d3.forceY(d => yearScale(d.publication_year || hi)).strength(1));
@@ -1317,6 +1321,15 @@ document.getElementById('reshuffleBtn').onclick = () => {
   }
   sim3.alpha(1).restart();
 };
+
+window.addEventListener('resize', () => {
+  const c = document.getElementById('graphView');
+  const r = c.getBoundingClientRect();
+  if (!r.width || !sim3) return;
+  graphW = r.width; graphH = r.height;
+  applySpacing();
+  drawYearGrid(state.nodes);
+});
 
 // ---- palette ----
 function applyPalette(name){
