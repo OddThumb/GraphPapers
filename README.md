@@ -5,7 +5,7 @@ stable between releases. The live app reads real records from OpenAlex.</sub>
 
 # GraphPapers
 
-**v1.3** · [Open it in a browser](https://oddthumb.github.io/GraphPapers/)
+**v1.5** · [Open it in a browser](https://oddthumb.github.io/GraphPapers/)
 
 A free, single-file alternative to Connected Papers. Enter a paper, get a
 force-directed graph of the ~40 works most related to it, then export a ready-made
@@ -82,6 +82,31 @@ whole graph around it.
 
 Two tabs beside the graph list what the seed paper cites and what cites it, ranked
 by citation count.
+
+### Quantum Jump
+
+Following citations keeps you inside one conversation. **Quantum Jump!** leaves it: it
+moves the graph to a paper that has *no citation link* to the current one, and draws a
+trail back to where you came from, so the path stays visible however far you wander.
+
+Two ways of finding those papers, chosen with **Find by**:
+
+| | It looks for | It cannot see |
+|---|---|---|
+| **Read together** | Papers other researchers cite alongside this one, though the two never cite each other | Papers too recent for anyone to have cited them yet |
+| **Shared foundations** | Papers that cite the same *rare* works this one cites | Work built on a different literature |
+
+Rarity is what makes the second one work. Sharing a field's standard catalogue with
+someone is no evidence of anything; sharing a paper cited eight times means you are
+looking at nearly the same problem.
+
+Both are corrected for fame — a raw count of shared citations just returns whichever
+papers everyone cites. Both drop candidates already drawn, so pressing the button again
+gives you somewhere new; **Undo jump** steps back, and **Reset draws** starts over.
+**Field** narrows the search to the same discipline, or restricts it to a different one.
+
+Hover the trail to see why two papers were linked: the works that cite them both, or the
+references they share.
 
 ### Citation export
 

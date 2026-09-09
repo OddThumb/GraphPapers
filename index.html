@@ -28,7 +28,7 @@
 :root[data-palette="ink"]{
   --paper:#ffffff; --paper-2:#f2f2f2; --ink:#1a1a1a; --muted:#555555;
   --soft:#888888; --rule:rgba(0,0,0,0.12); --rule-solid:#cccccc;
-  --accent:#1e4fa3; --accent-tint:rgba(30,79,163,0.08); --link:#1e4fa3;
+  --accent:#1e4fa3; --accent-tint:rgba(30,79,163,0.08); --link:#0f6f6b;
   --accent-strong:rgba(30,79,163,0.50);
   --ramp-lo:#cccccc; --ramp-hi:#333333;
 }
@@ -225,6 +225,30 @@ main{flex:1; display:flex; overflow:hidden; min-height:0}
   font:inherit; font-size:12px; cursor:pointer; color:var(--ink);
 }
 .btn:hover{background:var(--paper-2)}
+#qJumpBlock{
+  margin-top:16px; padding-top:12px;
+  border-top:1px solid color-mix(in srgb, var(--accent) 30%, transparent);
+  display:flex; flex-direction:column; gap:8px;
+}
+#qJumpBlock .eyebrow{color:var(--accent); margin:0}
+#quantumBtns{display:grid; grid-template-columns:1fr 1fr; gap:8px}
+#quantumJumpBtn{border-color:var(--accent); color:var(--accent); transition:background 150ms ease, color 150ms ease, transform 150ms ease}
+#quantumJumpBtn:hover:not(:disabled){background:var(--accent-tint)}
+#quantumJumpBtn:disabled{border-color:var(--rule); color:var(--soft); cursor:default; background:transparent}
+#quantumJumpBtn.is-firing{background:var(--accent); color:var(--paper); transform:scale(0.97)}
+@keyframes qj-pulse{0%, 100%{border-color:var(--accent)} 50%{border-color:color-mix(in srgb, var(--accent) 30%, transparent)}}
+#quantumJumpBtn.is-jumping{animation:qj-pulse 900ms ease-in-out infinite}
+@media (prefers-reduced-motion: reduce){
+  #quantumJumpBtn{transition:none}
+  #quantumJumpBtn.is-jumping{animation:none}
+}
+#qJumpBlock select{
+  width:100%; font:inherit; font-size:12px; padding:6px 8px;
+  border:1px solid var(--rule); border-radius:4px; background:var(--paper); color:var(--ink);
+}
+#qJumpBlock select:focus{outline:none; border-color:var(--soft)}
+#qCount{white-space:nowrap; font-size:9px; color:var(--accent)}
+#qCount.exhausted{color:var(--soft)}
 a{color:var(--link)}
 .status-line{font-family:'Geist Mono',monospace; font-size:10px; color:var(--soft); padding:16px}
 .error-box{font-size:12px; color:var(--ink); padding:16px; border:1px solid var(--rule); border-radius:6px; margin:16px}
@@ -265,6 +289,11 @@ a{color:var(--link)}
   display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden}
 .hc-authors{font-size:11px; color:var(--muted); margin-bottom:4px}
 .hc-meta{font-family:'Geist Mono',monospace; font-size:9px; color:var(--soft)}
+.tc-title{font-size:12px; font-weight:600; margin:0 0 4px}
+.tc-section{margin-top:8px}
+.tc-item{font-size:11px; margin:2px 0}
+.tc-more{font-size:10px; color:var(--soft); margin:4px 0 0}
+.trail-badge-text{font-family:'Geist Mono',monospace; font-size:9px}
 
 /* must stay last: these override rules declared further down the sheet */
 @media (max-width: 760px){
@@ -304,7 +333,7 @@ a{color:var(--link)}
 </head>
 <body>
 <header>
-  <h1 id="titleBtn" title="Reload the current graph with fresh data">GraphPapers</h1><span id="version">v1.3</span>
+  <h1 id="titleBtn" title="Reload the current graph with fresh data">GraphPapers</h1><span id="version">v1.5</span>
   <div class="search-wrap">
     <input id="searchInput" type="text" placeholder="Search by title, DOI, or OpenAlex ID">
     <div id="dropdown" hidden></div>
@@ -393,6 +422,11 @@ a{color:var(--link)}
             <line x1="2" y1="12" x2="62" y2="12" stroke="var(--muted)" stroke-width="1.2" stroke-dasharray="4,3"/>
             <polygon points="62 8, 71 12, 62 16" fill="var(--muted)"/>
           </svg><span class="lg-val">A real citation, arrow pointing at the older paper. Turn these on with <b>Citation links</b>.</span></div>
+        <div class="lg-row"><span class="lg-key">Jump trail</span>
+          <svg width="76" height="24" aria-hidden="true">
+            <line x1="2" y1="12" x2="62" y2="12" stroke="var(--link)" stroke-width="2" stroke-dasharray="6,3"/>
+            <polygon points="62 8, 71 12, 62 16" fill="var(--link)"/>
+          </svg><span class="lg-val">Where you jumped from &mdash; by <b>Read together</b> (co-citation) or <b>Shared foundations</b> (shared rare references), whichever <b>Find by</b> was set to. Either way the target had no citation link to the current paper, so the trail records a path citations could not have found. The ringed nodes it connects are past seeds, their ring fading the further back along the path they sit.</span></div>
       </div>
       <div id="promptPanel" hidden>
         <div id="promptHead">
@@ -500,29 +534,36 @@ async function searchWorks(q){
 
 async function fetchSeed(id){
   const w = await fetchJSON(API + '/works/' + id +
-    '?select=id,doi,display_name,publication_year,cited_by_count,referenced_works,authorships,abstract_inverted_index,primary_location,open_access,updated_date,biblio,type');
+    '?select=id,doi,display_name,publication_year,cited_by_count,referenced_works,authorships,abstract_inverted_index,primary_location,open_access,updated_date,biblio,type,primary_topic');
   return normalizeWork(w);
 }
 
 async function fetchCiters(id){
   const data = await fetchJSON(API + '/works?filter=cites:' + id +
-    '&per-page=100&sort=cited_by_count:desc&select=id,display_name,publication_year,cited_by_count,referenced_works,authorships,doi,open_access,primary_location,updated_date,biblio,type');
+    '&per-page=100&sort=cited_by_count:desc&select=id,display_name,publication_year,cited_by_count,referenced_works,authorships,doi,open_access,primary_location,updated_date,biblio,type,primary_topic');
   return (data.results || []).map(normalizeWork);
 }
 
 function chunk(arr, size){ const out=[]; for(let i=0;i<arr.length;i+=size) out.push(arr.slice(i,i+size)); return out; }
 
+// fetch full records for up to 50 ids in one request (URL length safety)
+async function fetchWorksByIds(ids){
+  if (!ids.length) return [];
+  const data = await fetchJSON(API + '/works?filter=openalex_id:' + ids.join('|') +
+    '&per-page=100&select=id,display_name,publication_year,cited_by_count,referenced_works,authorships,doi,open_access,primary_location,updated_date,biblio,type,primary_topic');
+  return (data.results || []).map(normalizeWork);
+}
+
 async function fetchRefs(refIds){
   const chunks = chunk(refIds, 50).slice(0, 2); // max 2 chunks per spec (URL length safety)
-  const results = await Promise.all(chunks.map(ids =>
-    fetchJSON(API + '/works?filter=openalex_id:' + ids.join('|') +
-      '&per-page=100&select=id,display_name,publication_year,cited_by_count,referenced_works,authorships,doi,open_access,primary_location,updated_date,biblio,type')
-  ));
-  return results.flatMap(d => (d.results || []).map(normalizeWork));
+  const results = await Promise.all(chunks.map(fetchWorksByIds));
+  return results.flat();
 }
 
 // bare source id of a work's primary-location journal, or undefined if none
 const nodeSourceId = w => w.primary_location && w.primary_location.source && bare(w.primary_location.source.id);
+// primary field name of a work, or null if it has no primary_topic
+const fieldOf = w => w.primary_topic?.field?.display_name || null;
 
 // fetch 2yr-mean-citedness for the journals behind a set of nodes, one request (chunked at 50, max 2 chunks)
 // degrades silently to an empty map on failure -- journal filtering then falls back to "all"
@@ -583,9 +624,9 @@ function edgeDirection(a, b, refsOf){
   return null;
 }
 
-// pure: pool = array of normalized works (includes seed). Returns {nodes, edges}.
-function computeGraph(seedId, pool){
-  const map = new Map(pool.map(w => [w.id, w]));
+// pure: builds a (idA, idB) => similarity closure over a pool (bibliographic coupling + co-citation).
+// exposes .Rmap so callers needing citation direction (computeGraph) don't rebuild it.
+function simScorer(pool){
   const Rmap = new Map(pool.map(w => [w.id, new Set(w.referenced_works || [])]));
   const Cmap = new Map(); // x -> set of pool members that reference x
   for (const p of pool) {
@@ -595,6 +636,15 @@ function computeGraph(seedId, pool){
     }
   }
   const sim = (a, b) => bibCoupling(Rmap.get(a), Rmap.get(b)) + coCitation(Cmap.get(a), Cmap.get(b));
+  sim.Rmap = Rmap;
+  return sim;
+}
+
+// pure: pool = array of normalized works (includes seed). Returns {nodes, edges}.
+function computeGraph(seedId, pool){
+  const map = new Map(pool.map(w => [w.id, w]));
+  const sim = simScorer(pool);
+  const Rmap = sim.Rmap;
 
   const others = pool.filter(w => w.id !== seedId);
   const scored = others.map(w => ({ id: w.id, s: sim(seedId, w.id) })).sort((a, b) => b.s - a.s);
@@ -631,6 +681,157 @@ function citationEdges(nodes){
     for (const ref of (n.referenced_works || []))
       if (ids.has(ref) && ref !== n.id) out.push({ from: n.id, to: ref });
   return out;
+}
+
+// pure: Map(id -> co-citation count) for papers that co-occur with the seed in other papers'
+// bibliographies -- i.e. papers with NO citation link to the seed, read in the same context.
+// Walks `citers`' referenced_works (a citer of X and the seed both getting cited together is
+// citation, not this; this is "X and the seed both get cited BY the same third paper"), excluding
+// the seed itself, everything the seed itself references, and every citer (those have their own,
+// direct, relation to the seed already). Falls back to walking `refs`' referenced_works when the
+// seed has no citers yet (a brand-new paper) -- same exclusions either way, since "the seed's own
+// references" already covers `refs`'s ids in both branches.
+function coCitationCounts(seed, refs, citers){
+  const exclude = new Set([seed.id, ...(seed.referenced_works || []), ...citers.map(w => w.id)]);
+  const source = citers.length ? citers : refs;
+  const counts = new Map();
+  for (const w of source) {
+    for (const id of (w.referenced_works || [])) {
+      if (exclude.has(id)) continue;
+      counts.set(id, (counts.get(id) || 0) + 1);
+    }
+  }
+  return counts;
+}
+
+// pure: which ids to actually fetch for the jump pool, from co-citation `counts`. Co-citation
+// count 1 is noise (almost everything is co-cited with almost everything else once); count 2+ is
+// the "related" band. Taking the top 45 by count would just return the field's most-cited papers
+// (they co-occur with everything because they're cited by everything) -- so only half the batch is
+// ranked, the other half is a random sample of the rest of the band, which is what keeps repeated
+// jumps from the same seed landing on different papers instead of the same famous handful.
+function shortlistIds(counts, rng){
+  rng = rng || Math.random;
+  const band = [...counts.entries()].filter(([, c]) => c >= 2).sort((a, b) => b[1] - a[1]).map(([id]) => id);
+  const ranked = band.slice(0, 45);
+  const rest = band.slice(45);
+  for (let i = rest.length - 1; i > 0; i--) {
+    const j = Math.floor(rng() * (i + 1));
+    [rest[i], rest[j]] = [rest[j], rest[i]];
+  }
+  const merged = ranked.slice();
+  const seen = new Set(merged);
+  for (const id of rest.slice(0, 45)) if (!seen.has(id)) { merged.push(id); seen.add(id); }
+  return merged;
+}
+
+// traces the seed's 6 RAREST references (by cited_by_count) to find papers that cite them too --
+// bibliographic-coupling candidates the co-citation route can never reach, because sharing a
+// reference needs no citation link between the two papers at all. A reference cited by everyone
+// (a catalogue, a stats package) is worthless signal AND expensive to trace; a reference cited 8
+// times means "same narrow problem" and costs one small request. 6 requests, run together.
+// Excludes the seed, everything it already references, and everyone who already cites it -- that
+// neighbourhood is already the Prior/Derivative works tabs. Returns counts (id -> how many of the
+// 6 rare refs it cites) + the works themselves (fetchCiters already returns full records) + the
+// rare refs traced (needed later to show which ones a chosen candidate actually shared).
+async function couplingCandidateIds(seed, refs, citers){
+  const rare = refs.slice().sort((a, b) => (a.cited_by_count || 0) - (b.cited_by_count || 0)).slice(0, 6);
+  const citerLists = await Promise.all(rare.map(r => fetchCiters(r.id)));
+  const exclude = new Set([seed.id, ...(seed.referenced_works || []), ...citers.map(w => w.id)]);
+  const rareIds = rare.map(r => r.id);
+  const counts = new Map();
+  const works = new Map();
+  for (const list of citerLists) {
+    for (const w of list) {
+      if (exclude.has(w.id)) continue;
+      works.set(w.id, w);
+      const refSet = new Set(w.referenced_works || []);
+      counts.set(w.id, rareIds.filter(id => refSet.has(id)).length);
+    }
+  }
+  return { counts, works: [...works.values()], rareRefs: rare };
+}
+
+// pure: normalized-title key for deduping OpenAlex records of the same paper (it holds separate
+// records for a preprint and its published version).
+const titleKey = s => String(s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+
+// pure: drops any candidate whose title matches the seed's or one already kept.
+function dedupeByTitle(seed, works){
+  const seen = new Set([titleKey(seed.display_name)]);
+  const out = [];
+  for (const w of works) {
+    const k = titleKey(w.display_name);
+    if (seen.has(k)) continue;
+    seen.add(k);
+    out.push(w);
+  }
+  return out;
+}
+
+// pure: `candidates` scored against the seed, best first, top 12. Score = a route-specific
+// "specificity" term (guards against the "famous paper" confound: a paper linked to everything
+// scores low unless it's ALSO disproportionately linked to this seed specifically) + bibliographic
+// coupling (already normalised). scorerPool must carry every referenced_works the coupling term
+// needs to resolve (seed + state.pool + the jump pool works).
+// opts.field: 'any' (default) | 'same' (fieldOf matches the seed's) | 'cross' (fieldOf is non-null and differs).
+// opts.route: 'cocite' (default) | 'coupling' -- picks the specificity formula below.
+// opts.coCounts: Map(id -> raw link count with the seed) -- co-citation count for 'cocite',
+// shared-rare-reference count for 'coupling'.
+// opts.nCiters: state.citers.length at the time the co-citation count was computed ('cocite' only).
+function quantumCandidates(seed, scorerPool, candidates, opts){
+  opts = opts || {};
+  const field = opts.field || 'any';
+  const route = opts.route || 'cocite';
+  const coCounts = opts.coCounts || new Map();
+  const nCiters = opts.nCiters || 0;
+  const seedField = fieldOf(seed);
+  const Rmap = simScorer(scorerPool).Rmap;
+  const seedRefs = Rmap.get(seed.id);
+  const coScore = w => {
+    const c = coCounts.get(w.id) || 0;
+    if (!c) return 0;
+    return route === 'coupling'
+      ? c / Math.sqrt(Math.max(1, w.cited_by_count || 0))
+      : (nCiters ? c / Math.sqrt(nCiters * Math.max(1, w.cited_by_count || 0)) : 0);
+  };
+
+  return candidates
+    .filter(w => w.id !== seed.id)
+    .filter(w => {
+      if (field === 'any') return true;
+      const f = fieldOf(w);
+      return field === 'same' ? (f != null && f === seedField) : (f != null && f !== seedField);
+    })
+    .map(w => ({ w, s: coScore(w) + bibCoupling(seedRefs, Rmap.get(w.id)) }))
+    .filter(x => x.s > 0)
+    .sort((a, b) => b.s - a.s)
+    .slice(0, 12)
+    .map(x => x.w);
+}
+
+// pure: quantumCandidates minus whatever has already been drawn from this seed+route, per a
+// Map("seedId|route" => Set(id)).
+function untriedCandidates(seed, scorerPool, candidates, opts, tried){
+  const key = seed.id + '|' + ((opts && opts.route) || 'cocite');
+  const drawn = (tried && tried.get(key)) || new Set();
+  return quantumCandidates(seed, scorerPool, candidates, opts).filter(w => !drawn.has(w.id));
+}
+
+// pure: the hover/tap card for a trail edge -- the evidence for why Quantum Jump linked these two
+// papers, snapshotted at jump time. evidence: { coCite: {count, titles}, sharedRefs: {count, titles} }.
+// A section is omitted entirely when its count is 0, not printed as "0 shared references".
+function trailCardHtml(evidence, fromTitle){
+  const section = (headerFor, ev) => {
+    if (!ev || !ev.count) return '';
+    const items = ev.titles.map(t => '<div class="tc-item">· ' + esc(t) + '</div>').join('');
+    const more = ev.count > ev.titles.length ? '<div class="tc-more">and ' + (ev.count - ev.titles.length) + ' more</div>' : '';
+    return '<div class="tc-section"><p class="eyebrow" style="margin:0 0 4px">' + headerFor(ev.count) + '</p>' + items + more + '</div>';
+  };
+  return '<p class="eyebrow" style="margin:0 0 4px">Jumped from</p>' +
+    '<div class="tc-title">' + esc(fromTitle || '(untitled)') + '</div>' +
+    section(n => n + ' paper' + (n === 1 ? '' : 's') + ' cite both', evidence && evidence.coCite) +
+    section(n => n + ' shared reference' + (n === 1 ? '' : 's'), evidence && evidence.sharedRefs);
 }
 
 function reconstructAbstract(inv){
@@ -808,7 +1009,10 @@ function formatCitation(w, style){
 }
 
 // ---- app state / UI ----
-const state = { seed: null, refs: [], citers: [], nodes: [], edges: [], sim: null, activeTab: 'graph' };
+const state = { seed: null, refs: [], citers: [], nodes: [], edges: [], sim: null, activeTab: 'graph',
+  pool: [], trail: [], trailEdges: [], tried: new Map(), jumpPool: new Map(), trailEvidence: new Map() };
+// quantum-jump option selections, held here (not in the detail markup) so they survive panel re-renders
+let qFindByVal = 'cocite', qFieldVal = 'any';
 const detailBody = document.getElementById('detailBody');
 const freshnessEl = document.getElementById('freshness');
 
@@ -829,10 +1033,70 @@ function fallbackCopy(text){
   return ok;
 }
 
+// Quantum Jump only makes sense departing from the current seed, so the block only
+// appears on the seed's own detail view -- everywhere else, "Rebuild graph from this
+// paper" is the way to make that paper the seed first.
+function quantumBlockHtml(){
+  return '<div id="qJumpBlock">' +
+    '<p class="eyebrow">Quantum Jump</p>' +
+    '<div id="quantumBtns">' +
+      '<button class="btn" id="quantumJumpBtn" title="Jump to a random high-similarity paper with no citation link to the current one">Quantum Jump!</button>' +
+      '<button class="btn" id="quantumUndoBtn" title="Undo the last jump">Undo jump</button>' +
+    '</div>' +
+    '<label class="gt-field"><span>Find by</span>' +
+      '<select id="qFindBy">' +
+        '<option value="cocite">Read together</option>' +
+        '<option value="coupling">Shared foundations</option>' +
+      '</select>' +
+    '</label>' +
+    '<label class="gt-field"><span>Field</span>' +
+      '<select id="qField">' +
+        '<option value="any">Any field</option>' +
+        '<option value="same">Same field</option>' +
+        '<option value="cross">Different field</option>' +
+      '</select>' +
+    '</label>' +
+    '<div class="gt-foot">' +
+      '<span class="mono" id="qCount"></span>' +
+      '<span style="display:flex; gap:8px">' +
+        '<button class="btn" id="qClearTrail" title="Empty the jump trail">Clear trail</button>' +
+        '<button class="btn" id="qResetDraws" title="Forget which candidates have already been drawn">Reset draws</button>' +
+      '</span>' +
+    '</div>' +
+  '</div>';
+}
+
+function wireQuantumBlock(){
+  document.getElementById('qFindBy').value = qFindByVal;
+  document.getElementById('qField').value = qFieldVal;
+  document.getElementById('quantumJumpBtn').onclick = quantumJump;
+  document.getElementById('quantumUndoBtn').onclick = quantumUndo;
+  document.getElementById('qFindBy').onchange = e => { qFindByVal = e.target.value; refreshQuantumUI(); };
+  document.getElementById('qField').onchange = e => { qFieldVal = e.target.value; refreshQuantumUI(); };
+  document.getElementById('qClearTrail').onclick = () => {
+    state.trail = [];
+    state.trailEdges = [];
+    state.trailEvidence = new Map();
+    if (state.seed) {
+      // state.nodes still holds the forced-in waypoints; fall back to the pre-injection list
+      state.nodes = (state.baseNodes || state.nodes).slice();
+      renderGraph(state.nodes, state.edges, state.seed.id);
+      applyFilters();
+    }
+    refreshQuantumUI();
+  };
+  document.getElementById('qResetDraws').onclick = () => {
+    state.tried = new Map();
+    refreshQuantumUI();
+  };
+  refreshQuantumUI();
+}
+
 function renderDetail(work){
   detailBody.classList.remove('status-line');
   const abstract = reconstructAbstract(work.abstract_inverted_index);
   const doi = work.doi ? '<a href="' + esc(work.doi) + '" target="_blank" rel="noopener">' + esc(work.doi) + '</a>' : '<span class="mono">No DOI</span>';
+  const showQuantum = !!(state.seed && work.id === state.seed.id);
   detailBody.innerHTML =
     '<div class="d-title">' + esc(work.display_name || '(untitled)') + '</div>' +
     '<div class="d-row">' + esc(fmtAuthors(work.authorships)) + '</div>' +
@@ -843,8 +1107,9 @@ function renderDetail(work){
       '<button class="btn" id="citeOneBtn" style="font-size:11px; padding:4px 8px">Cite</button>' +
     '</div>' +
     (abstract ? '<div class="d-abstract">' + esc(abstract) + '</div>' : '<div class="d-abstract mono">No abstract</div>') +
-    '<button class="btn" id="redrawBtn">Rebuild graph from this paper</button>';
-  document.getElementById('redrawBtn').onclick = () => loadAndBuildGraph(work.id);
+    (showQuantum ? quantumBlockHtml() : '<button class="btn" id="redrawBtn">Rebuild graph from this paper</button>');
+  const redrawBtn = document.getElementById('redrawBtn');
+  if (redrawBtn) redrawBtn.onclick = () => loadAndBuildGraph(work.id);
   document.getElementById('citeOneBtn').onclick = () => openCitePanel('single', work);
   const abstractCopyBtn = document.getElementById('abstractCopy');
   if (abstractCopyBtn) {
@@ -854,6 +1119,7 @@ function renderDetail(work){
       done.then(ok => { abstractCopyBtn.textContent = ok ? 'Copied' : 'Press Cmd+C'; setTimeout(() => { abstractCopyBtn.textContent = 'Copy'; }, 2000); });
     };
   }
+  if (showQuantum) wireQuantumBlock();
 
   // refs/citers are fetched without abstracts (payload); pull this one's on demand
   if (!('abstract_inverted_index' in work)) {
@@ -878,7 +1144,7 @@ function renderList(container, works){
 }
 
 function updateFreshness(){
-  const now = new Date();
+  const now = state.fetchedAt || new Date();
   const pad = n => String(n).padStart(2, '0');
   const ts = now.getFullYear() + '-' + pad(now.getMonth() + 1) + '-' + pad(now.getDate()) + ' ' + pad(now.getHours()) + ':' + pad(now.getMinutes());
   freshnessEl.innerHTML = 'OpenAlex · live fetch · ' + ts + '<br>Record updated: ' + (state.seed ? state.seed.updated_date : '-');
@@ -887,14 +1153,56 @@ function updateFreshness(){
 // ---- graph rendering (d3-force) ----
 let sim3, spacing = 1, layoutMode = 'force', pinnedId = null, citeLayerSel = null;
 let citeGroupSel = null, labelSel = null, zoomT = d3.zoomIdentity, gridRows = [];
+let trailLayerSel = null, trailHitSel = null, trailBadgeSel = null, zoomG = null, arrivalPending = false;
 const narrowScreen = () => window.matchMedia('(max-width: 760px)').matches;
+const reducedMotion = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
 // labels cannot move out of each other's way when y is pinned to the year
 const labelShown = d => d.r > (narrowScreen() ? 20 : (layoutMode === 'timeline' ? 14 : 10));
 let positionCiteLinks = () => {};
+let positionTrailLinks = () => {};
+
+// expanding accent rings from a point, staggered `count` beats 220ms apart -- used for the
+// quantum-jump discharge (from the old seed) and arrival (on the new one). No-op under reduced motion.
+// keeps bursting until stopRingLoop(); the fetch is slower than one burst
+let ringLoopTimer = null;
+function startRingLoop(groupSel, cx, cy, r){
+  stopRingLoop();
+  if (!groupSel || reducedMotion()) return;
+  ringBurst(groupSel, cx, cy, r, 3);
+  ringLoopTimer = setInterval(() => ringBurst(groupSel, cx, cy, r, 3), 1500);
+}
+function stopRingLoop(){
+  if (ringLoopTimer) { clearInterval(ringLoopTimer); ringLoopTimer = null; }
+}
+
+function ringBurst(groupSel, cx, cy, r, count){
+  if (!groupSel || reducedMotion()) return;
+  for (let i = 0; i < count; i++) {
+    setTimeout(() => {
+      const c = groupSel.append('circle').attr('class', 'qj-ring')
+        .attr('cx', cx).attr('cy', cy).attr('r', r)
+        .attr('fill', 'none').attr('stroke', cssVar('--accent')).attr('stroke-width', 2)
+        .attr('stroke-opacity', 0.9)
+        .style('transition', 'r 900ms ease-out, stroke-opacity 900ms ease-out');
+      c.node().getBoundingClientRect(); // force reflow so the transition below actually animates
+      requestAnimationFrame(() => c.attr('r', r + 160).attr('stroke-opacity', 0));
+      setTimeout(() => c.remove(), 950);
+    }, i * 220);
+  }
+}
 let nodeSel, linkSel, gridSel, graphW = 800, graphH = 600, tlScale = null;
 const cssVar = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
 const HOP_MIX = { 1: 1, 2: 0.70, 3: 0.46, 4: 0.28 };
 const hopColor = b => d3.interpolateLab(cssVar('--paper'), cssVar('--accent'))(HOP_MIX[b] || 0.28);
+// every paper on the trail is a seed; the ring fades from accent (current seed, i=0) toward
+// paper the further back along the path it sits, same paper->accent mix the hop colours use.
+const ringColor = i => d3.interpolateLab(cssVar('--paper'), cssVar('--accent'))(Math.max(0.25, 1 - i * 0.28));
+const trailFill = i => d3.interpolateLab(cssVar('--paper'), cssVar('--accent'))(Math.max(0.12, 0.58 - i * 0.15));
+// id -> steps back from the current seed (0 = current seed, 1 = paper jumped from, 2 = before that, ...)
+const trailIndexMap = (seedId, trail) => {
+  const order = [seedId, ...trail.slice().reverse().map(t => t.id)];
+  return new Map(order.map((id, i) => [id, i]));
+};
 // pure: which hop-color bucket (1-4) an edge falls into, given its max endpoint distance from the seed
 function hopBucket(h){
   if (h == null || h >= 4) return 4;
@@ -926,9 +1234,9 @@ function drawYearGrid(nodes){
     yr,
     y: yearScale(yr),
     line: gridSel.append('line').attr('x1', 0).attr('x2', graphW).node(),
-    plate: gridSel.append('rect').attr('x', 4).attr('width', 30).attr('height', 12)
+    plate: gridSel.append('rect').attr('width', 30).attr('height', 12)
       .attr('fill', cssVar('--paper')).attr('opacity', 0.85).node(),
-    text: gridSel.append('text').attr('x', 8).text(yr).node(),
+    text: gridSel.append('text').attr('text-anchor', 'end').text(yr).node(),
   }));
   layoutYearGrid();
 }
@@ -942,8 +1250,10 @@ function layoutYearGrid(){
     r.line.setAttribute('y1', y); r.line.setAttribute('y2', y);
     r.line.setAttribute('x2', graphW);
     r.line.style.display = off;
-    r.plate.setAttribute('y', y - 13); r.plate.style.display = off;
-    r.text.setAttribute('y', y - 4); r.text.style.display = off;
+    r.plate.setAttribute('x', graphW - 38); r.plate.setAttribute('y', y - 13);
+    r.plate.style.display = off;
+    r.text.setAttribute('x', graphW - 8); r.text.setAttribute('y', y - 4);
+    r.text.style.display = off;
   }
 }
 
@@ -1003,7 +1313,16 @@ function renderGraph(nodes, edges, seedId){
     .attr('markerWidth', 7).attr('markerHeight', 5).attr('refX', 7).attr('refY', 2.5)
     .attr('orient', 'auto')
     .append('polygon').attr('points', '0 0, 7 2.5, 0 5').attr('fill', cssVar('--muted'));
+  defs.append('marker').attr('id', 'arrow-trail')
+    .attr('viewBox', '0 0 7 5')
+    .attr('markerWidth', 7).attr('markerHeight', 5).attr('refX', 7).attr('refY', 2.5)
+    .attr('orient', 'auto')
+    .append('polygon').attr('points', '0 0, 7 2.5, 0 5').attr('fill', cssVar('--link'));
   const g = svg.append('g');
+  zoomG = g;
+  const isArrival = arrivalPending && !reducedMotion();
+  arrivalPending = false;
+  if (isArrival) g.style('opacity', 0);   // revealed once the graph is fully built, at the end of this function
   gridSel = svg.insert('g', () => g.node()).attr('class', 'year-grid');   // outside g: unaffected by zoom
   svg.call(d3.zoom().scaleExtent([0.2, 4]).on('zoom', e => {
     g.attr('transform', e.transform);
@@ -1011,6 +1330,7 @@ function renderGraph(nodes, edges, seedId){
     layoutYearGrid();
   }));
 
+  stopRingLoop();
   pinnedId = null;
   zoomT = d3.zoomIdentity;
   gridRows = [];
@@ -1045,6 +1365,72 @@ function renderGraph(nodes, edges, seedId){
     .attr('stroke-opacity', d => Math.min(0.95, 0.45 + d.sim * 0.5))
     .attr('marker-end', d => d.dir ? 'url(#arrow-h' + d.hopB + ')' : null);
 
+  // quantum-jump trail: a dashed overlay above the similarity links, below the nodes. Each edge
+  // also carries an invisible fat hit-line (for hover/tap) and a count badge at its midpoint.
+  const trailData = (state.trailEdges || []).map(t => Object.assign({}, t));
+  trailData.forEach(t => { t.a = byId.get(t.from); t.b = byId.get(t.to); });
+  positionTrailLinks = function(){
+    if (!trailLayerSel) return;
+    trailLayerSel.each(function(t){
+      if (!t.a || !t.b || t.a.x == null || t.b.x == null) return;
+      const dx = t.b.x - t.a.x, dy = t.b.y - t.a.y;
+      const L = Math.sqrt(dx * dx + dy * dy) || 1;
+      const frac = Math.max(0, (L - (t.b.r + 7)) / L);
+      this.setAttribute('x1', t.a.x); this.setAttribute('y1', t.a.y);
+      this.setAttribute('x2', t.a.x + dx * frac); this.setAttribute('y2', t.a.y + dy * frac);
+    });
+    if (trailHitSel) trailHitSel.each(function(t){
+      if (!t.a || !t.b || t.a.x == null) return;
+      this.setAttribute('x1', t.a.x); this.setAttribute('y1', t.a.y);
+      this.setAttribute('x2', t.b.x); this.setAttribute('y2', t.b.y);
+    });
+    if (trailBadgeSel) trailBadgeSel.attr('transform', t =>
+      (!t.a || !t.b || t.a.x == null) ? null
+        : 'translate(' + (t.a.x + t.b.x) / 2 + ',' + (t.a.y + t.b.y) / 2 + ')');
+  };
+  const trailGroupSel = g.append('g').attr('class', 'trail-layer');
+  trailHitSel = trailGroupSel.selectAll('line.trail-hit').data(trailData).join('line')
+    .attr('class', 'trail-hit')
+    .attr('stroke', 'transparent').attr('stroke-width', 14).style('pointer-events', 'stroke').style('cursor', 'pointer');
+  trailLayerSel = trailGroupSel.selectAll('line.trail-line').data(trailData).join('line')
+    .attr('class', 'trail-line')
+    .attr('stroke', cssVar('--link')).attr('stroke-width', 2).attr('stroke-opacity', 0.9)
+    .attr('stroke-dasharray', '6,3')
+    .attr('marker-end', 'url(#arrow-trail)').style('pointer-events', 'none');
+  trailBadgeSel = trailGroupSel.selectAll('g.trail-badge').data(trailData).join(enter => {
+    const grp = enter.append('g').attr('class', 'trail-badge').style('cursor', 'pointer');
+    grp.append('rect').attr('rx', 4).attr('ry', 4)
+      .attr('fill', cssVar('--paper')).attr('stroke', cssVar('--link')).attr('stroke-width', 1);
+    grp.append('text').attr('class', 'trail-badge-text').attr('text-anchor', 'middle').attr('dy', '0.32em')
+      .attr('fill', cssVar('--link'));
+    return grp;
+  });
+  trailBadgeSel.select('text').text(t => {
+    const ev = t.evidence;
+    return ev ? (ev.coCite ? ev.coCite.count : (ev.sharedRefs ? ev.sharedRefs.count : 0)) : 0;
+  });
+  trailBadgeSel.each(function(){
+    const textEl = this.querySelector('text');
+    const bw = textEl.getBBox().width, w = Math.max(20, bw + 10), h = 16;
+    d3.select(this).select('rect').attr('x', -w / 2).attr('y', -h / 2).attr('width', w).attr('height', h);
+  });
+  const showTrailCard = (t, event) => {
+    hoverCard.innerHTML = trailCardHtml(t.evidence, t.a ? t.a.display_name : '');
+    hoverCard.hidden = false;
+    positionHoverCard(event);
+  };
+  const openTrailSheet = t => {
+    detailBody.classList.remove('status-line');
+    detailBody.innerHTML = trailCardHtml(t.evidence, t.a ? t.a.display_name : '');
+    openSheet();
+  };
+  [trailHitSel, trailBadgeSel].forEach(sel => sel
+    .on('mouseenter', (e, t) => { if (!isNarrow()) showTrailCard(t, e); })
+    .on('mousemove', e => { if (!isNarrow() && !hoverCard.hidden) positionHoverCard(e); })
+    .on('mouseleave', () => { if (!isNarrow()) hoverCard.hidden = true; })
+    .on('click', (e, t) => { if (isNarrow()) { e.stopPropagation(); openTrailSheet(t); } }));
+
+  const trailIndex = trailIndexMap(seedId, state.trail);
   const node = g.append('g').selectAll('g').data(nodes).join('g')
     .attr('cursor', 'pointer')
     .call(d3.drag()
@@ -1054,9 +1440,9 @@ function renderGraph(nodes, edges, seedId){
 
   node.append('circle')
     .attr('r', d => d.r)
-    .attr('fill', d => d.id === seedId ? cssVar('--accent-strong') : colorFor(d))
-    .attr('stroke', d => d.id === seedId ? cssVar('--accent') : 'none')
-    .attr('stroke-width', d => d.id === seedId ? 3 : 0);
+    .attr('fill', d => trailIndex.has(d.id) ? trailFill(trailIndex.get(d.id)) : colorFor(d))
+    .attr('stroke', d => trailIndex.has(d.id) ? ringColor(trailIndex.get(d.id)) : 'none')
+    .attr('stroke-width', d => d.id === seedId ? 3 : trailIndex.has(d.id) ? 2 : 0);
 
   const label = node.append('text')
     .attr('class', 'node-label')
@@ -1127,13 +1513,40 @@ function renderGraph(nodes, edges, seedId){
         }
       }
       positionCiteLinks();
+      positionTrailLinks();
       node.attr('transform', d => 'translate(' + d.x + ',' + d.y + ')');
     });
+
+  // trail nodes hold together as one chain regardless of the Spacing slider -- a fixed-distance
+  // link force alongside the main one, over trail pairs only. Off when there is no trail.
+  const trailPairArray = trailData.filter(t => t.a && t.b).map(t => ({ source: t.from, target: t.to }));
+  sim3.force('trail', trailPairArray.length
+    ? d3.forceLink(trailPairArray).id(d => d.id).distance(70).strength(0.9)
+    : null);
+
   const lgy = nodes.map(n => n.publication_year).filter(Boolean);
   document.getElementById('lgYears').textContent =
     lgy.length ? Math.min(...lgy) + ' \u2192 ' + Math.max(...lgy) : 'older to newer';
   drawYearGrid(nodes);
   applySpacing();
+
+  // quantum-jump arrival: fade the graph in, draw the newest trail edge, ring the new seed once
+  if (isArrival) {
+    g.transition().duration(300).style('opacity', 1).on('end', () => {
+      if (trailLayerSel) {
+        const lines = trailLayerSel.nodes();
+        const last = lines[lines.length - 1];
+        if (last) {
+          const len = last.getTotalLength();
+          d3.select(last).attr('stroke-dasharray', len + ' ' + len).attr('stroke-dashoffset', len)
+            .transition().duration(500).attr('stroke-dashoffset', 0)
+            .on('end', function(){ d3.select(this).attr('stroke-dasharray', '6,3').attr('stroke-dashoffset', null); });
+        }
+      }
+      const arrivedSeed = nodes.find(n => n.id === seedId);
+      if (arrivedSeed) ringBurst(g, arrivedSeed.x, arrivedSeed.y, arrivedSeed.r, 1);
+    });
+  }
 }
 
 // one knob scales both repulsion and link rest-length; d3 needs an alpha kick to re-settle
@@ -1237,7 +1650,7 @@ document.getElementById('titleBtn').addEventListener('click', () => {
 });
 
 // ---- orchestration ----
-async function loadAndBuildGraph(seedId){
+async function loadAndBuildGraph(seedId, opts){
   setStatus('Fetching seed paper…');
   try {
     const seed = await fetchSeed(seedId);
@@ -1251,6 +1664,22 @@ async function loadAndBuildGraph(seedId){
       if (!seen.has(w.id)) { seen.add(w.id); pool.push(w); }
     }
     const { nodes, edges } = computeGraph(seed.id, pool);
+    const baseNodes = nodes.slice();   // before trail waypoints are forced in
+
+    // quantum-jump trail: force every trail member into the node list (the 40-node cap doesn't apply to it),
+    // then wire consecutive trail pairs into edges wherever both ends made it into the final node list.
+    const nodeIdSet = new Set(nodes.map(n => n.id));
+    for (const tw of state.trail) {
+      if (!nodeIdSet.has(tw.id)) { nodes.push(Object.assign({}, tw)); nodeIdSet.add(tw.id); }
+    }
+    const trailChain = [...state.trail, seed];
+    const trailEdges = [];
+    for (let i = 0; i < trailChain.length - 1; i++) {
+      const from = trailChain[i].id, to = trailChain[i + 1].id;
+      if (nodeIdSet.has(from) && nodeIdSet.has(to)) {
+        trailEdges.push({ from, to, evidence: state.trailEvidence.get(from + '|' + to) || null });
+      }
+    }
 
     state.sourceImpact = await fetchSourceImpact(nodes);
     const impactValues = [...new Set(nodes.map(nodeSourceId).filter(Boolean))]
@@ -1270,19 +1699,167 @@ async function loadAndBuildGraph(seedId){
 
     resetFilterInputs();   // a filter set on the previous graph would silently hide nodes here
     state.seed = seed; state.refs = refs; state.citers = citers; state.nodes = nodes; state.edges = edges;
+    state.pool = pool; state.trailEdges = trailEdges;
+    state.baseNodes = baseNodes; state.baseEdges = edges;
+    state.fetchedAt = new Date();
+    if (!(opts && opts.keepHistory)) state.history = [];
     renderGraph(nodes, edges, seed.id);
     applyFilters();
     renderList(document.getElementById('refsView'), refs);
     renderList(document.getElementById('citersView'), citers);
     renderDetail(seed);
     updateFreshness();
+    refreshQuantumUI();
     setStatus('');
     if (!document.getElementById('promptPanel').hidden) refreshPrompt();
     if (!document.getElementById('citePanel').hidden) refreshCitePanel();
   } catch (err) {
+    arrivalPending = false;
     setStatus('');
     setError(netMessage(err));
   }
+}
+
+// ---- quantum jump ----
+// each route's candidate pool is fetched lazily (only on first press per seed+route) and cached in
+// state.jumpPool by "seedId|route", so loadAndBuildGraph never pays for it, repeated jumps from the
+// same seed+route are free, and switching routes doesn't refetch or disable the other route's draws.
+// Before that fetch has happened, the readout can't know a count yet.
+const jumpKey = (seedId, route) => seedId + '|' + route;
+
+// Undo used to re-run the whole 5-request pipeline for a graph we had just been
+// looking at. Snapshot it on the way out and put it back instead.
+const GRAPH_SNAP_KEYS = ['seed','refs','citers','pool','nodes','baseNodes','edges','trailEdges',
+                         'sourceImpact','journalP75','journalP50','fetchedAt'];
+function snapshotGraph(){
+  const snap = {};
+  for (const k of GRAPH_SNAP_KEYS) snap[k] = state[k];
+  return snap;
+}
+function restoreGraph(snap){
+  for (const k of GRAPH_SNAP_KEYS) state[k] = snap[k];
+  renderGraph(state.nodes, state.edges, state.seed.id);
+  applyFilters();
+  renderList(document.getElementById('refsView'), state.refs);
+  renderList(document.getElementById('citersView'), state.citers);
+  renderDetail(state.seed);
+  updateFreshness();
+}
+
+function refreshQuantumUI(){
+  const jumpBtn = document.getElementById('quantumJumpBtn');
+  if (!jumpBtn) return; // block only renders on the seed's own detail view
+  const undoBtn = document.getElementById('quantumUndoBtn');
+  const countEl = document.getElementById('qCount');
+  undoBtn.disabled = !state.trail.length;
+  if (!state.seed) { countEl.textContent = ''; jumpBtn.disabled = true; return; }
+  const seed = state.seed;
+  const route = qFindByVal;
+  const key = jumpKey(seed.id, route);
+  if (!state.jumpPool.has(key)) {
+    countEl.textContent = 'Ready';
+    countEl.classList.remove('exhausted');
+    jumpBtn.disabled = false;   // never disabled just because nothing has been fetched yet
+    return;
+  }
+  const jump = state.jumpPool.get(key);
+  const candidates = jump.works;
+  const scorerPool = [seed, ...state.pool, ...jump.works];
+  const opts = { field: qFieldVal, coCounts: jump.counts, nCiters: jump.nCiters, route };
+  const all = quantumCandidates(seed, scorerPool, candidates, opts);
+  const untried = untriedCandidates(seed, scorerPool, candidates, opts, state.tried);
+  countEl.textContent = untried.length + ' of ' + all.length + ' left';
+  countEl.classList.toggle('exhausted', untried.length === 0);
+  jumpBtn.disabled = untried.length === 0;
+}
+
+async function quantumJump(){
+  if (!state.seed) return;
+  const seed = state.seed;
+  const route = qFindByVal;
+  const key = jumpKey(seed.id, route);
+  const btn = document.getElementById('quantumJumpBtn');
+  if (btn) {
+    btn.classList.add('is-firing');
+    setTimeout(() => btn.classList.remove('is-firing'), 150);
+  }
+  const seedNode = state.nodes.find(n => n.id === seed.id);
+  if (seedNode && seedNode.x != null && zoomG) startRingLoop(zoomG, seedNode.x, seedNode.y, seedNode.r);
+  if (btn) { btn.disabled = true; btn.textContent = 'Jumping…'; btn.classList.add('is-jumping'); }
+
+  let jump;
+  try {
+    if (!state.jumpPool.has(key)) {
+      if (route === 'coupling') {
+        const { counts, works, rareRefs } = await couplingCandidateIds(seed, state.refs, state.citers);
+        state.jumpPool.set(key, { works: dedupeByTitle(seed, works), counts, nCiters: 0, rareRefs });
+      } else {
+        const counts = coCitationCounts(seed, state.refs, state.citers);
+        const works = await fetchWorksByIds(shortlistIds(counts));
+        state.jumpPool.set(key, { works: dedupeByTitle(seed, works), counts, nCiters: state.citers.length });
+      }
+    }
+    jump = state.jumpPool.get(key);
+  } catch (err) {
+    stopRingLoop();
+    if (btn) { btn.disabled = false; btn.textContent = 'Quantum Jump!'; btn.classList.remove('is-jumping'); }
+    setError(netMessage(err));
+    return;
+  }
+
+  const candidates = jump.works;
+  const scorerPool = [seed, ...state.pool, ...jump.works];
+  const opts = { field: qFieldVal, coCounts: jump.counts, nCiters: jump.nCiters, route };
+  const untried = untriedCandidates(seed, scorerPool, candidates, opts, state.tried);
+  if (!untried.length) {
+    stopRingLoop();
+    if (btn) { btn.disabled = false; btn.textContent = 'Quantum Jump!'; btn.classList.remove('is-jumping'); }
+    const all = quantumCandidates(seed, scorerPool, candidates, opts);
+    setError(all.length
+      ? 'Quantum Jump! has already drawn every candidate for this paper and these options. Reset draws to start over.'
+      : 'No quantum jump candidates match these options.');
+    return;
+  }
+  const chosen = untried[Math.floor(Math.random() * untried.length)];
+  if (!state.tried.has(key)) state.tried.set(key, new Set());
+  state.tried.get(key).add(chosen.id);
+
+  // snapshot the evidence for the trail edge NOW: state.citers/pool belong to this (about-to-be-
+  // departed) seed only until loadAndBuildGraph overwrites them for the new one. Which evidence is
+  // relevant depends on the route: cocite jumps show co-citation + any shared references; coupling
+  // jumps show only the rare references that actually justified the link (trailCardHtml already
+  // skips a section whose count is 0, so leaving coCite unset for a coupling jump hides it).
+  let evidence;
+  if (route === 'coupling') {
+    const sharedRare = (jump.rareRefs || []).filter(r => (chosen.referenced_works || []).includes(r.id));
+    evidence = { route, sharedRefs: { count: sharedRare.length, titles: sharedRare.slice(0, 6).map(r => r.display_name).filter(Boolean) } };
+  } else {
+    const coCiters = state.citers.filter(c => (c.referenced_works || []).includes(chosen.id));
+    const aRefs = new Set(seed.referenced_works || []);
+    const bRefs = new Set(chosen.referenced_works || []);
+    const sharedIds = [...aRefs].filter(id => bRefs.has(id));
+    const titleOf = new Map([...state.pool, ...jump.works].map(w => [w.id, w.display_name]));
+    evidence = { route,
+      coCite: { count: coCiters.length, titles: coCiters.slice(0, 6).map(w => w.display_name).filter(Boolean) },
+      sharedRefs: { count: sharedIds.length, titles: sharedIds.map(id => titleOf.get(id)).filter(Boolean).slice(0, 6) }
+    };
+  }
+  state.trailEvidence.set(seed.id + '|' + chosen.id, evidence);
+
+  state.history = state.history || [];
+  state.history.push(snapshotGraph());
+  if (state.history.length > 20) state.history.shift();   // bound the memory
+  state.trail.push(seed);
+  arrivalPending = true;
+  loadAndBuildGraph(chosen.id, { keepHistory: true });
+}
+
+function quantumUndo(){
+  if (!state.trail.length) return;
+  state.trail.pop();
+  const snap = (state.history || []).pop();
+  if (snap && snap.seed) restoreGraph(snap);
+  else loadAndBuildGraph(state.seed.id);   // no snapshot (e.g. reloaded page): fall back
 }
 
 const toolsEl = document.getElementById('graphTools');
@@ -1340,14 +1917,22 @@ function applyPalette(name){
   const years = state.nodes.map(n => n.publication_year).filter(Boolean);
   const lo = years.length ? Math.min(...years) : 0, hi = years.length ? Math.max(...years) : 0;
   const ramp = d3.interpolateLab(cssVar('--ramp-lo'), cssVar('--ramp-hi'));
+  const trailIndex = trailIndexMap(seedId, state.trail);
   nodeSel.select('circle')
-    .attr('fill', d => d.id === seedId ? cssVar('--accent-strong')
+    .attr('fill', d => trailIndex.has(d.id) ? trailFill(trailIndex.get(d.id))
       : ramp(!d.publication_year || hi === lo ? 0.5 : (d.publication_year - lo) / (hi - lo)))
-    .attr('stroke', d => d.id === seedId ? cssVar('--accent') : 'none');
+    .attr('stroke', d => trailIndex.has(d.id) ? ringColor(trailIndex.get(d.id)) : 'none');
   linkSel.attr('stroke', d => hopColor(d.hopB));
   if (citeLayerSel) citeLayerSel.attr('stroke', cssVar('--muted'));
+  if (trailLayerSel) trailLayerSel.attr('stroke', cssVar('--link'));
+  if (trailBadgeSel) {
+    trailBadgeSel.select('rect').attr('fill', cssVar('--paper')).attr('stroke', cssVar('--link'));
+    trailBadgeSel.select('text').attr('fill', cssVar('--link'));
+  }
   const cm = document.querySelector('#arrow-cite polygon');
   if (cm) cm.setAttribute('fill', cssVar('--muted'));
+  const tm = document.querySelector('#arrow-trail polygon');
+  if (tm) tm.setAttribute('fill', cssVar('--link'));
   for (const b of [1, 2, 3, 4]) {
     const m = document.querySelector('#arrow-h' + b + ' polygon');
     if (m) m.setAttribute('fill', hopColor(b));
@@ -1463,7 +2048,7 @@ section('PRIOR WORKS (cited by the center paper)', prior) +
 section('LATER WORKS (citing the center paper)', deriv) +
 section('RELATED WORKS (linked through the similarity graph)', other),
 '---',
-'Generated by GraphPapers v1.3.',
+'Generated by GraphPapers v1.5.',
 picked.length + ' papers ' + (depth > 9 ? 'from the whole graph around the center' : 'within ' + depth + ' hop(s) of the center') + '. Source: OpenAlex, fetched ' +
   new Date().toISOString().slice(0, 16).replace('T', ' ') + '.',
 '',
@@ -1659,6 +2244,129 @@ function selfTest(){
   assert('edgeDirection: neither cites => null', edgeDirection('A', 'B', noRefs) === null);
   const bothRefs = new Map([['A', new Set(['B'])], ['B', new Set(['A'])]]);
   assert('edgeDirection: both cite => null', edgeDirection('A', 'B', bothRefs) === null);
+
+  // ---- quantum jump ----
+  {
+    // coCitationCounts: papers co-cited with the seed by its citers, excluding the seed itself,
+    // the seed's own references, and the citers themselves; counted by how often they co-occur.
+    const seedR = { id: 'S', referenced_works: ['R1', 'R2'] };
+    const citersR = [
+      { id: 'CT1', referenced_works: ['X', 'Y', 'R1'] },  // R1 is the seed's own ref -> excluded
+      { id: 'CT2', referenced_works: ['X', 'CT1'] }        // CT1 is itself a citer -> excluded
+    ];
+    const countsNone = coCitationCounts(seedR, [], citersR);
+    assert('coCitationCounts excludes the seed\'s own references', !countsNone.has('R1'));
+    assert('coCitationCounts excludes citer ids', !countsNone.has('CT1'));
+    assert('coCitationCounts counts co-occurrences', countsNone.get('X') === 2 && countsNone.get('Y') === 1);
+
+    // fallback to refs' own referenced_works when the seed has no citers yet
+    const refsR = [
+      { id: 'R1', referenced_works: ['P', 'R1dummy'] },
+      { id: 'R2', referenced_works: ['P', 'R1'] }   // R1 (the seed's own ref) still excluded here too
+    ];
+    const countsFallback = coCitationCounts(seedR, refsR, []);
+    assert('coCitationCounts falls back to refs when there are no citers', countsFallback.get('P') === 2);
+    assert('coCitationCounts fallback still excludes the seed\'s own references', !countsFallback.has('R1'));
+
+    // shortlistIds: keep only the 2+ band, top 45 ranked + up to 45 random from the rest, capped at 90
+    const smallCounts = new Map();
+    for (let i = 0; i < 60; i++) smallCounts.set('C' + i, 60 - i);   // C0..C58 => counts 60..2, C59 => count 1
+    const smallList = shortlistIds(smallCounts);
+    assert('shortlistIds drops count-1 ids (below the 2+ band)', !smallList.includes('C59'));
+    assert('shortlistIds keeps the whole band when it fits under 90', smallList.length === 59);
+    assert('shortlistIds ranked half is exactly the top 45 by count, in order',
+      smallList.slice(0, 45).every((id, i) => id === 'C' + i));
+
+    const bigCounts = new Map();
+    for (let i = 0; i < 200; i++) bigCounts.set('D' + i, 2);   // all tied, all in-band
+    const bigList = shortlistIds(bigCounts);
+    assert('shortlistIds caps at 90 (45 ranked + 45 random)', bigList.length === 90);
+    assert('shortlistIds has no duplicates', new Set(bigList).size === bigList.length);
+    assert('shortlistIds only returns ids from the band', bigList.every(id => bigCounts.has(id)));
+
+    // dedupeByTitle: OpenAlex holds separate records for preprint/published versions of a paper
+    const seedD = { id: 'S', display_name: 'A Study, of Things!' };
+    const dupWorks = [
+      { id: 'D1', display_name: 'a study of things' },        // matches the seed -> dropped
+      { id: 'D2', display_name: 'Another Paper' },
+      { id: 'D3', display_name: 'ANOTHER PAPER' }              // matches D2 -> dropped
+    ];
+    const deduped = dedupeByTitle(seedD, dupWorks);
+    assert('dedupeByTitle drops a record matching the seed title', !deduped.some(w => w.id === 'D1'));
+    assert('dedupeByTitle drops a later duplicate of an already-kept title', deduped.length === 1 && deduped[0].id === 'D2');
+
+    // quantumCandidates: scores `candidates` against the seed and applies the field filter
+    const S = { id: 'S', referenced_works: ['C1', 'C2'], primary_topic: { field: { display_name: 'Physics' } } };
+    const J1 = { id: 'J1q', referenced_works: ['C1', 'C2'], primary_topic: { field: { display_name: 'Physics' } } };
+    const J2 = { id: 'J2q', referenced_works: ['C1', 'C2'], primary_topic: { field: { display_name: 'Chemistry' } } };
+    const scorerPool = [S, J1, J2];
+    const candSet = [J1, J2];
+
+    const resCross = quantumCandidates(S, scorerPool, candSet, { field: 'cross' });
+    assert('quantumCandidates cross keeps only differing, non-null fields', resCross.length === 1 && resCross[0].id === 'J2q');
+
+    const resSame = quantumCandidates(S, scorerPool, candSet, { field: 'same' });
+    assert('quantumCandidates same keeps only matching fields', resSame.length === 1 && resSame[0].id === 'J1q');
+
+    assert('quantumCandidates never contains the seed', !quantumCandidates(S, scorerPool, scorerPool, {}).some(w => w.id === 'S'));
+
+    // route='coupling': specificity term normalises by the candidate's own fame only (no nCiters
+    // factor, since a shared-rare-reference count isn't relative to how many citers were scanned)
+    const Sc = { id: 'Sc', referenced_works: ['ZZ'] };
+    const Fc = { id: 'Fc', referenced_works: ['QQ'], cited_by_count: 10000 };  // disjoint refs -> bibCoupling 0
+    const Pc = { id: 'Pc', referenced_works: ['QQ'], cited_by_count: 10 };     // disjoint refs -> bibCoupling 0
+    const couplingCounts = new Map([['Fc', 4], ['Pc', 4]]);   // same raw shared-ref count
+    const resCoupling = quantumCandidates(Sc, [Sc, Fc, Pc], [Fc, Pc], { coCounts: couplingCounts, route: 'coupling' });
+    assert('quantumCandidates coupling route ranks the less-cited candidate higher at equal shared count',
+      resCoupling.length === 2 && resCoupling[0].id === 'Pc' && resCoupling[1].id === 'Fc');
+
+    // normalised co-citation: a paper with a high RAW co-citation count but also a huge cited_by_count
+    // (i.e. it's famous, and co-cited with everything) must rank BELOW one with a lower raw count but
+    // a small cited_by_count (i.e. specifically related to this seed) -- this is the fame-confound fix.
+    const Sx = { id: 'Sx', referenced_works: ['ZZ'] };
+    const Fx = { id: 'Fx', referenced_works: ['QQ'], cited_by_count: 100000 };   // disjoint refs -> bibCoupling 0
+    const Px = { id: 'Px', referenced_works: ['QQ'], cited_by_count: 10 };       // disjoint refs -> bibCoupling 0
+    const coCountsX = new Map([['Fx', 30], ['Px', 5]]);   // Fx co-cited 6x more often, raw
+    const resX = quantumCandidates(Sx, [Sx, Fx, Px], [Fx, Px], { coCounts: coCountsX, nCiters: 50 });
+    assert('quantumCandidates normalised co-citation ranks specific over merely-famous',
+      resX.length === 2 && resX[0].id === 'Px' && resX[1].id === 'Fx');
+
+    const bigSeed = { id: 'BS', referenced_works: ['Z'] };
+    const bigPool = [bigSeed];
+    for (let i = 0; i < 20; i++) bigPool.push({ id: 'BP' + i, referenced_works: ['Z', 'Z2'] });
+    const bigCands = quantumCandidates(bigSeed, bigPool, bigPool, {});
+    assert('quantumCandidates caps at 12', bigCands.length <= 12);
+    assert('quantumCandidates never contains the seed (big pool)', !bigCands.some(w => w.id === 'BS'));
+    const bigScorer = simScorer(bigPool);
+    const bigScores = bigCands.map(w => bigScorer(bigSeed.id, w.id));
+    assert('quantumCandidates sorted descending by score',
+      bigScores.every((s, i) => i === 0 || bigScores[i - 1] >= s));
+
+    // ---- draw-without-replacement (state.tried), keyed by seed id AND route ----
+    const triedMap = new Map();
+    triedMap.set('TS|cocite', new Set(['A']));
+    const seedT = { id: 'TS', referenced_works: ['Z'] };
+    const poolT = [seedT, { id: 'A', referenced_works: ['Z'] }, { id: 'B', referenced_works: ['Z'] }];
+    const untriedForSeed = untriedCandidates(seedT, poolT, poolT, {}, triedMap);
+    assert('untriedCandidates excludes an id tried for this seed+route', !untriedForSeed.some(w => w.id === 'A'));
+
+    const untriedOtherRoute = untriedCandidates(seedT, poolT, poolT, { route: 'coupling' }, triedMap);
+    assert('untriedCandidates does not exclude that id for a different route on the same seed', untriedOtherRoute.some(w => w.id === 'A'));
+
+    const seedT2 = { id: 'TS2', referenced_works: ['Z'] };
+    const poolT2 = [seedT2, { id: 'A', referenced_works: ['Z'] }, { id: 'B', referenced_works: ['Z'] }];
+    const untriedForOtherSeed = untriedCandidates(seedT2, poolT2, poolT2, {}, triedMap);
+    assert('untriedCandidates does not exclude that id for a different seed', untriedForOtherSeed.some(w => w.id === 'A'));
+
+    const seedT3 = { id: 'TS3', referenced_works: ['Z'] };
+    const poolT3 = [seedT3, { id: 'A', referenced_works: ['Z'] }, { id: 'B', referenced_works: ['Z'] }, { id: 'C', referenced_works: ['Z'] }];
+    const tried3 = new Map();
+    const before = untriedCandidates(seedT3, poolT3, poolT3, {}, tried3).length;
+    const picked = untriedCandidates(seedT3, poolT3, poolT3, {}, tried3)[0];
+    tried3.set(seedT3.id + '|cocite', new Set([picked.id]));
+    const after = untriedCandidates(seedT3, poolT3, poolT3, {}, tried3).length;
+    assert('untriedCandidates count decreases by exactly one per draw', after === before - 1);
+  }
 
   // ---- citation formatting ----
   const fixtureWork = {
