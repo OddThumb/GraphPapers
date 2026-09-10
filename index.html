@@ -59,11 +59,13 @@ header{
   border-bottom:1px solid var(--rule); flex:0 0 auto;
 }
 .search-wrap{position:relative; flex:1; max-width:26.25rem}
+/* the search box is where everything starts, so it carries the accent at rest, not only on
+   focus -- a first-time visitor should see where to begin without hunting for it */
 #searchInput{
-  width:100%; padding:8px 12px; border:1px solid var(--rule); border-radius:4px;
+  width:100%; padding:8px 12px; border:1px solid var(--accent); border-radius:4px;
   background:var(--paper); color:var(--ink); font:inherit;
 }
-#searchInput:focus{outline:none; border-color:var(--soft)}
+#searchInput:focus{outline:none; border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-tint)}
 #dropdown{
   position:absolute; top:calc(100% + 4px); left:0; right:0; background:var(--paper);
   border:1px solid var(--rule); border-radius:6px; max-height:320px; overflow:auto; z-index:10;
@@ -74,10 +76,10 @@ header{
 .res-title{font-size:0.75rem}
 .res-meta{font-family:'Geist Mono',monospace; font-size:0.5625rem; color:var(--soft); letter-spacing:0.04em; margin-top:2px}
 #searchInputB{
-  width:100%; padding:8px 12px; border:1px solid var(--rule); border-radius:4px;
+  width:100%; padding:8px 12px; border:1px solid var(--accent); border-radius:4px;
   background:var(--paper); color:var(--ink); font:inherit;
 }
-#searchInputB:focus{outline:none; border-color:var(--soft)}
+#searchInputB:focus{outline:none; border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-tint)}
 #dropdownB{
   position:absolute; top:calc(100% + 4px); left:0; right:0; background:var(--paper);
   border:1px solid var(--rule); border-radius:6px; max-height:320px; overflow:auto; z-index:10;
