@@ -9,7 +9,7 @@
 
 # GraphPapers
 
-**v0.11** · [Open it in a browser](https://oddthumb.github.io/GraphPapers/)
+**v0.12** · [Open it in a browser](https://oddthumb.github.io/GraphPapers/)
 
 A free, single-file paper-graph tool. Enter a paper, get a graph of the forty works most related to it — then go where following citations cannot take you.
 
@@ -21,6 +21,10 @@ Tools of this kind show you the neighbourhood of one paper. These two are why th
 No install. No account. No API key. No backend. One HTML file, on a desktop or a phone.
 
 ### Your first thirty seconds
+
+The fastest way in is the **?** button next to the legend, at the top right of the graph. Pick one of four short tracks and the app dims everything except the control you need next, tells you what it does, and waits while you press the real thing — the graph, Quantum Jump, Bridge, and getting results out each get their own. A written manual sits behind the same button if you would rather read.
+
+Or find your own way:
 
 1. Open the link and type a paper title — or press **Surprise me** and take whatever comes.
 2. Click any node to read its abstract, or to rebuild the graph around it.
@@ -129,9 +133,13 @@ The left-hand control panel adapts: Layout, Spacing, Advanced and Reshuffle stay
 
 **Export citations** gains a **Route only** scope — the intermediate papers are the evidence for the connection — alongside everything on screen. **Story prompt** switches too: instead of a chronological history it asks what each research line does not know about the other, why each intermediate paper ties to both, what question an actual link would pose, and — explicitly — whether the connection is spurious, so the model is invited to say no.
 
+### Every reference
+
+The **Prior works** tab lists the whole bibliography, not a sample of it. The graph is built from the first hundred references, since that is enough to score similarity; opening the tab fetches the rest and the tab label carries the real total, so you can see the list is complete. Where OpenAlex has no record for a cited id — deleted or merged entries happen — the footer says how many could not be retrieved, rather than leaving a silent gap.
+
 ### Citation export
 
-**Export citations** writes the papers out as BibTeX, RIS, APA, MLA, or Chicago — one paper, everything the filters currently show, or all 40. Copy it, or download a `.bib` / `.ris` file and drag it straight into Zotero, EndNote, or Overleaf.
+**Export citations** writes the papers out as BibTeX, RIS, APA, MLA, or Chicago — one paper, everything the filters currently show, all 40, or every reference the paper cites — the last is the one to use when auditing a manuscript's bibliography. Copy it, or download a `.bib` / `.ris` file and drag it straight into Zotero, EndNote, or Overleaf.
 
 Author names come from OpenAlex as single strings, so the family name is taken as everything after the last space. That is right for most Western names and wrong for some; check the names before submitting.
 

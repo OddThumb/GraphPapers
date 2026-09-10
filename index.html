@@ -28,8 +28,9 @@
 :root[data-palette="ink"]{
   --paper:#ffffff; --paper-2:#f2f2f2; --ink:#1a1a1a; --muted:#555555;
   --soft:#888888; --rule:rgba(0,0,0,0.12); --rule-solid:#cccccc;
-  --accent:#1e4fa3; --accent-tint:rgba(30,79,163,0.08); --link:#0f6f6b;
-  --accent-strong:rgba(30,79,163,0.50);
+  /* hsl(218,82%,38%) -- same hue and lightness as the old #1e4fa3, saturation 69% -> 82% */
+  --accent:#114cb0; --accent-tint:rgba(17,76,176,0.08); --link:#0f6f6b;
+  --accent-strong:rgba(17,76,176,0.50);
   --ramp-lo:#cccccc; --ramp-hi:#333333;
 }
 :root[data-palette="noir"]{
@@ -40,20 +41,23 @@
   --ramp-lo:#4a4a4a; --ramp-hi:#e8e8e8;
 }
 *{box-sizing:border-box}
-html{-webkit-text-size-adjust:100%; text-size-adjust:100%}
+:root{--ui-scale:1.5}
+html{font-size:calc(16px * var(--ui-scale)); -webkit-text-size-adjust:100%; text-size-adjust:100%}
 html,body{margin:0;height:100%}
 body{
   display:flex; flex-direction:column; background:var(--paper); color:var(--ink);
-  font-family:'Geist','Noto Sans KR','Apple SD Gothic Neo',sans-serif; font-size:13px; overflow:hidden;
+  font-family:'Geist','Noto Sans KR','Apple SD Gothic Neo',sans-serif; font-size:0.8125rem; overflow:hidden;
 }
 h1{font-family:'Instrument Serif',serif; font-size:1.75rem; font-weight:400; margin:0}
-#version{font-family:'Geist Mono',monospace; font-size:9px; color:var(--soft); letter-spacing:0.08em; margin-left:-16px; align-self:flex-start; padding-top:4px}
+#version{font-family:'Geist Mono',monospace; font-size:0.5625rem; color:var(--soft); letter-spacing:0.08em; margin-left:-16px; align-self:flex-start; padding-top:4px}
 header{
   position:relative; z-index:20;
-  display:flex; align-items:center; gap:24px; padding:12px 24px;
+  /* wraps only when the row genuinely doesn't fit -- at --ui-scale 1.5 the language and
+     palette controls overflowed a 1024px window, and a fixed single row cannot hold them */
+  display:flex; align-items:center; flex-wrap:wrap; gap:8px 24px; padding:12px 24px;
   border-bottom:1px solid var(--rule); flex:0 0 auto;
 }
-.search-wrap{position:relative; flex:1; max-width:420px}
+.search-wrap{position:relative; flex:1; max-width:26.25rem}
 #searchInput{
   width:100%; padding:8px 12px; border:1px solid var(--rule); border-radius:4px;
   background:var(--paper); color:var(--ink); font:inherit;
@@ -66,8 +70,8 @@ header{
 #dropdown div{padding:8px 12px; border-bottom:1px solid var(--rule); cursor:pointer}
 #dropdown div:last-child{border-bottom:none}
 #dropdown div:hover{background:var(--paper-2)}
-.res-title{font-size:12px}
-.res-meta{font-family:'Geist Mono',monospace; font-size:9px; color:var(--soft); letter-spacing:0.04em; margin-top:2px}
+.res-title{font-size:0.75rem}
+.res-meta{font-family:'Geist Mono',monospace; font-size:0.5625rem; color:var(--soft); letter-spacing:0.04em; margin-top:2px}
 #searchInputB{
   width:100%; padding:8px 12px; border:1px solid var(--rule); border-radius:4px;
   background:var(--paper); color:var(--ink); font:inherit;
@@ -80,10 +84,10 @@ header{
 #dropdownB div{padding:8px 12px; border-bottom:1px solid var(--rule); cursor:pointer}
 #dropdownB div:last-child{border-bottom:none}
 #dropdownB div:hover{background:var(--paper-2)}
-#bridgeToggleBtn{white-space:nowrap; font-size:12px; padding:6px 10px}
+#bridgeToggleBtn{white-space:nowrap; font-size:0.75rem; padding:6px 10px}
 #bridgeToggleBtn.active{border-color:var(--accent); color:var(--accent)}
-#surpriseBtn{white-space:nowrap; font-size:12px; padding:6px 10px}
-#statusLine{font-family:'Geist Mono',monospace; font-size:10px; color:var(--soft);
+#surpriseBtn{white-space:nowrap; font-size:0.75rem; padding:6px 10px}
+#statusLine{font-family:'Geist Mono',monospace; font-size:0.625rem; color:var(--soft);
   letter-spacing:0.04em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
 #langCtl{margin-left:auto; display:flex; align-items:center; gap:8px}
 #repoLink{
@@ -91,13 +95,13 @@ header{
 }
 #repoLink:hover{color:var(--ink)}
 #paletteCtl{display:flex; align-items:center; gap:8px}
-#langCtl span, #paletteCtl span{font-family:'Geist Mono',monospace; font-size:9px; text-transform:uppercase;
+#langCtl span, #paletteCtl span{font-family:'Geist Mono',monospace; font-size:0.5625rem; text-transform:uppercase;
   letter-spacing:0.18em; color:var(--soft)}
-#uiLang, #palette{font:inherit; font-size:11px; padding:4px 8px; border:1px solid var(--rule);
+#uiLang, #palette{font:inherit; font-size:0.6875rem; padding:4px 8px; border:1px solid var(--rule);
   border-radius:4px; background:var(--paper); color:var(--ink); cursor:pointer}
 #netBar{
   flex:0 0 auto; padding:8px 24px; background:var(--accent-tint);
-  border-bottom:1px solid var(--accent); color:var(--ink); font-size:12px;
+  border-bottom:1px solid var(--accent); color:var(--ink); font-size:0.75rem;
 }
 #netBar[hidden]{display:none}
 #bridgeBar{
@@ -106,12 +110,12 @@ header{
 }
 #bridgeBar[hidden]{display:none}
 #bridgeModeCtl{display:flex; align-items:center; gap:8px}
-#bridgeModeCtl span{font-family:'Geist Mono',monospace; font-size:9px; text-transform:uppercase;
+#bridgeModeCtl span{font-family:'Geist Mono',monospace; font-size:0.5625rem; text-transform:uppercase;
   letter-spacing:0.18em; color:var(--soft)}
-#bridgeMode{font:inherit; font-size:11px; padding:4px 8px; border:1px solid var(--rule);
+#bridgeMode{font:inherit; font-size:0.6875rem; padding:4px 8px; border:1px solid var(--rule);
   border-radius:4px; background:var(--paper); color:var(--ink); cursor:pointer}
 #bridgeMode:disabled{color:var(--soft); cursor:default}
-#findBridgeBtn{font-size:12px; padding:6px 10px}
+#findBridgeBtn{font-size:0.75rem; padding:6px 10px}
 #findBridgeBtn:disabled{color:var(--soft); cursor:default}
 #bridgeReadout{white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
 main{flex:1; display:flex; overflow:hidden; min-height:0}
@@ -122,38 +126,38 @@ main{flex:1; display:flex; overflow:hidden; min-height:0}
   cursor:pointer; border-bottom:2px solid transparent;
 }
 .tab.active{color:var(--ink); border-bottom-color:var(--accent)}
-#spacingCtl span{font-family:'Geist Mono',monospace; font-size:9px; text-transform:uppercase; letter-spacing:0.18em; color:var(--soft)}
-#spacing{width:96px; accent-color:var(--muted); cursor:pointer}
-#citeLinkCtl span{font-family:'Geist Mono',monospace; font-size:9px; text-transform:uppercase;
+#spacingCtl span{font-family:'Geist Mono',monospace; font-size:0.5625rem; text-transform:uppercase; letter-spacing:0.18em; color:var(--soft)}
+#spacing{width:6rem; accent-color:var(--muted); cursor:pointer}
+#citeLinkCtl span{font-family:'Geist Mono',monospace; font-size:0.5625rem; text-transform:uppercase;
   letter-spacing:0.18em; color:var(--soft)}
 #showCiteLinks{accent-color:var(--muted); cursor:pointer}
 #graphCtls{margin-left:auto; display:flex; align-items:center; gap:16px; padding-right:4px}
 #graphTools{
-  position:absolute; left:12px; top:12px; z-index:5; width:190px;
-  max-height:calc(100% - 24px); overflow-y:auto;
+  position:absolute; left:12px; top:12px; z-index:5; width:11.875rem;
+  max-height:calc(100% - 1.5rem); overflow-y:auto;
   background:var(--paper);
   background:color-mix(in srgb, var(--paper) 65%, transparent);
   backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px);
   border:1px solid var(--rule); border-radius:6px;
-  padding:12px; display:flex; flex-direction:column; gap:8px;
+  padding:0.75rem; display:flex; flex-direction:column; gap:8px;
 }
 #graphTools:hover{background:color-mix(in srgb, var(--paper) 96%, transparent)}
 #graphTools[hidden]{display:none}
-.gt-head{margin:0; font-family:'Geist Mono',monospace; font-size:9px; text-transform:uppercase;
+.gt-head{margin:0; font-family:'Geist Mono',monospace; font-size:0.5625rem; text-transform:uppercase;
   letter-spacing:0.18em; color:var(--soft)}
 .gt-head + *{margin-top:-2px}
 .gt-head:not(:first-child){margin-top:8px; padding-top:12px; border-top:1px solid var(--rule)}
-#graphTools .btn{width:100%; font-size:12.5px; padding:7px 8px}
+#graphTools .btn{width:100%; font-size:0.78125rem; padding:7px 8px}
 #layoutCtl{display:grid; grid-template-columns:1fr 1fr; width:100%}
 #layoutCtl .layoutBtn{-webkit-appearance:none; appearance:none; min-width:0;
-  font:inherit; font-size:12.5px; padding:7px 4px; cursor:pointer;
+  font:inherit; font-size:0.78125rem; padding:7px 4px; cursor:pointer;
   background:transparent; color:var(--muted); border:1px solid var(--rule)}
 #layoutCtl .layoutBtn:first-child{border-radius:4px 0 0 4px}
 #layoutCtl .layoutBtn:last-child{border-radius:0 4px 4px 0; border-left:none}
 #layoutCtl .layoutBtn.active{background:var(--paper-2); color:var(--ink)}
 #spacingCtl{display:flex; flex-direction:column; gap:4px}
 #spacingCtl span, .gt-field > span, #citeLinkCtl span, #oaCtl span{
-  font-family:'Geist Mono',monospace; font-size:9px; text-transform:uppercase;
+  font-family:'Geist Mono',monospace; font-size:0.5625rem; text-transform:uppercase;
   letter-spacing:0.14em; color:var(--soft)}
 #spacing{width:100%; accent-color:var(--muted); cursor:pointer}
 #citeLinkCtl, #oaCtl{display:flex; align-items:center; gap:6px; cursor:pointer}
@@ -173,27 +177,27 @@ main{flex:1; display:flex; overflow:hidden; min-height:0}
 .gt-row{display:flex; justify-content:space-between; align-items:baseline; gap:6px}
 #graphTools .gt-val{font-family:'Geist Mono',monospace; text-transform:none; letter-spacing:normal; color:var(--soft)}
 #graphTools input[type=text], #graphTools input[type=number], #graphTools select{
-  width:100%; min-width:0; font:inherit; font-size:12.5px; padding:5px 6px;
+  width:100%; min-width:0; font:inherit; font-size:0.78125rem; padding:5px 6px;
   border:1px solid var(--rule); border-radius:4px; background:var(--paper); color:var(--ink);
 }
 #graphTools input:focus, #graphTools select:focus{outline:none; border-color:var(--soft)}
 .gt-foot{display:flex; align-items:center; justify-content:space-between; gap:8px; margin-top:4px}
 .gt-foot .btn{width:auto}
-#fCount{white-space:nowrap; font-size:9px}
+#fCount{white-space:nowrap; font-size:0.5625rem}
 #toolsBtn{display:none}
 #sheetClose{display:none}
 @media (max-width: 760px){
   header{flex-wrap:wrap; gap:8px 12px; padding:8px 12px}
   h1{font-size:1.35rem}
   .search-wrap{order:3; flex:1 1 100%; max-width:none}
-  #surpriseBtn{white-space:nowrap; font-size:12px; padding:6px 10px}
+  #surpriseBtn{white-space:nowrap; font-size:0.75rem; padding:6px 10px}
 #statusLine{order:4; flex:1 1 100%}
   #langCtl span, #paletteCtl span{display:none}
 
   /* a 68/32 split leaves neither half usable on a phone -- stack them instead */
   main{flex-direction:column}
   #leftPanel{flex:1 1 auto; min-height:58vh; border-right:none; border-bottom:1px solid var(--rule)}
-  #detailPanel{flex:0 0 auto; max-height:42vh; width:100%; padding:12px}
+  #detailPanel{flex:0 0 auto; max-height:42vh; width:100%; padding:0.75rem}
 
   #tabs{gap:12px; padding:0 12px; flex-wrap:wrap}
   .tab{white-space:nowrap; padding:10px 2px}
@@ -204,60 +208,131 @@ main{flex:1; display:flex; overflow:hidden; min-height:0}
   #toolsBtn{
     display:block; position:absolute; left:12px; top:12px; z-index:5;
     width:32px; height:32px; border:1px solid var(--rule-solid); border-radius:6px;
-    background:var(--paper); color:var(--muted); font-size:16px; line-height:1;
+    background:var(--paper); color:var(--muted); font-size:1rem; line-height:1;
     cursor:pointer; padding:0;
   }
-  #graphTools{display:none; left:12px; top:52px; width:calc(100% - 24px); max-width:280px}
+  #graphTools{display:none; left:12px; top:52px; width:calc(100% - 24px); max-width:17.5rem}
   #graphTools.open{display:flex}
   #toolsBtn[hidden]{display:none}
-  #legendBtn{width:32px; height:32px; font-size:17px}
+  #legendBtn{width:32px; height:32px; font-size:1.0625rem}
   #legend{top:52px; width:calc(100% - 24px)}
+  #manualBtn{width:32px; height:32px; font-size:0.8125rem; right:52px}
+  #manualPanel{inset:8px}
 
   /* finger-sized targets */
   #searchInput, #graphTools input[type=text], #graphTools input[type=number],
   #graphTools select, #uiLang, #palette, #promptPanel select, #citePanel select,
-  #promptText, #citeText{font-size:16px}
-  #graphTools .btn, #layoutCtl .layoutBtn{font-size:13px; padding:8px}
+  #promptText, #citeText{font-size:1rem}
+  #graphTools .btn, #layoutCtl .layoutBtn{font-size:0.8125rem; padding:8px}
   #graphTools input[type=text], #graphTools input[type=number], #graphTools select{padding:8px}
   #spacing, #forceAdvanced input[type=range]{height:24px}
   #showCiteLinks, #fOA{width:18px; height:18px}
-  .lg-key{width:64px}
+  .lg-key{width:4rem}
 
 
 }
 #legendBtn{
   position:absolute; right:12px; top:12px; z-index:5; width:24px; height:24px;
   border:1px solid var(--rule-solid); border-radius:50%; background:var(--paper);
-  color:var(--muted); font-family:'Instrument Serif',serif; font-size:14px; font-style:italic;
+  color:var(--muted); font-family:'Instrument Serif',serif; font-size:0.875rem; font-style:italic;
   line-height:1; cursor:pointer; padding:0;
 }
 #legendBtn:hover{background:var(--paper-2); color:var(--ink)}
+#manualBtn{
+  position:absolute; right:44px; top:12px; z-index:5; width:24px; height:24px;
+  border:1px solid var(--rule-solid); border-radius:50%; background:var(--paper);
+  color:var(--muted); font-family:'Geist Mono',monospace; font-size:0.6875rem; font-weight:600;
+  line-height:1; cursor:pointer; padding:0;
+}
+#manualBtn:hover{background:var(--paper-2); color:var(--ink)}
+#manualPanel{
+  position:absolute; inset:12px; z-index:7; background:var(--paper);
+  border:1px solid var(--rule-solid); border-radius:6px;
+  display:flex; flex-direction:column; overflow:hidden;
+}
+#manualPanel[hidden]{display:none}
+#manualHead{display:flex; align-items:center; gap:16px; padding:8px 16px; border-bottom:1px solid var(--rule)}
+#manualHead .grow{flex:1}
+#manualFrame{flex:1; width:100%; border:none; background:var(--paper)}
 #legend{
-  position:absolute; right:12px; top:44px; z-index:6; width:340px; max-width:calc(100% - 24px);
-  background:var(--paper); border:1px solid var(--rule-solid); border-radius:6px; padding:16px;
+  position:absolute; right:12px; top:44px; z-index:6; width:21.25rem; max-width:calc(100% - 24px);
+  background:var(--paper); border:1px solid var(--rule-solid); border-radius:6px; padding:1rem;
   display:flex; flex-direction:column; gap:12px;
 }
 .lg-row{display:flex; align-items:flex-start; gap:12px}
-.lg-key{width:76px; flex:0 0 auto; font-family:'Geist Mono',monospace; font-size:8px;
+.lg-key{width:4.75rem; flex:0 0 auto; font-family:'Geist Mono',monospace; font-size:0.5rem;
   letter-spacing:0.14em; text-transform:uppercase; color:var(--soft); padding-top:6px}
 .lg-row svg{flex:0 0 auto}
-.lg-val{font-size:11px; line-height:1.5; color:var(--muted); padding-top:4px}
+.lg-val{font-size:0.6875rem; line-height:1.5; color:var(--muted); padding-top:4px}
 .lg-val b{color:var(--ink); font-weight:600}
 #legend[hidden]{display:none}
+
+/* ---- guided tour: fixed to the viewport (not #content) since a spotlit control can be
+   anywhere in the app, including the header search box or bridge bar. Four independent dim
+   strips (not one masked rect) leave the hole a literal DOM gap, so the real control underneath
+   is unambiguously clickable in every browser -- no reliance on mask/pointer-events edge cases. */
+#tourChooser{
+  position:fixed; inset:0; z-index:8000; display:flex; align-items:center; justify-content:center;
+  background:rgba(0,0,0,0.35);
+}
+#tourChooser[hidden]{display:none}
+#tourChooserBox{
+  background:var(--paper); border:1px solid var(--rule-solid); border-radius:8px;
+  padding:1.25rem; width:20rem; max-width:calc(100% - 32px); display:flex; flex-direction:column; gap:10px;
+}
+#tourChooserBox .btn{text-align:left}
+#tourChooserFoot{display:flex; justify-content:space-between; align-items:center; margin-top:6px}
+/* pointer-events:none deliberately: anything a highlighted control CREATES -- the search
+   dropdown, the ideas chips, a sheet -- appears outside the spotlight hole, and a dim layer
+   that swallowed clicks made those unreachable (a user could type a title but not pick a
+   result). The spotlight guides the eye; it must never trap the user. */
+.tourDimPart{position:fixed; background:rgba(0,0,0,0.6); z-index:8010; pointer-events:none}
+#tourRing{
+  position:fixed; z-index:8011; border:2px solid var(--accent); border-radius:8px;
+  box-shadow:0 0 0 4px var(--accent-tint); pointer-events:none;
+}
+#tourCallout{
+  position:fixed; z-index:8012; width:17.5rem; max-width:calc(100% - 24px);
+  background:var(--paper); border:1px solid var(--rule-solid); border-radius:8px;
+  padding:0.875rem; box-shadow:0 6px 24px rgba(0,0,0,0.25); display:flex; flex-direction:column; gap:10px;
+}
+/* every one of these sets its own display, which beats the [hidden] attribute's default --
+   #tourOverviewBar was missing from this list and so sat on screen permanently */
+#tourChooser[hidden], #tourDim[hidden], #tourRing[hidden], #tourCallout[hidden],
+#tourOverviewLayer[hidden], #tourOverviewBar[hidden]{display:none}
+#tourCalloutStep{font-family:'Geist Mono',monospace; font-size:0.5625rem; text-transform:uppercase;
+  letter-spacing:0.14em; color:var(--soft)}
+#tourCalloutBody{font-size:0.8125rem; line-height:1.6; color:var(--ink)}
+#tourCalloutBtns{display:flex; justify-content:flex-end; gap:8px}
+#tourCalloutBtns .btn{padding:5px 10px; font-size:0.6875rem}
+#tourOverviewLayer{position:fixed; inset:0; z-index:8010; pointer-events:none}
+.tourOvLabel{
+  position:fixed; background:var(--paper); border:1px solid var(--accent); border-radius:5px;
+  padding:3px 8px; font-family:'Geist Mono',monospace; font-size:0.625rem; color:var(--accent);
+  pointer-events:none; white-space:nowrap;
+}
+#tourOverviewBar{
+  position:fixed; left:50%; bottom:20px; transform:translateX(-50%); z-index:8013;
+  background:var(--paper); border:1px solid var(--rule-solid); border-radius:8px;
+  padding:12px 16px; display:flex; flex-direction:column; gap:8px; align-items:center;
+  pointer-events:auto; max-width:calc(100% - 32px);
+}
+#tourOverviewBar p{margin:0; font-size:0.75rem; color:var(--muted); text-align:center}
+#tourOverviewBtns{display:flex; justify-content:center}
 #promptPanel, #citePanel{
   position:absolute; left:0; right:0; bottom:0; height:52%; background:var(--paper);
   border-top:1px solid var(--rule-solid); display:flex; flex-direction:column; z-index:5;
 }
 #promptPanel[hidden], #citePanel[hidden]{display:none}
-#promptHead, #citeHead{display:flex; align-items:center; gap:16px; padding:8px 16px; border-bottom:1px solid var(--rule)}
+#promptHead, #citeHead{display:flex; align-items:center; gap:16px; padding:0.5rem 1rem; border-bottom:1px solid var(--rule)}
 #promptHead .grow, #citeHead .grow{flex:1}
 #promptPanel select, #citePanel select{
-  font:inherit; font-size:11px; padding:4px 8px; border:1px solid var(--rule);
+  font:inherit; font-size:0.6875rem; padding:4px 8px; border:1px solid var(--rule);
   border-radius:4px; background:var(--paper); color:var(--ink);
 }
 #promptText, #citeText{
-  flex:1; margin:0; padding:12px 16px; border:none; resize:none; background:var(--paper);
-  color:var(--ink); font-family:'Geist Mono',monospace; font-size:11px; line-height:1.6;
+  flex:1; margin:0; padding:0.75rem 1rem; border:none; resize:none; background:var(--paper);
+  color:var(--ink); font-family:'Geist Mono',monospace; font-size:0.6875rem; line-height:1.6;
 }
 #promptText:focus, #citeText:focus{outline:none}
 #content{flex:1; position:relative; min-height:0}
@@ -267,23 +342,23 @@ main{flex:1; display:flex; overflow:hidden; min-height:0}
 .listView[hidden]{display:none}
 .paper-row{padding:10px 0; border-bottom:1px solid var(--rule); cursor:pointer}
 .paper-row:hover{background:var(--paper-2)}
-.paper-row .res-title{font-size:13px; margin-bottom:2px}
-#detailPanel{flex:0 0 32%; padding:16px; overflow:auto; min-width:0}
-.eyebrow{font-family:'Geist Mono',monospace; font-size:9px; text-transform:uppercase; letter-spacing:0.18em; color:var(--soft); margin:0 0 6px}
+.paper-row .res-title{font-size:0.8125rem; margin-bottom:2px}
+#detailPanel{flex:0 0 32%; padding:1rem; overflow:auto; min-width:0}
+.eyebrow{font-family:'Geist Mono',monospace; font-size:0.5625rem; text-transform:uppercase; letter-spacing:0.18em; color:var(--soft); margin:0 0 6px}
 /* Hangul goes muddy at 8px Geist Mono; Korean labels switch register instead of shrinking */
 :root[lang="ko"] .eyebrow, :root[lang="ko"] #langCtl span, :root[lang="ko"] #paletteCtl span,
 :root[lang="ko"] #spacingCtl span, :root[lang="ko"] #citeLinkCtl span, :root[lang="ko"] .gt-head,
 :root[lang="ko"] .gt-field > span, :root[lang="ko"] #oaCtl span, :root[lang="ko"] .lg-key{
   font-family:'Geist','Noto Sans KR','Apple SD Gothic Neo',sans-serif;
-  font-size:11px; font-weight:500; text-transform:none; letter-spacing:normal;
+  font-size:0.6875rem; font-weight:500; text-transform:none; letter-spacing:normal;
 }
-.d-title{font-size:15px; font-weight:500; margin:0 0 8px; line-height:1.4}
-.d-row{font-size:12px; color:var(--muted); margin-bottom:4px}
-.mono{font-family:'Geist Mono',monospace; font-size:10px; color:var(--soft)}
-.d-abstract{font-size:12px; line-height:1.6; color:var(--ink); margin:8px 0}
+.d-title{font-size:0.9375rem; font-weight:500; margin:0 0 8px; line-height:1.4}
+.d-row{font-size:0.75rem; color:var(--muted); margin-bottom:4px}
+.mono{font-family:'Geist Mono',monospace; font-size:0.625rem; color:var(--soft)}
+.d-abstract{font-size:0.75rem; line-height:1.6; color:var(--ink); margin:8px 0}
 .btn{
   background:transparent; border:1px solid var(--rule); border-radius:4px; padding:8px 12px;
-  font:inherit; font-size:12px; cursor:pointer; color:var(--ink);
+  font:inherit; font-size:0.75rem; cursor:pointer; color:var(--ink);
 }
 .btn:hover{background:var(--paper-2)}
 #qJumpBlock{
@@ -305,28 +380,36 @@ main{flex:1; display:flex; overflow:hidden; min-height:0}
   #quantumJumpBtn.is-jumping{animation:none}
 }
 #qJumpBlock select{
-  width:100%; font:inherit; font-size:12px; padding:6px 8px;
+  width:100%; font:inherit; font-size:0.75rem; padding:6px 8px;
   border:1px solid var(--rule); border-radius:4px; background:var(--paper); color:var(--ink);
 }
 #qJumpBlock select:focus{outline:none; border-color:var(--soft)}
-#qCount{white-space:nowrap; font-size:9px; color:var(--accent)}
+#qCount{white-space:nowrap; font-size:0.5625rem; color:var(--accent)}
 #qCount.exhausted{color:var(--soft)}
 .qt-chips{display:flex; flex-wrap:wrap; gap:6px}
 .qt-chip{
-  font:inherit; font-size:11px; padding:3px 8px; border-radius:4px;
+  font:inherit; font-size:0.6875rem; padding:3px 8px; border-radius:4px;
   border:1px solid var(--rule); background:transparent; color:var(--ink); cursor:pointer;
 }
 .qt-chip.selected{background:var(--accent-tint); border-color:var(--accent); color:var(--accent)}
 a{color:var(--link)}
-.status-line{font-family:'Geist Mono',monospace; font-size:11px; color:var(--soft); padding:16px}
+.status-line{font-family:'Geist Mono',monospace; font-size:0.6875rem; color:var(--soft); padding:16px}
 #graphView > .status-line{
   position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
-  text-align:center; padding:24px 24px 24px 220px; pointer-events:none;
+  /* left padding clears #graphTools, whose width is in rem -- keep this in rem too or the
+     text slides under the panel as soon as --ui-scale grows it */
+  text-align:center; padding:1.5rem 1.5rem 1.5rem 13.75rem; pointer-events:none;
 }
-.error-box{font-size:12px; color:var(--ink); padding:16px; border:1px solid var(--rule); border-radius:6px; margin:16px}
+.error-box{font-size:0.75rem; color:var(--ink); padding:16px; border:1px solid var(--rule); border-radius:6px; margin:16px}
+#graphEmptyHint{
+  display:block; margin:8px auto 0; background:none; border:none; padding:0; font:inherit;
+  font-size:0.6875rem; color:var(--accent); cursor:pointer; text-decoration:underline;
+  text-underline-offset:2px; pointer-events:auto;
+}
+#graphEmptyHint:hover{color:var(--accent-strong)}
 #colophon{
   margin-top:20px; padding-top:12px; border-top:1px solid var(--rule); text-align:right;
-  font-family:'Geist Mono',monospace; font-size:11px; color:var(--soft); line-height:1.5;
+  font-family:'Geist Mono',monospace; font-size:0.6875rem; color:var(--soft); line-height:1.5;
 }
 #freshness{cursor:help}
 #credit{margin-top:4px; padding-top:4px; border-top:1px solid var(--rule)}
@@ -339,33 +422,33 @@ a{color:var(--link)}
 #ackBtn:hover{color:var(--muted)}
 #ackDlg{
   border:1px solid var(--rule-solid); border-radius:6px; background:var(--paper); color:var(--ink);
-  padding:20px 24px; max-width:400px; font-family:'Geist',sans-serif; font-size:12px;
+  padding:1.25rem 1.5rem; max-width:25rem; font-family:'Geist',sans-serif; font-size:0.75rem;
 }
 #ackDlg::backdrop{background:rgba(45,49,66,0.20)}
 #ackDlg ul{margin:0 0 16px; padding-left:16px; line-height:1.7}
 #ackDlg li{margin-bottom:4px}
 #ackDlg li b{font-weight:600}
-.node-label{font-size:10px; fill:var(--ink); pointer-events:none; font-family:'Geist',sans-serif}
+.node-label{font-size:0.625rem; fill:var(--ink); pointer-events:none; font-family:'Geist',sans-serif}
 
 .dim{opacity:0.12}
 #titleBtn{cursor:pointer}
 .year-grid{pointer-events:none}
 .year-grid line{stroke:var(--rule)}
-.year-grid text{font-family:'Geist Mono',monospace; font-size:8px; fill:var(--soft)}
+.year-grid text{font-family:'Geist Mono',monospace; font-size:0.5rem; fill:var(--soft)}
 #hoverCard{
   position:absolute; z-index:6; background:var(--paper); border:1px solid var(--rule-solid);
-  border-radius:6px; padding:8px 12px; max-width:280px; pointer-events:none;
+  border-radius:6px; padding:0.5rem 0.75rem; max-width:17.5rem; pointer-events:none;
 }
 #hoverCard[hidden]{display:none}
-.hc-title{font-size:12px; font-weight:600; color:var(--ink); margin-bottom:4px;
+.hc-title{font-size:0.75rem; font-weight:600; color:var(--ink); margin-bottom:4px;
   display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden}
-.hc-authors{font-size:11px; color:var(--muted); margin-bottom:4px}
-.hc-meta{font-family:'Geist Mono',monospace; font-size:9px; color:var(--soft)}
-.tc-title{font-size:12px; font-weight:600; margin:0 0 4px}
+.hc-authors{font-size:0.6875rem; color:var(--muted); margin-bottom:4px}
+.hc-meta{font-family:'Geist Mono',monospace; font-size:0.5625rem; color:var(--soft)}
+.tc-title{font-size:0.75rem; font-weight:600; margin:0 0 4px}
 .tc-section{margin-top:8px}
-.tc-item{font-size:11px; margin:2px 0}
-.tc-more{font-size:10px; color:var(--soft); margin:4px 0 0}
-.trail-badge-text{font-family:'Geist Mono',monospace; font-size:9px}
+.tc-item{font-size:0.6875rem; margin:2px 0}
+.tc-more{font-size:0.625rem; color:var(--soft); margin:4px 0 0}
+.trail-badge-text{font-family:'Geist Mono',monospace; font-size:0.5625rem}
 
 /* must stay last: these override rules declared further down the sheet */
 @media (max-width: 760px){
@@ -375,14 +458,14 @@ a{color:var(--link)}
   #detailPanel{
     position:fixed; left:0; right:0; bottom:0; z-index:30;
     width:100%; max-height:82vh; overflow-y:auto;
-    padding:16px 12px 24px; background:var(--paper);
+    padding:1rem 0.75rem 1.5rem; background:var(--paper);
     border-top:1px solid var(--rule-solid); border-radius:10px 10px 0 0;
     transform:translateY(100%); transition:transform 0.18s ease;
   }
   #detailPanel.open{transform:translateY(0)}
   #sheetClose{
     display:block; position:absolute; right:8px; top:8px; width:32px; height:32px;
-    border:none; background:none; color:var(--muted); font-size:24px; line-height:1;
+    border:none; background:none; color:var(--muted); font-size:1.5rem; line-height:1;
     cursor:pointer; padding:0;
   }
   /* a tap fires mouseenter, so the hover card would stick; the sheet replaces it */
@@ -396,9 +479,9 @@ a{color:var(--link)}
 
   /* the single-row header ran off-screen, taking Copy/Download/Close with it */
   #promptPanel, #citePanel{height:76%}
-  #promptHead, #citeHead{flex-wrap:wrap; gap:8px 12px; padding:12px}
+  #promptHead, #citeHead{flex-wrap:wrap; gap:8px 12px; padding:0.75rem}
   #promptHead .grow, #citeHead .grow{display:none}
-  #promptHead .btn, #citeHead .btn{flex:1 1 0; min-width:76px}
+  #promptHead .btn, #citeHead .btn{flex:1 1 0; min-width:4.75rem}
   #promptHead label, #citeHead label{display:flex; flex-direction:column; gap:4px}
 
   /* #searchWrapB now lives in #bridgeBar (a non-wrapping row); give it its own line like the
@@ -410,7 +493,7 @@ a{color:var(--link)}
 </head>
 <body>
 <header>
-  <h1 id="titleBtn" data-i18n-attr="title:resetTitle" title="Start over">GraphPapers</h1><span id="version">v0.11</span>
+  <h1 id="titleBtn" data-i18n-attr="title:resetTitle" title="Start over">GraphPapers</h1><span id="version">v0.12</span>
   <div class="search-wrap">
     <input id="searchInput" type="text" data-i18n-attr="placeholder:searchPlaceholder" placeholder="Search by title, DOI, or OpenAlex ID">
     <div id="dropdown" hidden></div>
@@ -465,7 +548,10 @@ a{color:var(--link)}
       </div>
     </div>
     <div id="content">
-      <div id="graphView"><div class="status-line" data-i18n="graphEmpty">Search for a paper above to build a graph, or press Surprise me.</div></div>
+      <div id="graphView"><div class="status-line"><div>
+        <div data-i18n="graphEmpty">Search for a paper above to build a graph, or press Surprise me.</div>
+        <button type="button" id="graphEmptyHint" data-i18n="graphEmptyHint">New here? Find the ? Manual button next to the legend icon, or take the guided tour.</button>
+      </div></div></div>
       <div id="hoverCard" hidden></div>
       <div id="refsView" class="listView" hidden></div>
       <div id="citersView" class="listView" hidden></div>
@@ -517,6 +603,51 @@ a{color:var(--link)}
         </div>
       </div>
       <button id="legendBtn" data-i18n-attr="title:legendBtnTitle,aria-label:legend" title="What the graph shows" aria-label="Legend">i</button>
+      <button id="manualBtn" data-i18n-attr="title:manualBtnTitle,aria-label:manualBtn" title="How to use GraphPapers" aria-label="Manual">?</button>
+      <div id="manualPanel" hidden>
+        <div id="manualHead">
+          <span class="eyebrow" style="margin:0" data-i18n="manualHeading">Manual</span>
+          <span class="grow"></span>
+          <button class="btn" id="manualClose" data-i18n="close">Close</button>
+        </div>
+        <iframe id="manualFrame" title="GraphPapers manual"></iframe>
+      </div>
+      <div id="tourChooser" hidden>
+        <div id="tourChooserBox">
+          <span class="eyebrow" style="margin:0" id="tourChooserTitle">Guided tour</span>
+          <p class="mono" id="tourChooserPick" style="font-size:0.75rem; color:var(--muted)"></p>
+          <button class="btn" id="tourPickBasics"></button>
+          <button class="btn" id="tourPickQuantum"></button>
+          <button class="btn" id="tourPickBridge"></button>
+          <button class="btn" id="tourPickExport"></button>
+          <div id="tourChooserFoot">
+            <button class="btn" id="tourUseManual"></button>
+            <button class="btn" id="tourChooserClose"></button>
+          </div>
+        </div>
+      </div>
+      <div id="tourDim" hidden>
+        <div class="tourDimPart" id="tourDimT"></div>
+        <div class="tourDimPart" id="tourDimB"></div>
+        <div class="tourDimPart" id="tourDimL"></div>
+        <div class="tourDimPart" id="tourDimR"></div>
+      </div>
+      <div id="tourRing" hidden></div>
+      <div id="tourCallout" hidden>
+        <div id="tourCalloutStep"></div>
+        <div id="tourCalloutBody"></div>
+        <div id="tourCalloutBtns">
+          <button class="btn" id="tourSkipBtn"></button>
+          <button class="btn" id="tourNextBtn" hidden></button>
+          <button class="btn" id="tourExitBtn"></button>
+        </div>
+      </div>
+      <div id="tourOverviewLayer" hidden></div>
+      <div id="tourOverviewBar" hidden>
+        <span class="eyebrow" style="margin:0" id="tourOverviewTitle"></span>
+        <p id="tourOverviewHint"></p>
+        <div id="tourOverviewBtns"><button class="btn" id="tourOverviewFinish"></button></div>
+      </div>
       <div id="legend" hidden>
         <p class="eyebrow" style="margin:0 0 12px" data-i18n="legend">Legend</p>
         <div class="lg-row"><span class="lg-key" data-i18n="lgNodeSize">Node size</span>
@@ -584,6 +715,7 @@ a{color:var(--link)}
               <option value="route" data-i18n="scopeRoute" hidden>Route only</option>
               <option value="visible" data-i18n="scopeVisible">Visible papers</option>
               <option value="all" data-i18n="scopeAll">All 40 papers</option>
+              <option value="allRefs" data-i18n="scopeAllRefs">All references</option>
             </select>
           </label>
           <span class="mono" id="citeCount"></span>
@@ -622,7 +754,7 @@ a{color:var(--link)}
 </dialog>
 
 <script>
-const APP_VERSION = 'v0.11';
+const APP_VERSION = 'v0.12';
 const API = 'https://api.openalex.org';
 const MAILTO = 'astrphscst@gmail.com';
 const bare = id => (id || '').replace(/^https?:\/\/openalex\.org\//, '');
@@ -640,6 +772,7 @@ const I18N = {
     tabGraph: 'Similarity graph', tabRefs: 'Prior works', tabCiters: 'Derivative works',
     storyBtn: 'Story prompt', exportCitations: 'Export citations',
     graphEmpty: 'Search for a paper above to build a graph, or press Surprise me.',
+    graphEmptyHint: 'New here? Find the ? Manual button next to the legend icon, or take the guided tour.',
     graphControls: 'Graph controls',
     layout: 'Layout', layoutForce: 'Free', layoutTimeline: 'Timeline',
     spacing: 'Spacing', reshuffle: 'Reshuffle',
@@ -652,6 +785,7 @@ const I18N = {
     journalAll: 'All journals', journalTop50: 'Top 50%', journalTop25: 'Top 25%', oaOnly: 'OA only',
     fCount: '{shown} / {total} shown', reset: 'Reset',
     legendBtnTitle: 'What the graph shows', legend: 'Legend',
+    manualBtnTitle: 'How to use GraphPapers', manualBtn: 'Manual', manualHeading: 'Manual',
     lgNodeSize: 'Node size', lgCitationCount: 'Citation count',
     lgNodeColour: 'Node colour', lgPubYear: 'Publication year, <span id="lgYears">older to newer</span>',
     olderToNewer: 'older to newer',
@@ -667,7 +801,7 @@ const I18N = {
     promptCount: '{n} papers · {chars} chars',
     format: 'Format', scope: 'Scope', scopeSingle: 'This paper', scopeVisible: 'Visible papers',
     scopeRoute: 'Route only', scopeAllBridge: 'Everything on screen',
-    scopeAll: 'All 40 papers', citeCount: '{n} entries', download: 'Download',
+    scopeAll: 'All 40 papers', scopeAllRefs: 'All references ({n})', citeCount: '{n} entries', download: 'Download',
     detail: 'Detail', detailEmpty: 'Search for a paper to begin.', closeDetails: 'Close details',
     noDOI: 'No DOI', readPdf: 'Read the free PDF →', noAbstract: 'No abstract', cite: 'Cite',
     rebuildGraph: 'Rebuild from this paper', undoStep: 'Undo',
@@ -689,10 +823,14 @@ const I18N = {
     sharedKeywordCount: '{n} shared keyword(s)', chainVia: 'Linked through: {title}',
     statusFetchingSeed: 'Fetching seed paper…', statusCollecting: 'Collecting references and citations…',
     statusComputing: 'Computing similarity…',
+    statusFetchingRefs: 'Fetching remaining references ({n}/{total})…',
     couldNotReach: 'Could not reach OpenAlex: {msg}',
+    oaBusy: 'OpenAlex is temporarily overloaded. Nothing is wrong on your side \u2014 try again in a moment.',
+    retrying: 'OpenAlex is busy \u2014 retrying ({n})\u2026',
     noConnection: 'No connection. GraphPapers fetches every paper live from OpenAlex, so it needs internet.',
     noData: 'No data', jumpedFrom: 'Jumped from',
     citeBothCount: '{n} paper(s) cite both', sharedRefCount: '{n} shared reference(s)', andMore: 'and {n} more',
+    refsMissingCount: '{n} reference(s) could not be retrieved from OpenAlex.',
     ack: 'Acknowledgements', ackNoEntries: 'No entries yet.',
     ackBody: 'GraphPapers is a small open project. Ideas, bug reports, and pull requests are all welcome — contributors will be credited here.',
     freshnessTitle: 'No local cache — every lookup is fetched live from OpenAlex',
@@ -707,6 +845,8 @@ const I18N = {
     bridgeReadout: '{distance} step(s) · {mode} · {requests} request(s)',
     bridgeDirect: 'These two papers are directly linked by a citation, so there is no intermediate paper -- both modes give the same answer.',
     bridgeShorterRejected: 'A shorter, {n}-step route exists but was rejected as weaker.',
+    bridgeUnresolved: 'Record could not be retrieved',
+    bridgeUnresolvedExplain: 'This bridge-route hop is real, but OpenAlex returned no data for this id, so no title, authors or abstract are available.',
     bridgeStepLabel: 'step {i} of {n}',
     bridgeSearchStep: 'Searching, step {n}…'
   },
@@ -720,6 +860,7 @@ const I18N = {
     tabGraph: '유사도 그래프', tabRefs: '선행 논문', tabCiters: '후행 논문',
     storyBtn: '이야기 프롬프트', exportCitations: '인용 내보내기',
     graphEmpty: '위에서 논문을 검색하거나, 아무 논문이나 버튼을 눌러 보세요.',
+    graphEmptyHint: '처음이신가요? 범례 아이콘 옆의 ? 설명서 버튼을 확인하거나, 가이드 투어를 시작해보세요.',
     graphControls: '그래프 설정',
     layout: '배치', layoutForce: '자유', layoutTimeline: '연대순',
     spacing: '간격', reshuffle: '다시 배치',
@@ -732,6 +873,7 @@ const I18N = {
     journalAll: '전체 저널', journalTop50: '상위 50%', journalTop25: '상위 25%', oaOnly: '오픈액세스만',
     fCount: '{total}개 중 {shown}개 표시', reset: '초기화',
     legendBtnTitle: '그래프가 보여주는 것', legend: '범례',
+    manualBtnTitle: 'GraphPapers 사용법', manualBtn: '설명서', manualHeading: '설명서',
     lgNodeSize: '노드 크기', lgCitationCount: '피인용수',
     lgNodeColour: '노드 색상', lgPubYear: '발행 연도, <span id="lgYears">오래된순에서 최신순</span>',
     olderToNewer: '오래된순에서 최신순',
@@ -747,7 +889,7 @@ const I18N = {
     promptCount: '{n}개 논문 · {chars}자',
     format: '형식', scope: '범위', scopeSingle: '이 논문', scopeVisible: '화면에 표시된 논문',
     scopeRoute: '경로만', scopeAllBridge: '화면의 전체 논문',
-    scopeAll: '전체 40개 논문', citeCount: '{n}개 항목', download: '다운로드',
+    scopeAll: '전체 40개 논문', scopeAllRefs: '전체 참고문헌 ({n})', citeCount: '{n}개 항목', download: '다운로드',
     detail: '상세', detailEmpty: '시작하려면 논문을 검색하세요.', closeDetails: '상세 정보 닫기',
     noDOI: 'DOI 없음', readPdf: '무료 PDF로 읽기 →', noAbstract: '초록 없음', cite: '인용',
     rebuildGraph: '이 논문으로 다시 그리기', undoStep: '되돌리기',
@@ -769,10 +911,14 @@ const I18N = {
     sharedKeywordCount: '공유 키워드 {n}개', chainVia: '{title}을(를) 통해 연결됨',
     statusFetchingSeed: '기준 논문을 가져오는 중…', statusCollecting: '참고문헌과 인용 정보를 모으는 중…',
     statusComputing: '유사도를 계산하는 중…',
+    statusFetchingRefs: '나머지 참고문헌을 가져오는 중 ({n}/{total})…',
     couldNotReach: 'OpenAlex에 연결할 수 없습니다: {msg}',
+    oaBusy: 'OpenAlex 서버가 일시적으로 몰려 있습니다. 사용자 쪽 문제가 아니니 잠시 후 다시 시도해 주세요.',
+    retrying: 'OpenAlex 응답 지연 \u2014 다시 시도 중 ({n})\u2026',
     noConnection: '연결이 없습니다. GraphPapers는 모든 논문을 OpenAlex에서 실시간으로 가져오므로 인터넷이 필요합니다.',
     noData: '데이터 없음', jumpedFrom: '여기서 건너옴',
     citeBothCount: '논문 {n}개가 둘 다 인용', sharedRefCount: '참고문헌 {n}개 공유', andMore: '외 {n}개 더',
+    refsMissingCount: '참고문헌 {n}개를 OpenAlex에서 가져오지 못했습니다.',
     ack: '감사의 글', ackNoEntries: '아직 등록된 항목이 없습니다.',
     ackBody: 'GraphPapers는 작은 오픈소스 프로젝트입니다. 아이디어, 버그 제보, 풀 리퀘스트를 환영하며 기여자는 이곳에 기록됩니다.',
     freshnessTitle: '로컬 캐시 없음 — 모든 조회는 OpenAlex에서 실시간으로 가져옵니다',
@@ -787,6 +933,8 @@ const I18N = {
     bridgeReadout: '{distance}단계 · {mode} · 요청 {requests}회',
     bridgeDirect: '두 논문은 인용으로 직접 연결되어 있어 중간 논문이 없습니다 -- 두 방식 모두 같은 답을 줍니다.',
     bridgeShorterRejected: '더 짧은 {n}단계 경로가 있지만 더 약하다고 판단해 제외했습니다.',
+    bridgeUnresolved: '가져올 수 없는 기록',
+    bridgeUnresolvedExplain: '이 경로 연결은 실제로 존재하지만, OpenAlex가 이 id에 대한 데이터를 반환하지 않아 제목·저자·초록을 확인할 수 없습니다.',
     bridgeStepLabel: '{n}단계 중 {i}단계',
     bridgeSearchStep: '{n}단계 탐색 중…'
   }
@@ -814,7 +962,8 @@ function applyLang(){
   updateLegendYears();
   if (lastDetailWork) renderDetail(lastDetailWork);
   if (state.seed) {
-    renderList(document.getElementById('refsView'), state.refs);
+    renderRefsList();
+    updateRefsTabLabel();
     renderList(document.getElementById('citersView'), state.citers);
     applyFilters();
     updateFreshness();
@@ -834,11 +983,29 @@ function noteQuota(res){
   updateFreshness();
 }
 
+// A graph costs 4-8 requests and a bridge search 6-12, so one transient hiccup used to throw
+// the whole operation away. 503/502/504 are by definition temporary, and a 429 with quota still
+// on the clock is burst limiting rather than the daily ceiling -- both are worth waiting out.
+// A 429 with nothing left is the real ceiling: retrying cannot help, so it fails immediately.
+const RETRY_STATUS = new Set([429, 502, 503, 504]);
+const RETRY_WAITS = [600, 1500];   // ms; two retries, then give up rather than hang the UI
+
 async function fetchJSON(url){
-  const res = await fetch(url + (url.includes('?') ? '&' : '?') + 'mailto=' + MAILTO);
-  noteQuota(res);
-  if (!res.ok) throw new Error('HTTP ' + res.status);
-  return res.json();
+  let lastStatus = 0;
+  for (let attempt = 0; ; attempt++) {
+    const res = await fetch(url + (url.includes('?') ? '&' : '?') + 'mailto=' + MAILTO);
+    noteQuota(res);
+    if (res.ok) return res.json();
+    lastStatus = res.status;
+    const outOfQuota = res.status === 429 && quota.remaining === 0;
+    if (attempt >= RETRY_WAITS.length || !RETRY_STATUS.has(res.status) || outOfQuota) break;
+    // honour Retry-After when the server sends one, but never stall the UI for long
+    const after = +(res.headers.get('retry-after') || 0);
+    const wait = after > 0 ? Math.min(after * 1000, 4000) : RETRY_WAITS[attempt];
+    setStatus(tf('retrying', { n: attempt + 1 }));
+    await new Promise(r => setTimeout(r, wait));
+  }
+  throw new Error('HTTP ' + lastStatus);
 }
 
 // normalizes a raw OpenAlex work: bare id, bare referenced_works
@@ -1785,6 +1952,17 @@ function renderDetail(work){
   lastDetailWork = work;
   detailBody.classList.remove('status-line');
   detailBody.removeAttribute('data-i18n');
+  if (work._unresolved) {
+    // OpenAlex returned nothing for this bridge-route id -- there is no title, authors,
+    // abstract or reference list to show, and no graph can be rebuilt from an empty one.
+    // Replace the usual (empty) fields with an honest explanation and a direct link.
+    detailBody.innerHTML =
+      '<div class="d-title">' + esc(t('bridgeUnresolved')) + '</div>' +
+      '<div class="d-row">' + esc(t('bridgeUnresolvedExplain')) + '</div>' +
+      '<div class="d-row mono"><a href="https://openalex.org/' + esc(work.id) + '" target="_blank" rel="noopener">' +
+        esc(work.id) + '</a></div>';
+    return;
+  }
   const abstract = reconstructAbstract(work.abstract_inverted_index);
   const doi = work.doi ? '<a href="' + esc(work.doi) + '" target="_blank" rel="noopener">' + esc(work.doi) + '</a>' : '<span class="mono">' + esc(t('noDOI')) + '</span>';
   const oaUrl = (work.open_access && work.open_access.oa_url) || '';
@@ -1799,8 +1977,8 @@ function renderDetail(work){
     '<div class="d-row">' + doi + '</div>' +
     oaLink +
     '<div style="text-align:right">' +
-      (abstract ? '<button class="btn" id="abstractCopy" style="font-size:11px; padding:4px 8px">' + esc(t('copy')) + '</button> ' : '') +
-      '<button class="btn" id="citeOneBtn" style="font-size:11px; padding:4px 8px">' + esc(t('cite')) + '</button>' +
+      (abstract ? '<button class="btn" id="abstractCopy" style="font-size:0.6875rem; padding:4px 8px">' + esc(t('copy')) + '</button> ' : '') +
+      '<button class="btn" id="citeOneBtn" style="font-size:0.6875rem; padding:4px 8px">' + esc(t('cite')) + '</button>' +
     '</div>' +
     (abstract ? '<div class="d-abstract">' + esc(abstract) + '</div>' : '<div class="d-abstract mono">' + esc(t('noAbstract')) + '</div>') +
     (showQuantum ? quantumBlockHtml()
@@ -1851,6 +2029,29 @@ function renderList(container, works){
   });
 }
 
+// renders the References tab: the list itself, plus (once the full fetch for this seed has
+// settled) an honest footer when OpenAlex silently dropped some ids -- see ensureFullRefs.
+function renderRefsList(){
+  const el = document.getElementById('refsView');
+  renderList(el, state.refs);
+  const full = state.seed && refsFullBySeed.get(state.seed.id);
+  if (full && full.missing > 0) {
+    const div = document.createElement('div');
+    div.className = 'status-line';
+    div.textContent = tf('refsMissingCount', { n: full.missing });
+    el.appendChild(div);
+  }
+}
+
+// tab label carries the seed's full reference count (referenced_works.length -- the id array
+// OpenAlex already returns whole with the seed record, not paginated) so the user can see the
+// list is meant to be complete even before opening the tab triggers the lazy fetch.
+function updateRefsTabLabel(){
+  const btn = document.querySelector('.tab[data-tab="refs"]');
+  if (!btn) return;
+  btn.textContent = state.seed ? t('tabRefs') + ' (' + state.seed.referenced_works.length + ')' : t('tabRefs');
+}
+
 function updateFreshness(){
   const now = state.fetchedAt || new Date();
   const pad = n => String(n).padStart(2, '0');
@@ -1878,8 +2079,13 @@ let trailLayerSel = null, trailHitSel = null, trailBadgeSel = null, zoomG = null
 const narrowScreen = () => window.matchMedia('(max-width: 760px)').matches;
 const reducedMotion = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
 // labels cannot move out of each other's way when y is pinned to the year
+// The radius threshold exists to keep labels from colliding, so it has to grow with the text:
+// at --ui-scale 1.5 the same thresholds showed the same 38 labels in 1.5x type and overlapping
+// pairs went from 6 to 17. Scaling the threshold shows fewer, readable labels instead of more,
+// unreadable ones -- the seed is always labelled regardless.
+const uiScale = () => +(cssVar('--ui-scale') || 1) || 1;
 const labelShown = d => d.id === (state.seed && state.seed.id)
-  || d.r > (narrowScreen() ? 20 : (layoutMode === 'timeline' ? 14 : 10));
+  || d.r > (narrowScreen() ? 20 : (layoutMode === 'timeline' ? 14 : 10)) * uiScale();
 let positionCiteLinks = () => {};
 let positionTrailLinks = () => {};
 
@@ -2018,7 +2224,7 @@ function showHoverCard(d, event, hop, extraLine){
   const authorsText = first && first.author ? esc(first.author.display_name) + ((d.authorships || []).length > 1 ? t('etAlSuffix') : '') : t('unknownAuthors');
   const oa = d.open_access && d.open_access.is_oa ? ' · OA' : '';
   hoverCard.innerHTML =
-    '<div class="hc-title">' + esc(d.display_name || t('untitled')) + '</div>' +
+    '<div class="hc-title">' + esc(d._unresolved ? t('bridgeUnresolved') : (d.display_name || t('untitled'))) + '</div>' +
     '<div class="hc-authors">' + authorsText + '</div>' +
     '<div class="hc-meta">' + (d.publication_year || '?') + ' · ' + tf('citedCount', { n: d.cited_by_count || 0 }) + ' · ' + tf('hopLabel', { h: hop == null ? '?' : hop }) + oa + '</div>' +
     (extraLine ? '<div class="hc-meta">' + esc(extraLine) + '</div>' : '');
@@ -2548,8 +2754,13 @@ function buildBridgeGraph(seedA, poolA, seedB, poolB, route, routePool){
   const routeWorks = new Map((routePool || []).map(w => [w.id, w]));
   (route || []).forEach(id => {
     if (!nodeMap.has(id)) {
-      const w = routeWorks.get(id) || { id, display_name: '', cited_by_count: 0, referenced_works: [] };
-      nodeMap.set(id, Object.assign({}, w, { _cluster: 'route' }));
+      // OpenAlex's filter=openalex_id:A|B|C silently drops ids it doesn't know (see
+      // fetchWorksByIds), so a route hop can point at a work we never got data for. The
+      // citation edge is still real -- only the metadata is missing -- so keep the node
+      // and flag it rather than hiding a genuine link.
+      const w = routeWorks.get(id);
+      const node = w || { id, display_name: '', cited_by_count: 0, referenced_works: [] };
+      nodeMap.set(id, Object.assign({}, node, { _cluster: 'route', _unresolved: !w }));
     }
   });
   const routeSet = new Set(route || []);
@@ -2603,7 +2814,7 @@ function renderBridgeGraph(nodes, edges, aId, bId, route){
     const frac = cHi === cLo ? 0.5 : (Math.sqrt(n.cited_by_count || 0) - cLo) / (cHi - cLo);
     return 6 + frac * 20;
   };
-  nodes.forEach(n => { n.r = Math.max(rFor(n), (n.id === aId || n.id === bId) ? 16 : 0); });
+  nodes.forEach(n => { n.r = Math.max(rFor(n), (n.id === aId || n.id === bId) ? 16 : 0, n._unresolved ? 10 : 0); });
 
   const svg = d3.select(container).append('svg');
   const g = svg.append('g');
@@ -2660,7 +2871,7 @@ function renderBridgeGraph(nodes, edges, aId, bId, route){
     .attr('dy', d => d.r + 10)
     .attr('text-anchor', 'middle')
     .style('display', d => showLabel(d) ? 'block' : 'none')
-    .text(d => (d.display_name || '').replace(/<[^>]+>/g, '').slice(0, 34));
+    .text(d => d._unresolved ? t('bridgeUnresolved') : (d.display_name || '').replace(/<[^>]+>/g, '').slice(0, 34));
 
   const applyDim = () => {
     node.classed('dim', n => !isHighlighted(n.id));
@@ -2921,9 +3132,14 @@ function resetApp(){
   document.getElementById('legend').hidden = true;
   detailPanelEl.classList.remove('open');
   document.getElementById('graphView').innerHTML =
-    '<div class="status-line" data-i18n="graphEmpty">' + esc(t('graphEmpty')) + '</div>';
+    '<div class="status-line"><div>' +
+      '<div data-i18n="graphEmpty">' + esc(t('graphEmpty')) + '</div>' +
+      '<button type="button" id="graphEmptyHint" data-i18n="graphEmptyHint">' + esc(t('graphEmptyHint')) + '</button>' +
+    '</div></div>';
+  document.getElementById('graphEmptyHint').onclick = openTourChooser;
   document.getElementById('refsView').innerHTML = '';
   document.getElementById('citersView').innerHTML = '';
+  updateRefsTabLabel();
   detailBody.classList.add('status-line');
   detailBody.setAttribute('data-i18n', 'detailEmpty');
   detailBody.textContent = t('detailEmpty');
@@ -2931,6 +3147,40 @@ function resetApp(){
   updateFreshness();
 }
 document.getElementById('titleBtn').addEventListener('click', resetApp);
+
+// ---- References tab: complete bibliography, fetched lazily ----
+// keyed by seed id, not reset explicitly anywhere -- a rebuild always re-fetches `refs` fresh and
+// deletes its own entry below, so a stale entry can only belong to a seed nothing has re-fetched
+// since, which is exactly when it's still valid (including after an undo restores that seed).
+const refsFullBySeed = new Map();   // seedId -> { missing: n }
+const refsFullPromises = new Map(); // seedId -> in-flight Promise, dedupes concurrent triggers
+
+// fetches whatever of the seed's referenced_works isn't already in state.refs (the graph-build
+// path only ever loads the first 100), then renders the tab and its gap footer. Safe to call
+// repeatedly -- a completed or in-flight fetch for this seed is reused, not repeated.
+async function ensureFullRefs(){
+  const seed = state.seed;
+  if (!seed) return;
+  const id = seed.id;
+  if (refsFullBySeed.has(id)) return;
+  if (refsFullPromises.has(id)) return refsFullPromises.get(id);
+  const total = seed.referenced_works.length;
+  const haveIds = new Set(state.refs.map(w => w.id));
+  const remaining = seed.referenced_works.filter(rid => !haveIds.has(rid));
+  const promise = (async () => {
+    const chunks = chunk(remaining, 50);
+    for (let i = 0; i < chunks.length; i++) {
+      setStatus(tf('statusFetchingRefs', { n: i + 1, total: chunks.length }));
+      const works = await fetchWorksByIds(chunks[i]);
+      for (const w of works) if (!haveIds.has(w.id)) { haveIds.add(w.id); state.refs.push(w); }
+    }
+    refsFullBySeed.set(id, { missing: total - state.refs.length });
+    if (chunks.length) setStatus('');
+    if (state.seed && state.seed.id === id) { renderRefsList(); updateRefsTabLabel(); }
+  })().finally(() => refsFullPromises.delete(id));
+  refsFullPromises.set(id, promise);
+  return promise;
+}
 
 // ---- orchestration ----
 async function loadAndBuildGraph(seedId, opts){
@@ -2981,6 +3231,9 @@ async function loadAndBuildGraph(seedId, opts){
     }
 
     resetFilterInputs();   // a filter set on the previous graph would silently hide nodes here
+    // a fresh fetch always resets the References tab's completeness cache for this id -- `refs`
+    // above is only ever the first-100-per-graph-build slice, never the completed list
+    refsFullBySeed.delete(seed.id); refsFullPromises.delete(seed.id);
     state.seed = seed; state.refs = refs; state.citers = citers; state.nodes = nodes; state.edges = edges;
     state.pool = pool; state.trailEdges = trailEdges;
     state.baseNodes = baseNodes; state.baseEdges = edges;
@@ -3016,7 +3269,8 @@ async function loadAndBuildGraph(seedId, opts){
       }
     }
     applyFilters();
-    renderList(document.getElementById('refsView'), refs);
+    renderRefsList();
+    updateRefsTabLabel();
     renderList(document.getElementById('citersView'), citers);
     renderDetail(seed);
     updateFreshness();
@@ -3136,7 +3390,8 @@ function restoreGraph(snap){
   for (const k of GRAPH_SNAP_KEYS) state[k] = snap[k];
   renderGraph(state.nodes, state.edges, state.seed.id);
   applyFilters();
-  renderList(document.getElementById('refsView'), state.refs);
+  renderRefsList();
+  updateRefsTabLabel();
   renderList(document.getElementById('citersView'), state.citers);
   renderDetail(state.seed);
   updateFreshness();
@@ -3511,9 +3766,12 @@ addEventListener('offline', syncNet);
 syncNet();
 
 // fetch() rejects with a TypeError on a network failure, unlike an HTTP error status
-const netMessage = err => navigator.onLine
-  ? tf('couldNotReach', { msg: err.message })
-  : t('noConnection');
+const netMessage = err => {
+  if (!navigator.onLine) return t('noConnection');
+  // 503/502/504 survived every retry: OpenAlex is up but overloaded, which is not the user's doing
+  if (/HTTP 50[234]$/.test(err.message || '')) return t('oaBusy');
+  return tf('couldNotReach', { msg: err.message });
+};
 
 // ---- LLM story prompt ----
 // d3.forceLink rewrites edge source/target from id strings to node objects, so read both
@@ -3840,6 +4098,7 @@ let citeSinglePaper = null;
 
 function citeScopeWorks(scope){
   if (scope === 'single') return citeSinglePaper ? [citeSinglePaper] : [];
+  if (scope === 'allRefs') return state.refs;
   if (isBridgeView()) {
     const nodes = state.bridge.nodeById ? [...state.bridge.nodeById.values()] : [];
     if (scope === 'route') {
@@ -3864,6 +4123,8 @@ function syncCiteScopeOptions(){
   sel.querySelector('option[value="visible"]').hidden = bridge;
   sel.querySelector('option[value="route"]').hidden = !bridge;
   sel.querySelector('option[value="all"]').textContent = t(bridge ? 'scopeAllBridge' : 'scopeAll');
+  sel.querySelector('option[value="allRefs"]').textContent =
+    tf('scopeAllRefs', { n: state.seed ? state.seed.referenced_works.length : 0 });
   if (sel.selectedOptions[0] && sel.selectedOptions[0].hidden) {
     sel.value = bridge ? (state.bridge.route ? 'route' : 'all') : 'visible';
   }
@@ -3880,11 +4141,14 @@ function sortedWorks(works){
   });
 }
 
-function refreshCitePanel(){
+async function refreshCitePanel(){
   if (!state.seed) return;
   syncCiteScopeOptions();
   const format = document.getElementById('citeFormat').value;
   const scope = document.getElementById('citeScope').value;
+  // picking this scope before the References tab was ever opened must not silently export a
+  // truncated list -- fetch the rest now rather than shipping whatever happened to be loaded.
+  if (scope === 'allRefs') await ensureFullRefs();
   const entries = sortedWorks(citeScopeWorks(scope)).map(w => formatCitation(w, format));
   document.getElementById('citeText').value = entries.join('\n\n');
   document.getElementById('citeCount').textContent = tf('citeCount', { n: entries.length });
@@ -3924,7 +4188,417 @@ document.getElementById('citeDownload').onclick = () => {
 };
 
 document.getElementById('ackBtn').onclick = () => document.getElementById('ackDlg').showModal();
+document.getElementById('graphEmptyHint').onclick = openTourChooser;
 document.getElementById('ackClose').onclick = () => document.getElementById('ackDlg').close();
+
+// ---- manual ----
+// The manual documents controls with live, inert copies of the app's own markup rather than
+// screenshots, so it never drifts from what the app actually looks like. Every clone is built
+// fresh at open time (current language, current palette, current control state) and rendered
+// into an isolated document (a new window, or an <iframe> if the popup was blocked) — isolation
+// means the clones can freely reuse the app's real element ids without ever colliding with the
+// live page, and cloneNode never copies JS-attached handlers, so nothing in the manual is wired.
+// Short, imperative, one-feature-per-item on purpose: a later pass turns each item into one
+// step of a guided tour that spotlights the real control, so "Press X to do Y" beats a paragraph.
+const MANUAL_I18N = {
+  en: {
+    s1h: 'Finding a paper',
+    s1p: [
+      'Search by title, DOI, or OpenAlex ID.',
+      'Press Surprise me to load a random paper instead.'
+    ],
+    s2h: 'The similarity graph',
+    s2p: [
+      'Searching or Surprise me builds a graph of about 40 related works, found by bibliographic coupling and co-citation.',
+      'Node size shows citation count; colour shows publication year; a ring marks the seed paper.',
+      'Edge thickness shows similarity strength; edge colour fades with distance from the seed.',
+      'Tick Citation links to overlay real citation edges on top of the similarity graph.',
+      'Hover a node to preview its neighbours; click to pin the highlight; click empty canvas to release it.',
+      'Select a paper to see its abstract, authors, and DOI in the detail panel, with a button to copy the abstract.',
+      'Press Rebuild from this paper to recenter the graph there; press Undo to step back.'
+    ],
+    s3h: 'Layout',
+    s3p: [
+      'Press Free or Timeline to switch layouts.',
+      'Drag Spacing to change how far apart nodes settle.',
+      'Open Advanced to adjust link distance, pull, push, and collision gap; press Reset forces to put them back.',
+      'Press Reshuffle to scatter nodes and let the layout resettle.',
+      'Scroll to zoom the canvas; drag a node to move it.',
+      'Choose a palette from the Palette menu.',
+      'Choose English or 한국어 from the Language menu.'
+    ],
+    s4h: 'Filtering',
+    s4p: [
+      'Type in Keyword to filter by title or abstract text.',
+      'Set Years to filter by publication year range.',
+      'Set Min citations to hide less-cited papers.',
+      'Choose Journal to filter by citation-based journal impact.',
+      'Tick OA only to show only open-access papers.',
+      'Press Reset to clear all filters.',
+      'Filtering hides nodes without moving the layout, and resets automatically on a new graph.'
+    ],
+    s5h: 'Reference lists',
+    s5p: ['Press Prior works or Derivative works to see the seed’s references and citing papers, ranked by citation count.'],
+    s6h: 'Quantum Jump',
+    s6p: [
+      'Press Quantum Jump! to jump to a paper with no citation link at all to the current one.',
+      'Choose Find by to pick how the jump target relates: Read together, Shared foundations, Same ideas, or Linked through a third paper. Every route guarantees no citation between the two papers.',
+      'Choose Field to require the same field, a different field, or any field.',
+      'Press Undo jump to step back one jump; press Reset draws to forget which candidates were already drawn.',
+      'Press Clear trail to empty the jump trail; each step it records carries the evidence behind that jump.'
+    ],
+    s7h: 'Bridge between two papers',
+    s7p: [
+      'Press Bridge to another paper to compare two papers.',
+      'Search or press Surprise me to pick the second paper.',
+      'Choose Fewest steps or Strongest link, then press Find bridge.',
+      'Strongest link minimizes 1/similarity per step, so a long chain of tight links can beat a short weak one — length is never free.',
+      'The route stays highlighted after the search; click a dimmed paper to add it and its neighbours.',
+      'Route edges have no arrowheads, since a route has no single direction the way a citation does.',
+      'A direct citation between the two papers is called out, since both modes then agree.',
+      'In this view: Timeline plots cluster against year, export gains a Route only scope, the story prompt asks relationship questions, and filters plus the citation overlay are hidden.'
+    ],
+    s8h: 'Getting results out',
+    s8p: [
+      'Press Export citations to open the export panel.',
+      'Choose a Format (BibTeX, RIS, APA, MLA, Chicago) and a Scope, then press Copy or Download.',
+      'Family names are guessed as everything after each author’s last space, which misreads suffixes (Jr., III), multi-word family names (van der Berg), and “Family, Given” order.',
+      'Press Story prompt to open the LLM prompt panel.',
+      'Choose Depth and Output language, then press Copy.',
+      'GraphPapers never calls an LLM itself — paste the prompt into whatever assistant you use.'
+    ],
+    s9h: 'Good to know',
+    s9p: [
+      'The status line shows your remaining daily OpenAlex quota and when it resets.',
+      'The detail panel shows when a record was last fetched — there is no local cache, every lookup is live.',
+      'Offline, a banner appears; if OpenAlex is briefly overloaded, GraphPapers retries automatically.',
+      'Press the i button to open the legend explaining what every mark on the graph means.',
+      'On a phone, the graph and detail panel stack vertically and the controls move behind a small menu button.'
+    ],
+    tour: {
+    title: 'Guided tour',
+    pick: 'What would you like to walk through?',
+    trackBasics: 'Basics',
+    trackQuantum: 'Quantum Jump',
+    trackBridge: 'Bridge',
+    trackExport: 'Getting results out',
+    useManual: 'Read the manual instead',
+    next: 'Next',
+    skip: 'Skip',
+    exit: 'Exit tour',
+    finish: 'Finish',
+    stepOf: 'Step {i} of {n}',
+    overviewTitle: 'Overview',
+    overviewHint: 'That’s everything in this track. Press Finish to close the tour.',
+    steps: {
+      basics: [
+        'Search by title, DOI, or OpenAlex ID — or press Surprise me for a random paper. Either builds a graph of about 40 related works.',
+        'Hover a node to preview its neighbours, scroll to zoom, and drag a node to move it. Press Next when you’re ready to continue.',
+        'Click any node to see its title, authors, abstract, and DOI in the detail panel.',
+        'Press Story prompt to open the LLM story-prompt panel.'
+      ],
+      quantum: [
+        'Quantum Jump needs a paper loaded first — search for one or press Surprise me.',
+        'Click the ringed seed node to bring up Quantum Jump for it.',
+        'Choose Find by to pick how the jump target relates: Read together, Shared foundations, Same ideas, or Linked through a third paper.',
+        'Choose Field to require the same field, a different field, or any field.',
+        'Press Quantum Jump! to jump to a paper with no citation link at all to the current one.',
+        'Press Clear trail to empty the jump trail, or Reset draws to forget which candidates were already drawn.',
+        'Press Undo jump to step back one jump.'
+      ],
+      bridge: [
+        'Bridge needs a paper loaded first — search for one or press Surprise me.',
+        'Press Bridge to another paper to compare two papers.',
+        'Search or press Surprise me to pick the second paper.',
+        'Choose a bridge mode: Fewest steps or Strongest link.',
+        'Press Find bridge to search for the route between the two papers.',
+        'The route stays highlighted after the search — click a dimmed paper to add it and its neighbours. Route edges have no arrowheads, since a route has no single direction the way a citation does. Press Next to finish.'
+      ],
+      exportT: [
+        'Getting results out needs a paper loaded first — search for one or press Surprise me.',
+        'Press Export citations to open the export panel.',
+        'Choose a Format (BibTeX, RIS, APA, MLA, Chicago) and a Scope.',
+        'Press Copy or Download to get your citations.',
+        'Press Story prompt to open the LLM prompt panel.',
+        'Choose Depth and Output language for the prompt.',
+        'Press Copy to copy the prompt — GraphPapers never calls an LLM itself, paste it into whatever assistant you use.'
+      ]
+    },
+    overview: {
+      basics: ['Search', 'Similarity graph', 'Detail panel', 'Story prompt'],
+      quantum: ['Quantum Jump', 'Find by / Field', 'Trail controls', 'Undo jump'],
+      bridge: ['Bridge bar', 'Find bridge', 'Route'],
+      exportT: ['Export citations', 'Story prompt']
+    }
+    }
+  },
+  ko: {
+    s1h: '논문 찾기',
+    s1p: [
+      '제목, DOI, OpenAlex ID로 검색하세요.',
+      '아무 논문이나 버튼을 눌러 무작위 논문을 불러오세요.'
+    ],
+    s2h: '유사도 그래프',
+    s2p: [
+      '검색하거나 아무 논문이나를 누르면 같은 문헌을 인용하는 관계(bibliographic coupling)와 함께 인용되는 관계(co-citation)로 찾은 관련 논문 약 40개로 그래프가 만들어집니다.',
+      '노드 크기는 피인용수, 색상은 발행 연도이며, 테두리는 기준 논문을 표시합니다.',
+      '선의 굵기는 유사도, 선의 색상은 기준 논문으로부터의 거리에 따라 흐려집니다.',
+      '인용 연결선을 체크하면 유사도 선 위에 실제 인용 관계를 겹쳐서 보여줍니다.',
+      '노드에 마우스를 올리면 이웃을 미리 보여주고, 클릭하면 강조가 고정됩니다. 빈 화면을 클릭하면 고정이 풀립니다.',
+      '논문을 선택하면 상세 패널에 초록, 저자, DOI가 표시되며, 초록을 복사하는 버튼도 있습니다.',
+      '이 논문으로 다시 그리기를 누르면 그 논문을 중심으로 그래프를 다시 그리고, 되돌리기를 누르면 한 단계 되돌립니다.'
+    ],
+    s3h: '배치',
+    s3p: [
+      '자유 또는 연대순 버튼으로 배치를 전환하세요.',
+      '간격을 드래그해 노드 사이 거리를 조절하세요.',
+      '고급을 열면 연결 거리, 당기는 힘, 미는 힘, 겹침 여백을 조절할 수 있고, 힘 초기화를 누르면 되돌릴 수 있습니다.',
+      '다시 배치를 누르면 노드를 무작위로 흩뿌리고 배치를 다시 정렬합니다.',
+      '스크롤로 화면을 확대/축소하고, 노드를 드래그해 옮기세요.',
+      '팔레트 메뉴에서 팔레트를 선택하세요.',
+      '언어 메뉴에서 한국어 또는 영어를 선택하세요.'
+    ],
+    s4h: '필터',
+    s4p: [
+      '키워드에 입력해 제목이나 초록 텍스트로 필터링하세요.',
+      '연도에 설정해 발행 연도 범위로 필터링하세요.',
+      '최소 피인용수를 설정해 피인용수가 낮은 논문을 숨기세요.',
+      '저널에서 피인용수 기준 저널 영향력으로 필터링하세요.',
+      '오픈액세스만을 체크해 오픈액세스 논문만 표시하세요.',
+      '초기화를 눌러 모든 필터를 지우세요.',
+      '필터는 배치를 움직이지 않고 노드만 숨기며, 새 그래프를 만들면 자동으로 초기화됩니다.'
+    ],
+    s5h: '참고문헌 목록',
+    s5p: ['선행 논문 또는 후행 논문을 누르면 기준 논문의 참고문헌과 이를 인용한 논문이 피인용수 순으로 나타납니다.'],
+    s6h: 'Quantum Jump',
+    s6p: [
+      'Quantum Jump!를 누르면 현재 논문과 인용 관계가 전혀 없는 논문으로 점프합니다.',
+      '찾는 방식에서 후보와의 관계를 고르세요: 함께 읽히는 논문, 같은 토대를 쓰는 논문, 같은 아이디어, 제3의 논문 경유. 어떤 방식이든 두 논문 사이에 인용 관계가 없음을 보장합니다.',
+      '분야에서 같은 분야, 다른 분야, 분야 무관 중 하나를 고르세요.',
+      '점프 되돌리기를 누르면 마지막 점프를 되돌리고, 뽑기 기록 초기화를 누르면 이미 뽑은 후보 기록을 지웁니다.',
+      '경로 지우기를 누르면 점프 경로를 비우며, 각 단계에는 그 점프를 뒷받침한 근거가 함께 기록됩니다.'
+    ],
+    s7h: '두 논문 사이 연결하기',
+    s7p: [
+      '다른 논문과 연결하기를 눌러 두 논문을 비교하세요.',
+      '검색하거나 아무 논문이나를 눌러 두 번째 논문을 고르세요.',
+      '최단 경로 또는 가장 강한 연결을 고른 뒤 연결 찾기를 누르세요.',
+      '가장 강한 연결은 각 단계마다 1/유사도를 더한 값이 가장 작은 경로를 찾습니다 — 그래서 약한 연결의 짧은 경로보다 강한 연결이 이어진 긴 경로가 나을 수 있습니다. 길이 자체는 공짜가 아닙니다.',
+      '찾은 경로는 탐색이 끝난 뒤에도 계속 강조 표시되며, 흐려진 논문을 클릭하면 그 논문과 이웃이 강조에 추가됩니다.',
+      '경로 선에는 화살표가 없습니다. 경로에는 인용처럼 정해진 방향이 없기 때문입니다.',
+      '두 논문이 서로 직접 인용 관계라면 그 사실을 알려주는 안내가 뜹니다 — 이 경우 두 방식 모두 같은 답을 줍니다.',
+      '이 화면에서는: 연대순 배치는 X축이 클러스터, Y축이 연도가 되고, 내보내기에 경로만 범위가 추가되며, 이야기 프롬프트는 관계를 묻는 질문으로 바뀌고, 필터와 인용 연결선 오버레이는 숨겨집니다.'
+    ],
+    s8h: '결과 내보내기',
+    s8p: [
+      '인용 내보내기를 눌러 내보내기 패널을 여세요.',
+      '형식(BibTeX, RIS, APA, MLA, Chicago)과 범위를 고른 뒤 복사 또는 다운로드를 누르세요.',
+      '저자의 성(family name)은 이름의 마지막 띄어쓰기 뒤 부분으로 추정하므로, 접미사(Jr., III), 여러 단어로 된 성(van der Berg), "성, 이름" 순서는 잘못 처리될 수 있습니다.',
+      '이야기 프롬프트를 눌러 LLM 프롬프트 패널을 여세요.',
+      '깊이와 출력 언어를 고른 뒤 복사를 누르세요.',
+      'GraphPapers는 LLM을 직접 호출하지 않습니다 — 이 프롬프트를 원하는 AI 도구에 붙여넣어 사용하세요.'
+    ],
+    s9h: '알아두면 좋은 것',
+    s9p: [
+      '상태 표시줄에는 오늘 남은 OpenAlex 요청 수와 초기화 시점이 나타납니다.',
+      '상세 패널에는 레코드를 마지막으로 가져온 시점이 표시됩니다 — 로컬 캐시가 없어 모든 조회가 실시간입니다.',
+      '오프라인 상태면 배너가 나타나고, OpenAlex가 일시적으로 몰려 있으면 GraphPapers가 자동으로 다시 시도합니다.',
+      'i 버튼을 누르면 그래프의 각 표시가 무엇을 의미하는지 설명하는 범례가 열립니다.',
+      '휴대폰 화면에서는 그래프와 상세 패널이 세로로 쌓이고, 설정 패널은 작은 메뉴 버튼 뒤로 숨겨집니다.'
+    ],
+    tour: {
+    title: '가이드 투어',
+    pick: '무엇을 살펴보시겠어요?',
+    trackBasics: '기초',
+    trackQuantum: 'Quantum Jump',
+    trackBridge: '연결하기',
+    trackExport: '결과 내보내기',
+    useManual: '대신 설명서 읽기',
+    next: '다음',
+    skip: '건너뛰기',
+    exit: '투어 종료',
+    finish: '마치기',
+    stepOf: '{n} 중 {i}단계',
+    overviewTitle: '요약',
+    overviewHint: '이 트랙에서 살펴볼 내용은 여기까지입니다. 마치기를 눌러 투어를 닫으세요.',
+    steps: {
+      basics: [
+        '제목, DOI, OpenAlex ID로 검색하거나, 아무 논문이나를 눌러 무작위 논문을 불러오세요. 두 방법 모두 관련 논문 약 40개로 그래프를 만듭니다.',
+        '노드에 마우스를 올리면 이웃을 미리 보여주고, 스크롤로 확대/축소하며, 노드를 드래그해 옮길 수 있습니다. 준비되면 다음을 누르세요.',
+        '아무 노드나 클릭하면 상세 패널에 제목, 저자, 초록, DOI가 표시됩니다.',
+        '이야기 프롬프트를 눌러 LLM 프롬프트 패널을 여세요.'
+      ],
+      quantum: [
+        'Quantum Jump를 사용하려면 먼저 논문을 불러와야 합니다 — 검색하거나 아무 논문이나를 누르세요.',
+        '테두리로 표시된 기준 논문 노드를 클릭해 그 논문의 Quantum Jump를 여세요.',
+        '찾는 방식에서 후보와의 관계를 고르세요: 함께 읽히는 논문, 같은 토대를 쓰는 논문, 같은 아이디어, 제3의 논문 경유.',
+        '분야에서 같은 분야, 다른 분야, 분야 무관 중 하나를 고르세요.',
+        'Quantum Jump!를 누르면 현재 논문과 인용 관계가 전혀 없는 논문으로 점프합니다.',
+        '경로 지우기를 누르면 점프 경로를 비우고, 뽑기 기록 초기화를 누르면 이미 뽑은 후보 기록을 지웁니다.',
+        '점프 되돌리기를 누르면 마지막 점프를 되돌립니다.'
+      ],
+      bridge: [
+        '다른 논문과 연결하기를 사용하려면 먼저 논문을 불러와야 합니다 — 검색하거나 아무 논문이나를 누르세요.',
+        '다른 논문과 연결하기를 눌러 두 논문을 비교하세요.',
+        '검색하거나 아무 논문이나를 눌러 두 번째 논문을 고르세요.',
+        '최단 경로 또는 가장 강한 연결 중 하나를 고르세요.',
+        '연결 찾기를 눌러 두 논문 사이의 경로를 찾으세요.',
+        '찾은 경로는 탐색이 끝난 뒤에도 계속 강조 표시되며, 흐려진 논문을 클릭하면 그 논문과 이웃이 강조에 추가됩니다. 경로 선에는 화살표가 없습니다 — 경로에는 인용처럼 정해진 방향이 없기 때문입니다. 다음을 눌러 마치세요.'
+      ],
+      exportT: [
+        '결과를 내보내려면 먼저 논문을 불러와야 합니다 — 검색하거나 아무 논문이나를 누르세요.',
+        '인용 내보내기를 눌러 내보내기 패널을 여세요.',
+        '형식(BibTeX, RIS, APA, MLA, Chicago)과 범위를 고르세요.',
+        '복사 또는 다운로드를 눌러 인용 정보를 받으세요.',
+        '이야기 프롬프트를 눌러 LLM 프롬프트 패널을 여세요.',
+        '깊이와 출력 언어를 고르세요.',
+        '복사를 눌러 프롬프트를 복사하세요 — GraphPapers는 LLM을 직접 호출하지 않으니, 원하는 AI 도구에 붙여넣어 사용하세요.'
+      ]
+    },
+    overview: {
+      basics: ['검색', '유사도 그래프', '상세 패널', '이야기 프롬프트'],
+      quantum: ['Quantum Jump', '찾는 방식 / 분야', '경로 관련 버튼', '점프 되돌리기'],
+      bridge: ['연결하기 바', '연결 찾기', '경로'],
+      exportT: ['인용 내보내기', '이야기 프롬프트']
+    }
+    }
+  }
+};
+
+// clones a live element inert and un-positions it (the app's panels are position:absolute
+// overlays; embedded in a manual section they need to sit in normal document flow instead)
+function embedLive(selector, opts){
+  opts = opts || {};
+  const el = document.querySelector(selector);
+  if (!el) return '';
+  const c = el.cloneNode(true);
+  c.removeAttribute('hidden');
+  Object.assign(c.style, {
+    position: 'static', inset: 'auto', left: 'auto', right: 'auto', top: 'auto', bottom: 'auto',
+    zIndex: 'auto', maxHeight: 'none', maxWidth: 'none',
+    backdropFilter: 'none', WebkitBackdropFilter: 'none', margin: '10px 0',
+    width: opts.width || ''
+  });
+  (opts.unhide || []).forEach(s => { const n = c.querySelector(s); if (n) n.removeAttribute('hidden'); });
+  (opts.enable || []).forEach(s => { const n = c.querySelector(s); if (n) n.removeAttribute('disabled'); });
+  (opts.remove || []).forEach(s => { const n = c.querySelector(s); if (n) n.remove(); });
+  return c.outerHTML;
+}
+
+// #filterSection's inputs/selects are only styled through the "#graphTools input, #graphTools
+// select" descendant rules, so a standalone copy needs a synthetic ancestor carrying that id.
+function graphToolsScope(innerHTML){
+  return '<div id="graphTools" style="position:static; display:flex; flex-direction:column; gap:8px; ' +
+    'background:var(--paper); border:1px solid var(--rule); border-radius:6px; padding:0.75rem; margin:10px 0; max-width:17.5rem">' +
+    innerHTML + '</div>';
+}
+
+// Quantum Jump's block is generated by the app's own quantumBlockHtml() (zero drift), then
+// tweaked to show the ideas-route chips, which are hidden until that route is selected.
+function quantumDemoHtml(){
+  const wrap = document.createElement('div');
+  wrap.innerHTML = quantumBlockHtml();
+  const sel = wrap.querySelector('#qFindBy');
+  if (sel) sel.value = 'ideas';
+  const chips = wrap.querySelector('#qIdeasChips');
+  if (chips) {
+    chips.hidden = false;
+    chips.innerHTML = ['Diffusion models', 'Transformer architectures', 'Self-supervised learning']
+      .map((label, i) => '<button type="button" class="qt-chip' + (i < 2 ? ' selected' : '') + '">' + esc(label) + '</button>')
+      .join('');
+  }
+  return wrap.innerHTML;
+}
+
+function buildManualHTML(){
+  const M = MANUAL_I18N[lang] || MANUAL_I18N.en;
+  const palette = document.documentElement.dataset.palette || 'editorial';
+  const styleTag = document.querySelector('style').outerHTML;
+  const fontLink = document.querySelector('link[rel="stylesheet"]').outerHTML;
+
+  const section = (heading, items, controlsHtml) =>
+    '<details open><summary>' + esc(heading) + '</summary><div class="man-body">' +
+      '<ul>' + items.map(p => '<li>' + esc(p) + '</li>').join('') + '</ul>' +
+      (controlsHtml || '') +
+    '</div></details>';
+
+  const gt = document.getElementById('graphTools');
+  const gtClone = gt ? gt.cloneNode(true) : null;
+  if (gtClone) {
+    ['#filterSection', '#citeLinkCtl'].forEach(s => { const n = gtClone.querySelector(s); if (n) n.remove(); });
+    gtClone.removeAttribute('hidden');
+    Object.assign(gtClone.style, { position: 'static', maxHeight: 'none', maxWidth: '17.5rem',
+      backdropFilter: 'none', WebkitBackdropFilter: 'none', margin: '10px 0' });
+  }
+
+  const netBar = embedLive('#netBar');
+  const readoutClone = document.createElement('div');
+  readoutClone.innerHTML = embedLive('#bridgeBar', { enable: ['#bridgeMode', '#findBridgeBtn'] });
+  const readoutSpan = readoutClone.querySelector('#bridgeReadout');
+  if (readoutSpan) readoutSpan.textContent = tf('bridgeReadout', { distance: 3, mode: t('bridgeStrongest'), requests: 12 });
+
+  const sections = [
+    section(M.s1h, M.s1p, embedLive('.search-wrap') + embedLive('#surpriseBtn')),
+    section(M.s2h, M.s2p,
+      embedLive('#legendBtn') + embedLive('#citeLinkCtl') +
+      '<div class="d-title" style="margin-top:10px">' + esc('Attention Is All You Need') + '</div>' +
+      '<div class="d-row mono">2017 · ' + esc(tf('citedCount', { n: 118000 })) + '</div>' +
+      '<div style="text-align:right"><button class="btn" style="font-size:0.6875rem; padding:4px 8px">' + esc(t('copy')) + '</button> ' +
+      '<button class="btn" style="font-size:0.6875rem; padding:4px 8px">' + esc(t('cite')) + '</button></div>' +
+      '<div id="rebuildBtns" style="margin-top:8px"><button class="btn">' + esc(t('rebuildGraph')) + '</button>' +
+      '<button class="btn">' + esc(t('undoStep')) + '</button></div>'),
+    section(M.s3h, M.s3p, (gtClone ? gtClone.outerHTML : '') + embedLive('#langCtl') + embedLive('#paletteCtl')),
+    section(M.s4h, M.s4p, graphToolsScope(embedLive('#filterSection'))),
+    section(M.s5h, M.s5p,
+      embedLive('#tabs', { remove: ['#graphCtls'] }) +
+      '<div class="paper-row"><div class="res-title">Attention Is All You Need</div>' +
+      '<div class="res-meta">2017 · ' + esc(tf('citedCount', { n: 118000 })) + '</div></div>'),
+    section(M.s6h, M.s6p, quantumDemoHtml()),
+    section(M.s7h, M.s7p, embedLive('#bridgeToggleBtn') + readoutClone.innerHTML),
+    section(M.s8h, M.s8p,
+      embedLive('#graphCtls') + embedLive('#promptPanel') + embedLive('#citePanel', { unhide: ['#citeScope option[value="route"]'] })),
+    section(M.s9h, M.s9p, netBar + embedLive('#legendBtn'))
+  ].join('');
+
+  return '<!doctype html><html lang="' + esc(lang) + '" data-palette="' + esc(palette) + '"><head><meta charset="utf-8">' +
+    '<title>' + esc(t('manualHeading')) + ' · GraphPapers</title>' + fontLink + styleTag +
+    '<style>' +
+      'body{overflow:auto; padding:24px; max-width:760px; margin:0 auto}' +
+      'h1{font-size:1.3rem; margin-bottom:4px}' +
+      '.man-body{padding:4px 0 20px}' +
+      '.man-body ul{margin:0; padding-left:20px; max-width:640px}' +
+      '.man-body li{font-size:0.8125rem; line-height:1.7; color:var(--muted); margin-bottom:4px}' +
+      'details{border-top:1px solid var(--rule); padding:12px 0}' +
+      'summary{font-family:\'Geist Mono\',monospace; font-size:0.75rem; text-transform:uppercase; letter-spacing:0.1em; cursor:pointer; color:var(--ink)}' +
+      '#graphTools:hover{background:var(--paper)}' +
+    '</style></head><body>' +
+    '<h1>GraphPapers — ' + esc(t('manualHeading')) + '</h1>' +
+    sections +
+    '</body></html>';
+}
+
+// static manual: also the tour's fallback (reducedMotion, narrow screens, or "read the manual
+// instead" from the tour chooser) -- both are driven by the very same MANUAL_I18N strings, so
+// the two can't drift apart.
+function openStaticManual(){
+  const html = buildManualHTML();
+  let win = null;
+  try { win = window.open('', '_blank'); } catch (e) { win = null; }
+  if (win) {
+    win.document.open(); win.document.write(html); win.document.close();
+  } else {
+    document.getElementById('manualFrame').srcdoc = html;
+    document.getElementById('manualPanel').hidden = false;
+  }
+}
+document.getElementById('manualClose').onclick = () => { document.getElementById('manualPanel').hidden = true; };
+// narrow screens move #graphTools etc. into sheets the tour doesn't account for -- rather than
+// mispositioning a spotlight there, fall straight through to the static manual (same fallback
+// as reduced motion).
+document.getElementById('manualBtn').onclick = () => {
+  if (reducedMotion() || narrowScreen()) { openStaticManual(); return; }
+  openTourChooser();
+};
 
 // ---- search UI ----
 // shared by both the primary search box and the bridge's second one -- onChoose(work) does
@@ -4101,7 +4775,290 @@ document.getElementById('tabs').addEventListener('click', e => {
   if (tab !== 'graph') document.getElementById('legend').hidden = true;
   document.getElementById('refsView').hidden = tab !== 'refs';
   document.getElementById('citersView').hidden = tab !== 'citers';
+  if (tab === 'refs' && state.seed) ensureFullRefs();
 });
+
+// ---- guided tour ----
+// Anchors every step by CSS selector (or a small resolver function) and re-queries the DOM on
+// every animation frame rather than holding element references: renderGraph/renderDetail rebuild
+// large parts of the page from scratch, so a cached node would go stale under the tour's feet.
+// Completion is state-driven (state.seed, pinnedId, a panel's .hidden, a captured-then-compared
+// select value, ...) polled every frame -- not a timer, and the tour never calls .click() on the
+// control it is teaching. A one-time listener is also attached to whichever element is *currently*
+// resolved (re-attached whenever that identity changes), purely as a fast path for the couple of
+// steps (Copy/Download) that leave no other lasting trace to poll; the state check is what
+// actually decides completion everywhere else, so a stray unrelated click can't fake it.
+//
+// Spotlight is four independent dimming strips around the target's bounding rect, not one masked
+// rect: a hole cut by a mask still needs the browser to treat the masked-out area as unpainted for
+// hit-testing, which is inconsistent to rely on. Four strips leave the hole a literal DOM gap, so
+// the real control underneath is unambiguously clickable everywhere. The one accepted corner: a
+// multi-target step (e.g. "search or Surprise me") spotlights the union bounding box, which can
+// incidentally include an unrelated control sitting geometrically between the two (ponytail:
+// harmless -- the step's completion check doesn't care what else got clicked -- upgrade to a
+// multi-hole layout if that ever proves confusing).
+const tourTotalTried = () => { let n = 0; state.tried.forEach(s => { n += s.size; }); return n; };
+const tourGraphTab = () => {
+  const tab = document.querySelector('.tab[data-tab="graph"]');
+  if (tab && !tab.classList.contains('active')) tab.click();
+};
+const tourSeedNodeEl = () => {
+  if (!nodeSel || !state.seed) return [];
+  const sel = nodeSel.filter(d => d.id === state.seed.id);
+  return sel.empty() ? [] : [sel.node()];
+};
+// activation-time "capture a baseline, then watch for a change" factories -- called once when a
+// step becomes current; each returns the actual per-frame check.
+const tourValueWatch = (...sels) => () => {
+  const base = sels.map(s => { const el = document.querySelector(s); return el ? el.value : undefined; });
+  return () => sels.some((s, i) => { const el = document.querySelector(s); return el && el.value !== base[i]; });
+};
+const tourSeedChangeWatch = () => {
+  const id = state.seed && state.seed.id;
+  return () => !!state.seed && !!id && state.seed.id !== id;
+};
+const tourTrailWatch = () => {
+  const tl = state.trail.length, tt = tourTotalTried();
+  return () => state.trail.length !== tl || tourTotalTried() !== tt;
+};
+
+// sel: selector / array of selectors / resolver fn -- what gets spotlit. check: stateless
+// per-frame completion test. makeCheck: called once at activation for steps needing a captured
+// baseline (a select's value, the seed id) -- mutually exclusive with check. before: opens a
+// container the step needs (never the control the step itself teaches -- Bridge's own "open the
+// bar" step has no before, since pressing that button IS the taught action). Neither check nor
+// makeCheck: completion falls back to the fast-path click/change/input flag alone (Copy/Download,
+// which leave nothing else to poll). manual:true: no completion test, just a Next button.
+const TOUR_TRACKS = {
+  basics: [
+    { sel: ['#searchInput', '#surpriseBtn', '#dropdown'], before: tourGraphTab,
+      check: () => !!state.seed && !!nodeSel },
+    { sel: '#graphView', before: tourGraphTab, manual: true },
+    { sel: '#graphView', before: tourGraphTab, check: () => pinnedId != null },
+    { sel: '#storyBtn', check: () => !document.getElementById('promptPanel').hidden }
+  ],
+  quantum: [
+    { sel: ['#searchInput', '#surpriseBtn', '#dropdown'], before: tourGraphTab, check: () => !!state.seed },
+    { sel: tourSeedNodeEl, before: tourGraphTab,
+      check: () => !!(lastDetailWork && state.seed && lastDetailWork.id === state.seed.id && document.getElementById('quantumJumpBtn')) },
+    { sel: '#qFindBy', makeCheck: tourValueWatch('#qFindBy') },
+    { sel: '#qField', makeCheck: tourValueWatch('#qField') },
+    { sel: '#quantumJumpBtn', makeCheck: tourSeedChangeWatch },
+    { sel: ['#qClearTrail', '#qResetDraws'], makeCheck: tourTrailWatch },
+    { sel: '#quantumUndoBtn', makeCheck: tourSeedChangeWatch }
+  ],
+  bridge: [
+    { sel: ['#searchInput', '#surpriseBtn', '#dropdown'], before: tourGraphTab, check: () => !!state.seed },
+    { sel: '#bridgeToggleBtn', check: () => !document.getElementById('bridgeBar').hidden },
+    { sel: ['#searchInputB', '#surpriseBtn', '#dropdownB'], check: () => !!(state.bridge && state.bridge.b) },
+    { sel: '#bridgeMode', makeCheck: tourValueWatch('#bridgeMode') },
+    { sel: '#findBridgeBtn', check: () => !!(state.bridge && (state.bridge.route || state.bridge.noRoute || state.bridge.samePaper)) },
+    { sel: '#graphView', manual: true }
+  ],
+  exportT: [
+    { sel: ['#searchInput', '#surpriseBtn', '#dropdown'], before: tourGraphTab, check: () => !!state.seed },
+    { sel: '#citeToolbarBtn', check: () => !document.getElementById('citePanel').hidden },
+    { sel: ['#citeFormat', '#citeScope'], makeCheck: tourValueWatch('#citeFormat', '#citeScope') },
+    { sel: ['#citeCopy', '#citeDownload'] },
+    { sel: '#storyBtn', check: () => !document.getElementById('promptPanel').hidden },
+    { sel: ['#promptDepth', '#promptLang'], makeCheck: tourValueWatch('#promptDepth', '#promptLang') },
+    { sel: '#promptCopy' }
+  ]
+};
+const TOUR_OVERVIEW = {
+  basics: ['.search-wrap', '#graphView', '#detailPanel', '#storyBtn'],
+  quantum: ['#quantumJumpBtn', '#qFindBy', '#qClearTrail', '#quantumUndoBtn'],
+  bridge: ['#bridgeBar', '#findBridgeBtn', '#graphView'],
+  exportT: ['#citeToolbarBtn', '#storyBtn']
+};
+
+let tour = null;
+
+function tourResolve(sel){
+  if (typeof sel === 'function') { const r = sel(); return Array.isArray(r) ? r.filter(Boolean) : (r ? [r] : []); }
+  return (Array.isArray(sel) ? sel : [sel]).map(s => document.querySelector(s)).filter(Boolean);
+}
+function tourUnionRect(els){
+  const rects = els.map(e => e.getBoundingClientRect()).filter(r => r.width > 0 && r.height > 0);
+  if (!rects.length) return null;
+  const left = Math.min(...rects.map(r => r.left)), top = Math.min(...rects.map(r => r.top));
+  const right = Math.max(...rects.map(r => r.right)), bottom = Math.max(...rects.map(r => r.bottom));
+  return { left, top, right, bottom, width: right - left, height: bottom - top };
+}
+function tourSetRect(el, x, y, w, h){
+  el.style.left = x + 'px'; el.style.top = y + 'px';
+  el.style.width = Math.max(0, w) + 'px'; el.style.height = Math.max(0, h) + 'px';
+}
+function tourPositionHole(rect){
+  const pad = 6, vw = innerWidth, vh = innerHeight;
+  const x = Math.max(0, rect.left - pad), y = Math.max(0, rect.top - pad);
+  const w = rect.width + pad * 2, h = rect.height + pad * 2;
+  tourSetRect(document.getElementById('tourDimT'), 0, 0, vw, y);
+  tourSetRect(document.getElementById('tourDimB'), 0, y + h, vw, vh - (y + h));
+  tourSetRect(document.getElementById('tourDimL'), 0, y, x, h);
+  tourSetRect(document.getElementById('tourDimR'), x + w, y, vw - (x + w), h);
+  tourSetRect(document.getElementById('tourRing'), x, y, w, h);
+}
+function tourPositionCallout(rect){
+  const co = document.getElementById('tourCallout');
+  const margin = 14, vw = innerWidth, vh = innerHeight;
+  const cw = co.offsetWidth, ch = co.offsetHeight;
+  let x = rect.right + margin, y = rect.top;
+  if (x + cw > vw - 8) x = rect.left - margin - cw;
+  if (x < 8) {
+    x = Math.min(Math.max(8, rect.left), vw - cw - 8);
+    y = rect.bottom + margin;
+    if (y + ch > vh - 8) y = rect.top - margin - ch;
+  }
+  co.style.left = Math.min(Math.max(8, x), vw - cw - 8) + 'px';
+  co.style.top = Math.min(Math.max(8, y), vh - ch - 8) + 'px';
+}
+function tourPositionCalloutCenter(){
+  const co = document.getElementById('tourCallout');
+  co.style.left = ((innerWidth - co.offsetWidth) / 2) + 'px';
+  co.style.top = ((innerHeight - co.offsetHeight) / 2) + 'px';
+}
+function tourShowDim(show){
+  document.getElementById('tourDim').hidden = !show;
+  document.getElementById('tourRing').hidden = !show;
+}
+function tourAttachNudge(els){
+  els.forEach(el => {
+    if (tour.seen.has(el)) return;
+    tour.seen.add(el);
+    ['click', 'change', 'input', 'toggle'].forEach(evt => el.addEventListener(evt, () => { tour.flag = true; }, { once: true }));
+  });
+}
+function tourM(){ return MANUAL_I18N[lang] || MANUAL_I18N.en; }
+function tourCurrentStep(){ return TOUR_TRACKS[tour.track][tour.idx]; }
+function tourStepDone(step){
+  if (step.doneFn) return !!step.doneFn();
+  if (step.check) return !!step.check();
+  return !!tour.flag;
+}
+function tourRenderCallout(){
+  const M = tourM();
+  const steps = TOUR_TRACKS[tour.track];
+  document.getElementById('tourCalloutStep').textContent =
+    ptf(M.tour.stepOf, { i: tour.idx + 1, n: steps.length });
+  document.getElementById('tourCalloutBody').textContent = M.tour.steps[tour.track][tour.idx];
+  document.getElementById('tourSkipBtn').textContent = M.tour.skip;
+  document.getElementById('tourExitBtn').textContent = M.tour.exit;
+  const nextBtn = document.getElementById('tourNextBtn');
+  nextBtn.textContent = M.tour.next;
+  nextBtn.hidden = !tourCurrentStep().manual;
+}
+function tourActivateStep(){
+  const step = tourCurrentStep();
+  tour.flag = false;
+  tour.seen = new Set();
+  tour.missing = 0;
+  if (step.before) step.before();
+  step.doneFn = step.makeCheck ? step.makeCheck() : null;
+  tourRenderCallout();
+}
+function tourAdvance(){
+  tour.idx++;
+  const steps = TOUR_TRACKS[tour.track];
+  if (tour.idx >= steps.length) { tourShowOverview(); return; }
+  tourActivateStep();
+  // a precondition already satisfied (or a step whose action already happened) needs no showing
+  if (!steps[tour.idx].manual && tourStepDone(steps[tour.idx])) tourAdvance();
+}
+function tourTick(){
+  if (!tour || !tour.active) return;
+  if (tour.overview) { requestAnimationFrame(tourTick); return; }
+  const step = tourCurrentStep();
+  const targets = tourResolve(step.sel);
+  const rect = tourUnionRect(targets);
+  if (rect) {
+    tour.missing = 0;
+    tourShowDim(true);
+    tourPositionHole(rect);
+    tourPositionCallout(rect);
+    tourAttachNudge(targets);
+  } else {
+    tour.missing++;
+    tourShowDim(false);
+    tourPositionCalloutCenter();
+    // the target genuinely doesn't exist (or vanished mid-step, e.g. a re-render raced it) --
+    // don't trap the user waiting on a control that isn't there; move on after a brief grace
+    // period (long enough to survive a render race, short enough not to look stuck).
+    if (tour.missing > 90) { tourAdvance(); requestAnimationFrame(tourTick); return; }
+  }
+  if (!step.manual && tourStepDone(step)) tourAdvance();
+  requestAnimationFrame(tourTick);
+}
+function tourShowOverview(){
+  tour.overview = true;
+  tourShowDim(false);
+  document.getElementById('tourCallout').hidden = true;
+  const M = tourM();
+  const sels = TOUR_OVERVIEW[tour.track];
+  const labels = M.tour.overview[tour.track];
+  const layer = document.getElementById('tourOverviewLayer');
+  layer.innerHTML = '';
+  sels.forEach((sel, i) => {
+    const el = document.querySelector(sel);
+    if (!el) return;   // moved on, per the same "don't trap the user" rule as mid-tour steps
+    const r = el.getBoundingClientRect();
+    if (!r.width || !r.height) return;
+    const chip = document.createElement('div');
+    chip.className = 'tourOvLabel';
+    chip.textContent = labels[i];
+    let x = r.left, y = r.top - 26;
+    if (y < 4) y = r.bottom + 6;
+    chip.style.left = Math.max(4, Math.min(x, innerWidth - 160)) + 'px';
+    chip.style.top = y + 'px';
+    layer.appendChild(chip);
+  });
+  layer.hidden = false;
+  document.getElementById('tourOverviewTitle').textContent = M.tour.overviewTitle;
+  document.getElementById('tourOverviewHint').textContent = M.tour.overviewHint;
+  document.getElementById('tourOverviewFinish').textContent = M.tour.finish;
+  document.getElementById('tourOverviewBar').hidden = false;
+}
+function tourEnd(){
+  if (!tour) return;
+  tour.active = false;
+  document.getElementById('tourDim').hidden = true;
+  document.getElementById('tourRing').hidden = true;
+  document.getElementById('tourCallout').hidden = true;
+  document.getElementById('tourOverviewLayer').hidden = true;
+  document.getElementById('tourOverviewLayer').innerHTML = '';
+  document.getElementById('tourOverviewBar').hidden = true;
+  tour = null;
+}
+function tourStart(track){
+  document.getElementById('tourChooser').hidden = true;
+  tour = { track, idx: -1, active: true, overview: false, flag: false, seen: new Set(), missing: 0 };
+  document.getElementById('tourCallout').hidden = false;
+  tourAdvance();
+  requestAnimationFrame(tourTick);
+}
+document.getElementById('tourSkipBtn').onclick = () => tourAdvance();
+document.getElementById('tourNextBtn').onclick = () => tourAdvance();
+document.getElementById('tourExitBtn').onclick = () => tourEnd();
+document.getElementById('tourOverviewFinish').onclick = () => tourEnd();
+
+function openTourChooser(){
+  const M = tourM();
+  document.getElementById('tourChooserTitle').textContent = M.tour.title;
+  document.getElementById('tourChooserPick').textContent = M.tour.pick;
+  document.getElementById('tourPickBasics').textContent = M.tour.trackBasics;
+  document.getElementById('tourPickQuantum').textContent = M.tour.trackQuantum;
+  document.getElementById('tourPickBridge').textContent = M.tour.trackBridge;
+  document.getElementById('tourPickExport').textContent = M.tour.trackExport;
+  document.getElementById('tourUseManual').textContent = M.tour.useManual;
+  document.getElementById('tourChooserClose').textContent = t('close');
+  document.getElementById('tourChooser').hidden = false;
+}
+document.getElementById('tourPickBasics').onclick = () => tourStart('basics');
+document.getElementById('tourPickQuantum').onclick = () => tourStart('quantum');
+document.getElementById('tourPickBridge').onclick = () => tourStart('bridge');
+document.getElementById('tourPickExport').onclick = () => tourStart('exportT');
+document.getElementById('tourUseManual').onclick = () => { document.getElementById('tourChooser').hidden = true; openStaticManual(); };
+document.getElementById('tourChooserClose').onclick = () => { document.getElementById('tourChooser').hidden = true; };
 
 // ---- self test ----
 function selfTest(){
@@ -4498,8 +5455,29 @@ function selfTest(){
   const sn = splitName('Ashish Vaswani');
   assert('splitName splits on the last space', sn.family === 'Vaswani' && sn.given === 'Ashish');
 
+  // ---- guided tour data consistency (en/ko strings, and strings vs. the step tables) ----
+  {
+    ['s1', 's2', 's3', 's4', 's5', 's6', 's7', 's8', 's9'].forEach(s => {
+      assert('MANUAL_I18N.' + s + 'p: en/ko same length',
+        MANUAL_I18N.en[s + 'p'].length === MANUAL_I18N.ko[s + 'p'].length);
+    });
+    const enT = MANUAL_I18N.en.tour, koT = MANUAL_I18N.ko.tour;
+    assert('MANUAL_I18N.tour: en/ko have the same top-level keys',
+      JSON.stringify(Object.keys(enT).sort()) === JSON.stringify(Object.keys(koT).sort()));
+    Object.keys(TOUR_TRACKS).forEach(track => {
+      assert('MANUAL_I18N.tour.steps.' + track + ': en/ko same length',
+        enT.steps[track].length === koT.steps[track].length);
+      assert('MANUAL_I18N.tour.steps.' + track + ': matches TOUR_TRACKS step count',
+        enT.steps[track].length === TOUR_TRACKS[track].length);
+      assert('MANUAL_I18N.tour.overview.' + track + ': en/ko same length',
+        enT.overview[track].length === koT.overview[track].length);
+      assert('MANUAL_I18N.tour.overview.' + track + ': matches TOUR_OVERVIEW selector count',
+        enT.overview[track].length === TOUR_OVERVIEW[track].length);
+    });
+  }
+
   const out = document.createElement('pre');
-  out.style.cssText = 'font-family:monospace;font-size:12px;padding:16px;white-space:pre-wrap';
+  out.style.cssText = 'font-family:monospace;font-size:0.75rem;padding:16px;white-space:pre-wrap';
   const lines = results.map(r => (r.pass ? 'PASS' : 'FAIL') + ' — ' + r.name);
   out.textContent = lines.join('\n');
   document.body.appendChild(out);
