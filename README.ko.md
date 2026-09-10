@@ -9,7 +9,7 @@
 
 # GraphPapers
 
-**v0.12** · [브라우저에서 열기](https://oddthumb.github.io/GraphPapers/)
+**v0.12.1** · [브라우저에서 열기](https://oddthumb.github.io/GraphPapers/)
 
 무료 단일 파일 논문 그래프 도구입니다. 논문 하나를 입력하면 가장 관련도 높은 40편으로 그래프를 만들고 — 인용을 따라가는 것만으로는 갈 수 없는 곳까지 갑니다.
 

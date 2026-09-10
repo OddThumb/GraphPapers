@@ -9,7 +9,7 @@
 
 # GraphPapers
 
-**v0.12** · [Open it in a browser](https://oddthumb.github.io/GraphPapers/)
+**v0.12.1** · [Open it in a browser](https://oddthumb.github.io/GraphPapers/)
 
 A free, single-file paper-graph tool. Enter a paper, get a graph of the forty works most related to it — then go where following citations cannot take you.
 

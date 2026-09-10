@@ -452,6 +452,15 @@ a{color:var(--link)}
 
 /* must stay last: these override rules declared further down the sheet */
 @media (max-width: 760px){
+  /* 1.5x is a desktop preference. On a 393px phone it wrapped the header to four rows (220px of
+     a 852px screen) leaving almost no graph; phones already have the pixel density to read 1x. */
+  :root{--ui-scale:1}
+
+  /* the desktop rule pads 13.75rem on the left so the text clears #graphTools; on a phone that
+     panel lives behind #toolsBtn, so there is nothing to clear and 13.75rem (330px at --ui-scale
+     1.5) squeezed the text into a one-character column on a 393px screen */
+  #graphView > .status-line{padding:1.5rem}
+
   /* a strip under a full-height graph is unreadable, and you cannot scroll to it
      because dragging over the canvas pans the graph. Make it a bottom sheet. */
   #leftPanel{min-height:0; flex:1 1 auto; border-bottom:none}
@@ -493,7 +502,7 @@ a{color:var(--link)}
 </head>
 <body>
 <header>
-  <h1 id="titleBtn" data-i18n-attr="title:resetTitle" title="Start over">GraphPapers</h1><span id="version">v0.12</span>
+  <h1 id="titleBtn" data-i18n-attr="title:resetTitle" title="Start over">GraphPapers</h1><span id="version">v0.12.1</span>
   <div class="search-wrap">
     <input id="searchInput" type="text" data-i18n-attr="placeholder:searchPlaceholder" placeholder="Search by title, DOI, or OpenAlex ID">
     <div id="dropdown" hidden></div>
@@ -754,7 +763,7 @@ a{color:var(--link)}
 </dialog>
 
 <script>
-const APP_VERSION = 'v0.12';
+const APP_VERSION = 'v0.12.1';
 const API = 'https://api.openalex.org';
 const MAILTO = 'astrphscst@gmail.com';
 const bare = id => (id || '').replace(/^https?:\/\/openalex\.org\//, '');
@@ -2119,6 +2128,12 @@ function ringBurst(groupSel, cx, cy, r, count){
   }
 }
 let nodeSel, linkSel, gridSel, graphW = 800, graphH = 600, tlScale = null;
+// d3's default wheelDelta scales the raw deltaY, but a notch is worth 1 on some mice and 120 on
+// others, so a small-delta mouse zooms by 1.0014x per notch -- indistinguishable from nothing,
+// until the OS adds acceleration and it lurches. Trackpad pinch never showed it because it sends
+// a stream of small deltas that accumulate. Treat a real wheel as a discrete step (sign only) and
+// leave pinch (ctrlKey) continuous, so every mouse behaves the same.
+const wheelStep = e => e.ctrlKey ? -e.deltaY * 0.01 : -Math.sign(e.deltaY) * 0.18;
 const cssVar = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
 const HOP_MIX = { 1: 1, 2: 0.70, 3: 0.46, 4: 0.28 };
 const hopColor = b => d3.interpolateLab(cssVar('--paper'), cssVar('--accent'))(HOP_MIX[b] || 0.28);
@@ -2283,7 +2298,7 @@ function renderGraph(nodes, edges, seedId){
   arrivalPending = false;
   if (isArrival) g.style('opacity', 0);   // revealed once the graph is fully built, at the end of this function
   gridSel = svg.insert('g', () => g.node()).attr('class', 'year-grid');   // outside g: unaffected by zoom
-  svg.call(d3.zoom().scaleExtent([0.2, 4]).on('zoom', e => {
+  svg.call(d3.zoom().scaleExtent([0.2, 4]).wheelDelta(wheelStep).on('zoom', e => {
     g.attr('transform', e.transform);
     zoomT = e.transform;
     layoutYearGrid();
@@ -2825,7 +2840,7 @@ function renderBridgeGraph(nodes, edges, aId, bId, route){
   gridSel = svg.insert('g', () => g.node()).attr('class', 'year-grid');
   zoomT = d3.zoomIdentity;
   gridRows = [];
-  svg.call(d3.zoom().scaleExtent([0.2, 4]).on('zoom', e => {
+  svg.call(d3.zoom().scaleExtent([0.2, 4]).wheelDelta(wheelStep).on('zoom', e => {
     g.attr('transform', e.transform);
     zoomT = e.transform;
     layoutYearGrid();
@@ -4465,99 +4480,28 @@ const MANUAL_I18N = {
   }
 };
 
-// clones a live element inert and un-positions it (the app's panels are position:absolute
-// overlays; embedded in a manual section they need to sit in normal document flow instead)
-function embedLive(selector, opts){
-  opts = opts || {};
-  const el = document.querySelector(selector);
-  if (!el) return '';
-  const c = el.cloneNode(true);
-  c.removeAttribute('hidden');
-  Object.assign(c.style, {
-    position: 'static', inset: 'auto', left: 'auto', right: 'auto', top: 'auto', bottom: 'auto',
-    zIndex: 'auto', maxHeight: 'none', maxWidth: 'none',
-    backdropFilter: 'none', WebkitBackdropFilter: 'none', margin: '10px 0',
-    width: opts.width || ''
-  });
-  (opts.unhide || []).forEach(s => { const n = c.querySelector(s); if (n) n.removeAttribute('hidden'); });
-  (opts.enable || []).forEach(s => { const n = c.querySelector(s); if (n) n.removeAttribute('disabled'); });
-  (opts.remove || []).forEach(s => { const n = c.querySelector(s); if (n) n.remove(); });
-  return c.outerHTML;
-}
-
-// #filterSection's inputs/selects are only styled through the "#graphTools input, #graphTools
-// select" descendant rules, so a standalone copy needs a synthetic ancestor carrying that id.
-function graphToolsScope(innerHTML){
-  return '<div id="graphTools" style="position:static; display:flex; flex-direction:column; gap:8px; ' +
-    'background:var(--paper); border:1px solid var(--rule); border-radius:6px; padding:0.75rem; margin:10px 0; max-width:17.5rem">' +
-    innerHTML + '</div>';
-}
-
-// Quantum Jump's block is generated by the app's own quantumBlockHtml() (zero drift), then
-// tweaked to show the ideas-route chips, which are hidden until that route is selected.
-function quantumDemoHtml(){
-  const wrap = document.createElement('div');
-  wrap.innerHTML = quantumBlockHtml();
-  const sel = wrap.querySelector('#qFindBy');
-  if (sel) sel.value = 'ideas';
-  const chips = wrap.querySelector('#qIdeasChips');
-  if (chips) {
-    chips.hidden = false;
-    chips.innerHTML = ['Diffusion models', 'Transformer architectures', 'Self-supervised learning']
-      .map((label, i) => '<button type="button" class="qt-chip' + (i < 2 ? ' selected' : '') + '">' + esc(label) + '</button>')
-      .join('');
-  }
-  return wrap.innerHTML;
-}
-
+// static manual: prose only. Earlier versions embedded live clones of the app's own controls
+// (search box, buttons, the layout panel) plus a fabricated "Attention Is All You Need" detail
+// block with working-looking Copy/Cite/Rebuild buttons -- on a phone, in a separate tab with no
+// surrounding context, that read as a real but broken app screen, and the citation count was
+// fabricated data in a document about how to read real data. The guided tour (which spotlights
+// the actual controls in place) replaced the reason those clones existed, so they're gone; this
+// now just renders each section's heading and bullet list.
 function buildManualHTML(){
   const M = MANUAL_I18N[lang] || MANUAL_I18N.en;
   const palette = document.documentElement.dataset.palette || 'editorial';
   const styleTag = document.querySelector('style').outerHTML;
   const fontLink = document.querySelector('link[rel="stylesheet"]').outerHTML;
 
-  const section = (heading, items, controlsHtml) =>
+  const section = (heading, items) =>
     '<details open><summary>' + esc(heading) + '</summary><div class="man-body">' +
       '<ul>' + items.map(p => '<li>' + esc(p) + '</li>').join('') + '</ul>' +
-      (controlsHtml || '') +
     '</div></details>';
 
-  const gt = document.getElementById('graphTools');
-  const gtClone = gt ? gt.cloneNode(true) : null;
-  if (gtClone) {
-    ['#filterSection', '#citeLinkCtl'].forEach(s => { const n = gtClone.querySelector(s); if (n) n.remove(); });
-    gtClone.removeAttribute('hidden');
-    Object.assign(gtClone.style, { position: 'static', maxHeight: 'none', maxWidth: '17.5rem',
-      backdropFilter: 'none', WebkitBackdropFilter: 'none', margin: '10px 0' });
-  }
-
-  const netBar = embedLive('#netBar');
-  const readoutClone = document.createElement('div');
-  readoutClone.innerHTML = embedLive('#bridgeBar', { enable: ['#bridgeMode', '#findBridgeBtn'] });
-  const readoutSpan = readoutClone.querySelector('#bridgeReadout');
-  if (readoutSpan) readoutSpan.textContent = tf('bridgeReadout', { distance: 3, mode: t('bridgeStrongest'), requests: 12 });
-
   const sections = [
-    section(M.s1h, M.s1p, embedLive('.search-wrap') + embedLive('#surpriseBtn')),
-    section(M.s2h, M.s2p,
-      embedLive('#legendBtn') + embedLive('#citeLinkCtl') +
-      '<div class="d-title" style="margin-top:10px">' + esc('Attention Is All You Need') + '</div>' +
-      '<div class="d-row mono">2017 · ' + esc(tf('citedCount', { n: 118000 })) + '</div>' +
-      '<div style="text-align:right"><button class="btn" style="font-size:0.6875rem; padding:4px 8px">' + esc(t('copy')) + '</button> ' +
-      '<button class="btn" style="font-size:0.6875rem; padding:4px 8px">' + esc(t('cite')) + '</button></div>' +
-      '<div id="rebuildBtns" style="margin-top:8px"><button class="btn">' + esc(t('rebuildGraph')) + '</button>' +
-      '<button class="btn">' + esc(t('undoStep')) + '</button></div>'),
-    section(M.s3h, M.s3p, (gtClone ? gtClone.outerHTML : '') + embedLive('#langCtl') + embedLive('#paletteCtl')),
-    section(M.s4h, M.s4p, graphToolsScope(embedLive('#filterSection'))),
-    section(M.s5h, M.s5p,
-      embedLive('#tabs', { remove: ['#graphCtls'] }) +
-      '<div class="paper-row"><div class="res-title">Attention Is All You Need</div>' +
-      '<div class="res-meta">2017 · ' + esc(tf('citedCount', { n: 118000 })) + '</div></div>'),
-    section(M.s6h, M.s6p, quantumDemoHtml()),
-    section(M.s7h, M.s7p, embedLive('#bridgeToggleBtn') + readoutClone.innerHTML),
-    section(M.s8h, M.s8p,
-      embedLive('#graphCtls') + embedLive('#promptPanel') + embedLive('#citePanel', { unhide: ['#citeScope option[value="route"]'] })),
-    section(M.s9h, M.s9p, netBar + embedLive('#legendBtn'))
+    section(M.s1h, M.s1p), section(M.s2h, M.s2p), section(M.s3h, M.s3p),
+    section(M.s4h, M.s4p), section(M.s5h, M.s5p), section(M.s6h, M.s6p),
+    section(M.s7h, M.s7p), section(M.s8h, M.s8p), section(M.s9h, M.s9p)
   ].join('');
 
   return '<!doctype html><html lang="' + esc(lang) + '" data-palette="' + esc(palette) + '"><head><meta charset="utf-8">' +
@@ -4570,7 +4514,6 @@ function buildManualHTML(){
       '.man-body li{font-size:0.8125rem; line-height:1.7; color:var(--muted); margin-bottom:4px}' +
       'details{border-top:1px solid var(--rule); padding:12px 0}' +
       'summary{font-family:\'Geist Mono\',monospace; font-size:0.75rem; text-transform:uppercase; letter-spacing:0.1em; cursor:pointer; color:var(--ink)}' +
-      '#graphTools:hover{background:var(--paper)}' +
     '</style></head><body>' +
     '<h1>GraphPapers — ' + esc(t('manualHeading')) + '</h1>' +
     sections +
