@@ -28,9 +28,10 @@
 :root[data-palette="ink"]{
   --paper:#ffffff; --paper-2:#f2f2f2; --ink:#1a1a1a; --muted:#555555;
   --soft:#888888; --rule:rgba(0,0,0,0.12); --rule-solid:#cccccc;
-  /* hsl(218,82%,38%) -- same hue and lightness as the old #1e4fa3, saturation 69% -> 82% */
-  --accent:#114cb0; --accent-tint:rgba(17,76,176,0.08); --link:#0f6f6b;
-  --accent-strong:rgba(17,76,176,0.50);
+  /* hsl(214,100%,38%) -- zero red channel, so nothing pulls the blue toward violet; lightness
+     held at 38% (the same as the earlier #1e4fa3) by raising blue rather than just dropping red */
+  --accent:#0054c2; --accent-tint:rgba(0,84,194,0.08); --link:#0f6f6b;
+  --accent-strong:rgba(0,84,194,0.50);
   --ramp-lo:#cccccc; --ramp-hi:#333333;
 }
 :root[data-palette="noir"]{
@@ -119,7 +120,9 @@ header{
 #findBridgeBtn:disabled{color:var(--soft); cursor:default}
 #bridgeReadout{white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
 main{flex:1; display:flex; overflow:hidden; min-height:0}
-#leftPanel{flex:0 0 68%; display:flex; flex-direction:column; border-right:1px solid var(--rule); min-width:0}
+/* the only flex child of `main` now -- #detailPanel moved into #content as an overlay (see its own
+   rule), so the graph area gets the full width instead of a fixed 68% split. */
+#leftPanel{flex:1; display:flex; flex-direction:column; min-width:0}
 #tabs{display:flex; gap:20px; padding:0 16px; border-bottom:1px solid var(--rule); flex:0 0 auto}
 .tab{
   background:none; border:none; padding:10px 2px; font:inherit; color:var(--muted);
@@ -133,15 +136,22 @@ main{flex:1; display:flex; overflow:hidden; min-height:0}
 #showCiteLinks{accent-color:var(--muted); cursor:pointer}
 #graphCtls{margin-left:auto; display:flex; align-items:center; gap:16px; padding-right:4px}
 #graphTools{
-  position:absolute; left:12px; top:12px; z-index:5; width:11.875rem;
-  max-height:calc(100% - 1.5rem); overflow-y:auto;
+  /* same top and bottom as #detailPanel so the two read as a matched pair; 44px clears the
+     camera/?/i button row that sits at top:12px on the right. overflow:visible (not auto) --
+     .panel-handle straddles this box's edge and must not be clipped by it; the actual scrolling
+     happens one level in, on .panel-body. */
+  position:absolute; left:12px; top:44px; bottom:12px; z-index:5; width:11.875rem;
+  overflow:visible;
   background:var(--paper);
   background:color-mix(in srgb, var(--paper) 65%, transparent);
   backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px);
   border:1px solid var(--rule); border-radius:6px;
-  padding:0.75rem; display:flex; flex-direction:column; gap:8px;
 }
 #graphTools:hover{background:color-mix(in srgb, var(--paper) 96%, transparent)}
+/* the panel's actual content lives in here, sized to the panel and independently scrollable --
+   kept as a separate box from #graphTools itself so that one can stay overflow:visible for the
+   edge-straddling handle while this one still clips/scrolls the long controls list. */
+#graphTools .panel-body{height:100%; overflow-y:auto; padding:0.75rem; display:flex; flex-direction:column; gap:8px}
 #graphTools[hidden]{display:none}
 .gt-head{margin:0; font-family:'Geist Mono',monospace; font-size:0.5625rem; text-transform:uppercase;
   letter-spacing:0.18em; color:var(--soft)}
@@ -245,6 +255,15 @@ main{flex:1; display:flex; overflow:hidden; min-height:0}
   line-height:1; cursor:pointer; padding:0;
 }
 #manualBtn:hover{background:var(--paper-2); color:var(--ink)}
+#cameraBtn{
+  position:absolute; right:76px; top:12px; z-index:5; width:24px; height:24px;
+  border:1px solid var(--rule-solid); border-radius:50%; background:var(--paper);
+  color:var(--muted); line-height:1; cursor:pointer; padding:0;
+  display:flex; align-items:center; justify-content:center;
+}
+#cameraBtn:hover{background:var(--paper-2); color:var(--ink)}
+#cameraBtn:disabled{opacity:0.4; cursor:default; background:var(--paper); color:var(--muted)}
+#cameraBtn svg{width:14px; height:14px}
 #manualPanel{
   position:absolute; inset:12px; z-index:7; background:var(--paper);
   border:1px solid var(--rule-solid); border-radius:6px;
@@ -319,9 +338,12 @@ main{flex:1; display:flex; overflow:hidden; min-height:0}
 }
 #tourOverviewBar p{margin:0; font-size:0.75rem; color:var(--muted); text-align:center}
 #tourOverviewBtns{display:flex; justify-content:center}
+/* Above #detailPanel and #graphTools (both z-index 5) and the legend/manual: these are transient
+   -- you open one, copy or download, and close it -- so nothing should sit over them while open.
+   Still below the guided tour's overlay (8010+), which must dim everything including these. */
 #promptPanel, #citePanel{
   position:absolute; left:0; right:0; bottom:0; height:52%; background:var(--paper);
-  border-top:1px solid var(--rule-solid); display:flex; flex-direction:column; z-index:5;
+  border-top:1px solid var(--rule-solid); display:flex; flex-direction:column; z-index:8;
 }
 #promptPanel[hidden], #citePanel[hidden]{display:none}
 #promptHead, #citeHead{display:flex; align-items:center; gap:16px; padding:0.5rem 1rem; border-bottom:1px solid var(--rule)}
@@ -340,10 +362,38 @@ main{flex:1; display:flex; overflow:hidden; min-height:0}
 #graphView svg{width:100%; height:100%}
 .listView{position:absolute; inset:0; overflow:auto; padding:8px 16px}
 .listView[hidden]{display:none}
+/* #detailPanel became an overlay, so on the list tabs it now floats over the rows instead of
+   sitting beside them as a column. Inset the lists by its width so nothing is covered, and drop
+   the inset when it is collapsed to its handle. Desktop only -- on a phone the panel is a sheet. */
+@media (min-width: 761px){
+  #content:not(.dp-off) .listView{padding-right:calc(23.75rem + 24px)}
+  #content.dp-off .listView{padding-right:42px}   /* 14px handle + its 12px offset + a gap */
+}
 .paper-row{padding:10px 0; border-bottom:1px solid var(--rule); cursor:pointer}
 .paper-row:hover{background:var(--paper-2)}
 .paper-row .res-title{font-size:0.8125rem; margin-bottom:2px}
-#detailPanel{flex:0 0 32%; padding:1rem; overflow:auto; min-width:0}
+/* an overlay over the graph's right side, the same treatment as #graphTools (left side) -- inset
+   below the ?/i/camera buttons (top:12px, 24px tall) rather than shifting them, the same way
+   #legend already insets to top:44px to clear that row. #leftPanel is now full width (see its own
+   rule) since this no longer takes flex space out of `main`. */
+#detailPanel{
+  position:absolute; right:12px; top:44px; bottom:12px; z-index:5; width:23.75rem;
+  max-width:calc(100% - 24px); overflow:visible;
+  background:var(--paper);
+  background:color-mix(in srgb, var(--paper) 65%, transparent);
+  backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px);
+  border:1px solid var(--rule); border-radius:6px;
+  min-width:0;
+  /* overflow:visible (not auto) -- .panel-handle straddles this box's edge and must not be
+     clipped by it; the actual scrolling/wrapping happens one level in, on .panel-body. */
+}
+#detailPanel:hover{background:color-mix(in srgb, var(--paper) 96%, transparent)}
+#detailPanel .panel-body{
+  height:100%; overflow-y:auto; padding:1rem;
+  /* a DOI is one unbreakable token, and it was wide enough to force a horizontal scrollbar on the
+     whole panel. Let long tokens break instead -- a wrapped URL beats a scrollbar nobody wants. */
+  overflow-x:hidden; overflow-wrap:anywhere;
+}
 .eyebrow{font-family:'Geist Mono',monospace; font-size:0.5625rem; text-transform:uppercase; letter-spacing:0.18em; color:var(--soft); margin:0 0 6px}
 /* Hangul goes muddy at 8px Geist Mono; Korean labels switch register instead of shrinking */
 :root[lang="ko"] .eyebrow, :root[lang="ko"] #langCtl span, :root[lang="ko"] #paletteCtl span,
@@ -412,6 +462,15 @@ a{color:var(--link)}
   font-family:'Geist Mono',monospace; font-size:0.6875rem; color:var(--soft); line-height:1.5;
 }
 #freshness{cursor:help}
+/* remaining-quota readout: a thin bar (fill tracks --accent, so it recolours with the palette)
+   plus a bare count; the full sentence moves into the bar's title tooltip. Below 60 remaining the
+   count (not the bar, which is always accent-filled) turns --accent -- the same low-quota colour
+   cue the old inline sentence used, just relocated onto the smaller readout. */
+#quotaBar{display:inline-flex; align-items:center; gap:6px; cursor:help; margin-top:2px}
+#quotaTrack{position:relative; display:inline-block; width:4rem; height:3px; border-radius:2px; background:var(--rule); overflow:hidden; vertical-align:middle}
+#quotaFill{position:absolute; left:0; top:0; bottom:0; background:var(--accent); border-radius:2px}
+#quotaCount{font-family:'Geist Mono',monospace; font-size:0.5625rem; color:var(--soft)}
+#quotaCount.low{color:var(--accent)}
 #credit{margin-top:4px; padding-top:4px; border-top:1px solid var(--rule)}
 #credit a{color:var(--soft); text-decoration:none}
 #credit a:hover{color:var(--muted); text-decoration:underline}
@@ -449,6 +508,61 @@ a{color:var(--link)}
 .tc-item{font-size:0.6875rem; margin:2px 0}
 .tc-more{font-size:0.625rem; color:var(--soft); margin:4px 0 0}
 .trail-badge-text{font-family:'Geist Mono',monospace; font-size:0.5625rem}
+.hnd-icon{stroke:currentColor; stroke-width:1.4; stroke-linecap:round; fill:none}
+.hnd-icon circle{fill:currentColor; stroke:none}
+
+/* ---- desktop-only panel collapse: a hairline handle along each panel's inner edge (the edge
+   facing the graph). Gated to width>760px so it can never leave a phone user (who gets #toolsBtn
+   and the detailPanel sheet instead) with an unreachable panel -- see the trailing mobile block,
+   which stays authoritative there regardless of these classes. Both #graphTools and #detailPanel
+   are absolute overlays inside #content (not flex siblings), so collapsing either one never
+   changes the graph container's measured size -- it's already full width/height underneath them. */
+@media (min-width: 761px){
+  /* Expanded: a small square arrow button straddling the panel's inner edge (the edge facing the
+     graph), vertically centred -- the Overleaf placement. Half of it hangs off the panel onto the
+     graph canvas on purpose (top:50%/translateY, not top:0/bottom:0 -- that was the full-height
+     strip this replaces); same order of size as the corner buttons (#legendBtn etc, 24px/1rem
+     square). Solid --paper background (no blur) so it stays legible sitting over graph nodes/edges. */
+  .panel-handle{
+    position:absolute; top:50%; transform:translateY(-50%); width:1rem; height:1rem; border-radius:4px;
+    background:var(--paper); border:1px solid var(--rule-solid);
+    padding:0; cursor:pointer; z-index:6;
+    display:flex; align-items:center; justify-content:center;
+    color:var(--soft); font-family:'Geist Mono',monospace; font-size:11px; line-height:1;
+  }
+  .panel-handle:hover{border-color:var(--accent); color:var(--accent)}
+  /* the chevron points where the panel will go. Negative inset = roughly half the button's own
+     width sits outside the panel, over the graph -- not flush inside it (that put it over the
+     panel's own heading/eyebrow text). */
+  #toolsHandle{right:-0.5rem}
+  #toolsHandle::after{content:'\2039'}
+  #detailHandle{left:-0.5rem}
+  #detailHandle::after{content:'\203A'}
+  /* collapsed swaps the chevron for the icon/label below -- same #id specificity as the ::after
+     rules above (a class-only override would lose to them regardless of source order) */
+  #graphTools.gt-collapsed #toolsHandle::after, #detailPanel.dp-collapsed #detailHandle::after{content:none}
+  /* the arrow-button's icon/label children (below) only make sense on the collapsed tab */
+  .panel-handle .hnd-icon, .panel-handle .hnd-tab-label{display:none}
+
+  /* Collapsed: the panel becomes a small tab, not a bare strip -- explicit width AND height (never
+     `bottom:12px`'s full band) so it can't sit as a tall invisible blocker over the graph, and never
+     relies on display:none siblings for sizing (that zeroed a top:0/bottom:0 handle's height once
+     already). The handle itself becomes the tab: static in flow, filling it, no chevron. */
+  #graphTools.gt-collapsed, #detailPanel.dp-collapsed{
+    bottom:auto; padding:0; overflow:visible; display:block; width:auto; height:auto;
+  }
+  #graphTools.gt-collapsed > *:not(#toolsHandle), #detailPanel.dp-collapsed > *:not(#detailHandle){display:none}
+  .gt-collapsed .panel-handle, .dp-collapsed .panel-handle{
+    position:static; width:2.25rem; height:2.25rem; border-radius:6px;
+    top:auto; right:auto; left:auto; transform:none;
+  }
+  .gt-collapsed .panel-handle .hnd-icon{display:block; color:var(--muted)}
+  .dp-collapsed .panel-handle{width:auto; padding:0 0.75rem; white-space:nowrap}
+  .dp-collapsed .panel-handle .hnd-tab-label{
+    display:inline; font-family:'Geist','Noto Sans KR','Apple SD Gothic Neo',sans-serif;
+    font-size:0.6875rem; font-weight:500; color:var(--muted); text-transform:none;
+  }
+}
 
 /* must stay last: these override rules declared further down the sheet */
 @media (max-width: 760px){
@@ -464,13 +578,19 @@ a{color:var(--link)}
   /* a strip under a full-height graph is unreadable, and you cannot scroll to it
      because dragging over the canvas pans the graph. Make it a bottom sheet. */
   #leftPanel{min-height:0; flex:1 1 auto; border-bottom:none}
+  /* full reset of the desktop overlay rule's properties -- position, top, max-width, border and
+     backdrop-filter all get their own mobile values here rather than leaking through */
   #detailPanel{
-    position:fixed; left:0; right:0; bottom:0; z-index:30;
-    width:100%; max-height:82vh; overflow-y:auto;
-    padding:1rem 0.75rem 1.5rem; background:var(--paper);
-    border-top:1px solid var(--rule-solid); border-radius:10px 10px 0 0;
+    position:fixed; left:0; right:0; top:auto; bottom:0; z-index:30;
+    width:100%; max-width:none; max-height:82vh; overflow-y:auto;
+    background:var(--paper);
+    border:none; border-top:1px solid var(--rule-solid); border-radius:10px 10px 0 0;
+    backdrop-filter:none; -webkit-backdrop-filter:none;
     transform:translateY(100%); transition:transform 0.18s ease;
   }
+  /* the desktop rule's .panel-body padding is 1rem all round; the mobile sheet wants its own
+     (no left/right frame to match, extra room at the bottom) -- same override this rule always did */
+  #detailPanel .panel-body{padding:1rem 0.75rem 1.5rem; height:auto; overflow-y:visible}
   #detailPanel.open{transform:translateY(0)}
   #sheetClose{
     display:block; position:absolute; right:8px; top:8px; width:32px; height:32px;
@@ -480,6 +600,12 @@ a{color:var(--link)}
   /* a tap fires mouseenter, so the hover card would stick; the sheet replaces it */
   #hoverCard{display:none !important}
   #colophon{text-align:left}
+
+  /* the collapse handles are a desktop affordance (#graphTools/#detailPanel already have their
+     own mobile mechanisms -- #toolsBtn and the slide-up sheet) -- hide them outright so a stale
+     gt-collapsed/dp-collapsed class from a resized desktop window can never strand a phone user */
+  #toolsHandle, #detailHandle{display:none}
+  #cameraBtn{width:32px; height:32px; right:92px}
 
   /* let the toolbar drop to its own row instead of being clipped by the tab strip */
   #tabs{flex-wrap:wrap}
@@ -502,7 +628,7 @@ a{color:var(--link)}
 </head>
 <body>
 <header>
-  <h1 id="titleBtn" data-i18n-attr="title:resetTitle" title="Start over">GraphPapers</h1><span id="version">v0.12.1</span>
+  <h1 id="titleBtn" data-i18n-attr="title:resetTitle" title="Start over">GraphPapers</h1><span id="version">v1.0</span>
   <div class="search-wrap">
     <input id="searchInput" type="text" data-i18n-attr="placeholder:searchPlaceholder" placeholder="Search by title, DOI, or OpenAlex ID">
     <div id="dropdown" hidden></div>
@@ -566,6 +692,14 @@ a{color:var(--link)}
       <div id="citersView" class="listView" hidden></div>
       <button id="toolsBtn" data-i18n-attr="title:graphControls,aria-label:graphControls" title="Graph controls" aria-label="Graph controls">≡</button>
       <div id="graphTools">
+        <button id="toolsHandle" class="panel-handle" data-i18n-attr="title:collapsePanel,aria-label:collapsePanel" title="Collapse panel" aria-label="Collapse panel">
+          <svg class="hnd-icon" viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">
+            <line x1="2" y1="4" x2="14" y2="4"></line><circle cx="6" cy="4" r="1.6"></circle>
+            <line x1="2" y1="8" x2="14" y2="8"></line><circle cx="10" cy="8" r="1.6"></circle>
+            <line x1="2" y1="12" x2="14" y2="12"></line><circle cx="5" cy="12" r="1.6"></circle>
+          </svg>
+        </button>
+        <div class="panel-body">
         <p class="gt-head" data-i18n="layout">Layout</p>
         <div id="layoutCtl">
           <button class="layoutBtn active" data-layout="force" data-i18n="layoutForce">Free</button>
@@ -610,9 +744,13 @@ a{color:var(--link)}
         <label id="oaCtl"><input id="fOA" type="checkbox"><span data-i18n="oaOnly">OA only</span></label>
         <div class="gt-foot"><span class="mono" id="fCount"></span><button class="btn" id="fReset" data-i18n="reset">Reset</button></div>
         </div>
+        </div>
       </div>
       <button id="legendBtn" data-i18n-attr="title:legendBtnTitle,aria-label:legend" title="What the graph shows" aria-label="Legend">i</button>
       <button id="manualBtn" data-i18n-attr="title:manualBtnTitle,aria-label:manualBtn" title="How to use GraphPapers" aria-label="Manual">?</button>
+      <button id="cameraBtn" data-i18n-attr="title:cameraBtnTitle,aria-label:cameraBtnTitle" title="Save graph as image" aria-label="Save graph as image" disabled>
+        <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M5.5 2a1 1 0 0 0-.9.55L4.1 3.5H2.5A1.5 1.5 0 0 0 1 5v7a1.5 1.5 0 0 0 1.5 1.5h11A1.5 1.5 0 0 0 15 12V5a1.5 1.5 0 0 0-1.5-1.5h-1.6l-.5-.95A1 1 0 0 0 10.5 2h-5zM8 6.25a2.75 2.75 0 1 1 0 5.5 2.75 2.75 0 0 1 0-5.5z"/></svg>
+      </button>
       <div id="manualPanel" hidden>
         <div id="manualHead">
           <span class="eyebrow" style="margin:0" data-i18n="manualHeading">Manual</span>
@@ -735,20 +873,25 @@ a{color:var(--link)}
         </div>
         <textarea id="citeText" readonly spellcheck="false"></textarea>
       </div>
+      <div id="detailPanel">
+        <button id="detailHandle" class="panel-handle" data-i18n-attr="title:collapsePanel,aria-label:collapsePanel" title="Collapse panel" aria-label="Collapse panel">
+          <span class="hnd-tab-label" data-i18n="detail">Detail</span>
+        </button>
+        <div class="panel-body">
+        <button id="sheetClose" data-i18n-attr="aria-label:closeDetails" aria-label="Close details">&times;</button>
+        <p class="eyebrow" data-i18n="detail">Detail</p>
+        <div id="detailBody" class="status-line" data-i18n="detailEmpty">Search for a paper to begin.</div>
+        <div id="colophon">
+          <div id="freshness" data-i18n-attr="title:freshnessTitle" title="No local cache — every lookup is fetched live from OpenAlex"></div>
+          <div id="credit">Sangin Kim · <a href="mailto:kimsanginn@gmail.com">kimsanginn@gmail.com</a><br>
+            Sehwan Cheon · <a href="mailto:thousandsh2@gmail.com">thousandsh2@gmail.com</a><br>
+            <a href="https://github.com/OddThumb/GraphPapers" target="_blank" rel="noopener">github.com/OddThumb/GraphPapers</a><br>
+            <button id="ackBtn" data-i18n="ack">Acknowledgements</button><br>
+            &copy; 2026 Sangin Kim, Sehwan Cheon &middot; MIT License</div>
+        </div>
+        </div>
+      </div>
     </div>
-  </div>
-  <div id="detailPanel">
-    <button id="sheetClose" data-i18n-attr="aria-label:closeDetails" aria-label="Close details">&times;</button>
-    <p class="eyebrow" data-i18n="detail">Detail</p>
-    <div id="detailBody" class="status-line" data-i18n="detailEmpty">Search for a paper to begin.</div>
-  <div id="colophon">
-    <div id="freshness" data-i18n-attr="title:freshnessTitle" title="No local cache — every lookup is fetched live from OpenAlex"></div>
-    <div id="credit">Sangin Kim · <a href="mailto:kimsanginn@gmail.com">kimsanginn@gmail.com</a><br>
-      Sehwan Cheon · <a href="mailto:thousandsh2@gmail.com">thousandsh2@gmail.com</a><br>
-      <a href="https://github.com/OddThumb/GraphPapers" target="_blank" rel="noopener">github.com/OddThumb/GraphPapers</a><br>
-      <button id="ackBtn" data-i18n="ack">Acknowledgements</button><br>
-      &copy; 2026 Sangin Kim, Sehwan Cheon &middot; MIT License</div>
-  </div>
   </div>
 </main>
 
@@ -763,7 +906,7 @@ a{color:var(--link)}
 </dialog>
 
 <script>
-const APP_VERSION = 'v0.12.1';
+const APP_VERSION = 'v1.0';
 const API = 'https://api.openalex.org';
 const MAILTO = 'astrphscst@gmail.com';
 const bare = id => (id || '').replace(/^https?:\/\/openalex\.org\//, '');
@@ -782,7 +925,8 @@ const I18N = {
     storyBtn: 'Story prompt', exportCitations: 'Export citations',
     graphEmpty: 'Search for a paper above to build a graph, or press Surprise me.',
     graphEmptyHint: 'New here? Find the ? Manual button next to the legend icon, or take the guided tour.',
-    graphControls: 'Graph controls',
+    graphControls: 'Graph controls', collapsePanel: 'Collapse panel', expandPanel: 'Expand panel',
+    cameraBtnTitle: 'Save graph as image',
     layout: 'Layout', layoutForce: 'Free', layoutTimeline: 'Timeline',
     spacing: 'Spacing', reshuffle: 'Reshuffle',
     advanced: 'Advanced', linkDistance: 'Link distance', pull: 'Pull', push: 'Push',
@@ -844,7 +988,7 @@ const I18N = {
     ackBody: 'GraphPapers is a small open project. Ideas, bug reports, and pull requests are all welcome — contributors will be credited here.',
     freshnessTitle: 'No local cache — every lookup is fetched live from OpenAlex',
     freshnessLine: 'OpenAlex · live fetch · {ts}', recordUpdated: 'Record updated: {date}',
-    quotaLine: 'Your daily OpenAlex quota: {left} of {total} left · resets in {reset}',
+    quotaLine: "Today's remaining OpenAlex requests, resets in {reset}",
     bridgeToggle: 'Bridge to another paper', bridgeToggleTitle: 'Compare with a second paper and find the route between them',
     bridgeSearchPlaceholder: 'Search for a second paper',
     bridgeModeLabel: 'Bridge', bridgeFewest: 'Fewest steps', bridgeStrongest: 'Strongest link',
@@ -857,7 +1001,8 @@ const I18N = {
     bridgeUnresolved: 'Record could not be retrieved',
     bridgeUnresolvedExplain: 'This bridge-route hop is real, but OpenAlex returned no data for this id, so no title, authors or abstract are available.',
     bridgeStepLabel: 'step {i} of {n}',
-    bridgeSearchStep: 'Searching, step {n}…'
+    bridgeSearchStep: 'Searching, step {n}…',
+    weakLink: 'Weak link -- no shared citers or references found.'
   },
   ko: {
     uiLanguage: '언어', palette: '팔레트', paletteSystem: '시스템', paletteEditorial: '에디토리얼',
@@ -870,7 +1015,8 @@ const I18N = {
     storyBtn: '이야기 프롬프트', exportCitations: '인용 내보내기',
     graphEmpty: '위에서 논문을 검색하거나, 아무 논문이나 버튼을 눌러 보세요.',
     graphEmptyHint: '처음이신가요? 범례 아이콘 옆의 ? 설명서 버튼을 확인하거나, 가이드 투어를 시작해보세요.',
-    graphControls: '그래프 설정',
+    graphControls: '그래프 설정', collapsePanel: '패널 접기', expandPanel: '패널 펼치기',
+    cameraBtnTitle: '그래프를 이미지로 저장',
     layout: '배치', layoutForce: '자유', layoutTimeline: '연대순',
     spacing: '간격', reshuffle: '다시 배치',
     advanced: '고급', linkDistance: '연결 거리', pull: '당기는 힘', push: '미는 힘',
@@ -932,7 +1078,7 @@ const I18N = {
     ackBody: 'GraphPapers는 작은 오픈소스 프로젝트입니다. 아이디어, 버그 제보, 풀 리퀘스트를 환영하며 기여자는 이곳에 기록됩니다.',
     freshnessTitle: '로컬 캐시 없음 — 모든 조회는 OpenAlex에서 실시간으로 가져옵니다',
     freshnessLine: 'OpenAlex · 실시간 조회 · {ts}', recordUpdated: '레코드 업데이트: {date}',
-    quotaLine: '오늘 남은 OpenAlex 요청: {total}회 중 {left}회 · {reset} 후 초기화',
+    quotaLine: '오늘 남은 OpenAlex 요청, {reset} 후 초기화',
     bridgeToggle: '다른 논문과 연결하기', bridgeToggleTitle: '두 번째 논문을 비교하고 그 사이의 경로를 찾습니다',
     bridgeSearchPlaceholder: '두 번째 논문 검색',
     bridgeModeLabel: '연결 방식', bridgeFewest: '최단 경로', bridgeStrongest: '가장 강한 연결',
@@ -945,7 +1091,8 @@ const I18N = {
     bridgeUnresolved: '가져올 수 없는 기록',
     bridgeUnresolvedExplain: '이 경로 연결은 실제로 존재하지만, OpenAlex가 이 id에 대한 데이터를 반환하지 않아 제목·저자·초록을 확인할 수 없습니다.',
     bridgeStepLabel: '{n}단계 중 {i}단계',
-    bridgeSearchStep: '{n}단계 탐색 중…'
+    bridgeSearchStep: '{n}단계 탐색 중…',
+    weakLink: '약한 연결 -- 공유 인용자나 참고문헌이 없습니다.'
   }
 };
 let lang = 'en';
@@ -1638,13 +1785,16 @@ function untriedCandidates(seed, scorerPool, candidates, opts, tried){
 // papers, snapshotted at jump time. evidence: { coCite: {count, titles}, sharedRefs: {count, titles},
 // ideas: {keywords: [names]}, chain: {viaId, viaTitle, count} }. A section is omitted entirely when
 // it has no content, not printed as "0 shared references".
+// shared by trailCardHtml and edgeCardHtml: one evidence block (a header + up to 6 titles + an
+// "and N more"), or '' when the count is 0 -- never prints "0 shared references".
+function evidenceSectionHtml(headerFor, ev){
+  if (!ev || !ev.count) return '';
+  const items = ev.titles.map(title => '<div class="tc-item">· ' + esc(title) + '</div>').join('');
+  const more = ev.count > ev.titles.length ? '<div class="tc-more">' + tf('andMore', { n: ev.count - ev.titles.length }) + '</div>' : '';
+  return '<div class="tc-section"><p class="eyebrow" style="margin:0 0 4px">' + headerFor(ev.count) + '</p>' + items + more + '</div>';
+}
+
 function trailCardHtml(evidence, fromTitle){
-  const section = (headerFor, ev) => {
-    if (!ev || !ev.count) return '';
-    const items = ev.titles.map(title => '<div class="tc-item">· ' + esc(title) + '</div>').join('');
-    const more = ev.count > ev.titles.length ? '<div class="tc-more">' + tf('andMore', { n: ev.count - ev.titles.length }) + '</div>' : '';
-    return '<div class="tc-section"><p class="eyebrow" style="margin:0 0 4px">' + headerFor(ev.count) + '</p>' + items + more + '</div>';
-  };
   const chainSection = ev => {
     if (!ev) return '';
     return '<div class="tc-section"><p class="eyebrow" style="margin:0 0 4px">' + tf('chainVia', { title: esc(ev.viaTitle || t('untitled')) }) + '</p>' +
@@ -1654,10 +1804,43 @@ function trailCardHtml(evidence, fromTitle){
     ? { count: evidence.ideas.keywords.length, titles: evidence.ideas.keywords } : null;
   return '<p class="eyebrow" style="margin:0 0 4px">' + esc(t('jumpedFrom')) + '</p>' +
     '<div class="tc-title">' + esc(fromTitle || t('untitled')) + '</div>' +
-    section(n => tf('citeBothCount', { n }), evidence && evidence.coCite) +
-    section(n => tf('sharedRefCount', { n }), evidence && evidence.sharedRefs) +
-    section(n => tf('sharedKeywordCount', { n }), ideasEv) +
+    evidenceSectionHtml(n => tf('citeBothCount', { n }), evidence && evidence.coCite) +
+    evidenceSectionHtml(n => tf('sharedRefCount', { n }), evidence && evidence.sharedRefs) +
+    evidenceSectionHtml(n => tf('sharedKeywordCount', { n }), ideasEv) +
     chainSection(evidence && evidence.chain);
+}
+
+// pure: the "who cites both / what do they both cite" evidence for an arbitrary similarity-graph
+// edge (a, b are the edge's live node objects -- referenced_works is already on hand, no Rmap/Cmap
+// rebuild needed). Titles are resolved against `pool` (state.pool: seed + its full references +
+// its citers) -- a referenced id outside that set has no title to show and is filtered out, same
+// as the quantum-jump 'cocite' branch above.
+function edgeEvidence(a, b, pool){
+  const aRefs = new Set(a.referenced_works || []);
+  const bRefs = b.referenced_works || [];
+  const sharedRefIds = bRefs.filter(id => aRefs.has(id));
+  const bothCite = pool.filter(w => w.id !== a.id && w.id !== b.id &&
+    (w.referenced_works || []).includes(a.id) && (w.referenced_works || []).includes(b.id));
+  const titleOf = new Map(pool.map(w => [w.id, w.display_name]));
+  return {
+    coCite: { count: bothCite.length, titles: bothCite.slice(0, 6).map(w => w.display_name).filter(Boolean) },
+    sharedRefs: { count: sharedRefIds.length, titles: sharedRefIds.map(id => titleOf.get(id)).filter(Boolean).slice(0, 6) }
+  };
+}
+
+// pure: the hover card for a similarity-graph edge. Same evidence markup as trailCardHtml's
+// sections (no "jumped from" framing -- this is a pair, not a jump), plus an honest fallback for a
+// link with neither shared citers nor shared references: every node links to its 3 nearest
+// neighbours, so the weakest of the three can be nearly score-free. An empty card would look like
+// a bug, so this says plainly that the link is weak instead of rendering nothing.
+function edgeCardHtml(aTitle, bTitle, evidence){
+  const weak = !evidence.coCite.count && !evidence.sharedRefs.count;
+  return '<div class="tc-title">' + esc(aTitle || t('untitled')) + '</div>' +
+    '<p class="eyebrow" style="margin:-2px 0 4px">↔</p>' +
+    '<div class="tc-title" style="margin-top:0">' + esc(bTitle || t('untitled')) + '</div>' +
+    (weak ? '<p class="tc-more" style="margin-top:8px">' + esc(t('weakLink')) + '</p>' :
+      evidenceSectionHtml(n => tf('citeBothCount', { n }), evidence.coCite) +
+      evidenceSectionHtml(n => tf('sharedRefCount', { n }), evidence.sharedRefs));
 }
 
 function reconstructAbstract(inv){
@@ -2069,8 +2252,13 @@ function updateFreshness(){
   if (quota.remaining != null && quota.limit != null) {
     const mins = quota.resetAt ? Math.max(0, Math.round((quota.resetAt - Date.now()) / 60000)) : null;
     const inWords = mins == null ? '' : (mins >= 60 ? Math.floor(mins / 60) + 'h ' + (mins % 60) + 'm' : mins + 'm');
-    q = '<br><span' + (quota.remaining < 60 ? ' style="color:var(--accent)"' : '') + '>' +
-        esc(tf('quotaLine', { left: quota.remaining, total: quota.limit, reset: inWords })) + '</span>';
+    const limit = quota.limit || 1;   // guard divide-by-zero on a missing/zero limit
+    const pct = Math.max(0, Math.min(100, (quota.remaining / limit) * 100));
+    const low = quota.remaining < 60;   // same low-quota threshold the old inline sentence used
+    q = '<br><div id="quotaBar" title="' + esc(tf('quotaLine', { reset: inWords })) + '">' +
+          '<span id="quotaTrack"><span id="quotaFill" style="width:' + pct + '%"></span></span>' +
+          '<span id="quotaCount"' + (low ? ' class="low"' : '') + '>' + quota.remaining + ' / ' + quota.limit + '</span>' +
+        '</div>';
   }
   freshnessEl.innerHTML = tf('freshnessLine', { ts }) + '<br>' +
     tf('recordUpdated', { date: state.seed ? state.seed.updated_date : '-' }) + q;
@@ -2085,6 +2273,10 @@ const FORCE_DEFAULTS = { distance: 0.4, pull: 0.5, push: 1.5, gap: 10 };
 let forceParams = { ...FORCE_DEFAULTS };
 let citeGroupSel = null, labelSel = null, zoomT = d3.zoomIdentity, gridRows = [];
 let trailLayerSel = null, trailHitSel = null, trailBadgeSel = null, zoomG = null, arrivalPending = false;
+// dwell timer for the similarity-edge hover card (renderGraph's link-hit layer) -- module-level so
+// a rerender (loadAndBuildGraph rebuilding the whole graph) can cancel one left pending mid-dwell.
+let edgeHoverTimer = null;
+const cancelEdgeHover = () => { if (edgeHoverTimer) { clearTimeout(edgeHoverTimer); edgeHoverTimer = null; } };
 const narrowScreen = () => window.matchMedia('(max-width: 760px)').matches;
 const reducedMotion = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
 // labels cannot move out of each other's way when y is pinned to the year
@@ -2136,7 +2328,10 @@ let nodeSel, linkSel, gridSel, graphW = 800, graphH = 600, tlScale = null;
 const wheelStep = e => e.ctrlKey ? -e.deltaY * 0.01 : -Math.sign(e.deltaY) * 0.18;
 const cssVar = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
 const HOP_MIX = { 1: 1, 2: 0.70, 3: 0.46, 4: 0.28 };
-const hopColor = b => d3.interpolateLab(cssVar('--paper'), cssVar('--accent'))(HOP_MIX[b] || 0.28);
+// HCL, not Lab: interpolating white -> blue in Lab bows through a positive a* (magenta), which
+// is what made the faint hop edges read as lavender even after the accent lost its red.
+// HCL holds the accent's hue and only drops chroma and lightness toward the paper.
+const hopColor = b => d3.interpolateHcl(cssVar('--paper'), cssVar('--accent'))(HOP_MIX[b] || 0.28);
 // every paper on the trail is a seed; the ring fades from accent (current seed, i=0) toward
 // paper the further back along the path it sits, same paper->accent mix the hop colours use.
 const ringColor = i => d3.interpolateLab(cssVar('--paper'), cssVar('--accent'))(Math.max(0.25, 1 - i * 0.28));
@@ -2339,6 +2534,32 @@ function renderGraph(nodes, edges, seedId){
     .attr('stroke-opacity', d => Math.min(0.95, 0.45 + d.sim * 0.5))
     .attr('marker-end', d => d.dir ? 'url(#arrow-h' + d.hopB + ')' : null);
 
+  // invisible fat hit-line under each similarity edge -- the visible line is 1.5-3.5px (stroke-
+  // width above), far too thin to hover reliably. Appended right after `link`, still well before
+  // the node group below, so a node always wins the hit test where the two overlap (SVG paints/
+  // hit-tests in document order; nothing here changes that ordering).
+  const linkHit = g.append('g').attr('class', 'link-hit-layer').selectAll('line').data(edges).join('line')
+    .attr('stroke', 'transparent').attr('stroke-width', 10)
+    .style('pointer-events', 'stroke').style('cursor', 'pointer');
+  const showEdgeCard = (d, event) => {
+    hoverCard.innerHTML = edgeCardHtml(d.source.display_name, d.target.display_name, edgeEvidence(d.source, d.target, state.pool || []));
+    hoverCard.hidden = false;
+    positionHoverCard(event);
+  };
+  let edgeHoverEvt = null;   // latest pointer position while dwelling, so the card lands where the pointer ended up, not where it entered
+  linkHit
+    .on('mouseenter', (e, d) => {
+      cancelEdgeHover();
+      if (isNarrow()) return;
+      edgeHoverEvt = e;
+      edgeHoverTimer = setTimeout(() => { edgeHoverTimer = null; showEdgeCard(d, edgeHoverEvt); }, 300);
+    })
+    .on('mousemove', e => {
+      edgeHoverEvt = e;
+      if (!isNarrow() && !hoverCard.hidden) positionHoverCard(e);
+    })
+    .on('mouseleave', () => { cancelEdgeHover(); if (!isNarrow()) hoverCard.hidden = true; });
+
   // quantum-jump trail: a dashed overlay above the similarity links, below the nodes. Each edge
   // also carries an invisible fat hit-line (for hover/tap) and a count badge at its midpoint.
   const trailData = (state.trailEdges || []).map(t => Object.assign({}, t));
@@ -2485,6 +2706,10 @@ function renderGraph(nodes, edges, seedId){
         this.setAttribute('x1', x1); this.setAttribute('y1', y1);
         this.setAttribute('x2', x2); this.setAttribute('y2', y2);
       });
+      linkHit.each(function(d){
+        this.setAttribute('x1', d.source.x); this.setAttribute('y1', d.source.y);
+        this.setAttribute('x2', d.target.x); this.setAttribute('y2', d.target.y);
+      });
       if (layoutMode === 'timeline') {
         pinTimelineY(nodes);
         for (const n of nodes) n.x = Math.max(n.r + 4, Math.min(graphW - n.r - 4, n.x));
@@ -2504,6 +2729,7 @@ function renderGraph(nodes, edges, seedId){
   updateLegendYears();
   drawYearGrid(nodes);
   applySpacing();
+  document.getElementById('cameraBtn').disabled = false;
 
   // quantum-jump arrival: fade the graph in, draw the newest trail edge, ring the new seed once
   if (isArrival) {
@@ -2938,6 +3164,7 @@ function renderBridgeGraph(nodes, edges, aId, bId, route){
   drawYearGrid(nodes);
   applyBridgeSpacing();
   syncGraphToolsForView();
+  document.getElementById('cameraBtn').disabled = false;
 
   return new Map(nodes.map(n => [n.id, n]));
 }
@@ -3127,6 +3354,7 @@ function resetApp(){
   state.jumpPool = new Map(); state.trailEvidence = new Map();
   state.sourceImpact = new Map(); state.fetchedAt = null;
   pinnedId = null; nodeSel = linkSel = labelSel = citeGroupSel = citeLayerSel = null;
+  document.getElementById('cameraBtn').disabled = true;
   stopRingLoop();
   bridgeSearchToken++;
   stopBridgeRings();
@@ -3607,6 +3835,42 @@ const isNarrow = () => window.matchMedia('(max-width: 760px)').matches;
 const openSheet = () => { if (isNarrow()) detailPanelEl.classList.add('open'); };
 document.getElementById('sheetClose').onclick = () => detailPanelEl.classList.remove('open');
 
+// re-measures the graph container and re-lays-out whichever graph is on screen, on an actual
+// window resize. #graphTools and #detailPanel are both absolute overlays (see their CSS) --
+// collapsing either never changes graphW/graphH, since the graph is already full width/height
+// underneath them, so the collapse toggles below do NOT call this (nothing for it to fix).
+function reflowGraph(){
+  const r = document.getElementById('graphView').getBoundingClientRect();
+  if (!r.width) return;
+  graphW = r.width; graphH = r.height;
+  if (isBridgeView()) { if (bridgeSim) { applyBridgeSpacing(); drawYearGrid(bridgeSim.nodes()); } }
+  else if (sim3) { applySpacing(); drawYearGrid(state.nodes); }
+}
+window.addEventListener('resize', reflowGraph);
+
+// ---- desktop-only panel collapse (see the CSS's @media (min-width: 761px) block) ----
+const toolsHandleEl = document.getElementById('toolsHandle'), detailHandleEl = document.getElementById('detailHandle');
+function setHandleLabel(handle, collapsed){
+  const key = collapsed ? 'expandPanel' : 'collapsePanel';
+  handle.setAttribute('data-i18n-attr', 'title:' + key + ',aria-label:' + key);
+  handle.title = t(key);
+  handle.setAttribute('aria-label', t(key));
+}
+function setToolsCollapsed(collapsed){
+  toolsEl.classList.toggle('gt-collapsed', collapsed);
+  setHandleLabel(toolsHandleEl, collapsed);
+  try { localStorage.setItem('gp-tools-collapsed', collapsed ? '1' : '0'); } catch (e) { /* private mode */ }
+}
+function setDetailCollapsed(collapsed){
+  detailPanelEl.classList.toggle('dp-collapsed', collapsed);
+  // the list tabs pad their right side to clear this overlay; drop that padding once it's a handle
+  document.getElementById('content').classList.toggle('dp-off', collapsed);
+  setHandleLabel(detailHandleEl, collapsed);
+  try { localStorage.setItem('gp-detail-collapsed', collapsed ? '1' : '0'); } catch (e) { /* private mode */ }
+}
+toolsHandleEl.onclick = () => setToolsCollapsed(!toolsEl.classList.contains('gt-collapsed'));
+detailHandleEl.onclick = () => setDetailCollapsed(!detailPanelEl.classList.contains('dp-collapsed'));
+// restored below, after applyLang() has run once, so setHandleLabel's t() calls have a language
 
 const legendEl = document.getElementById('legend');
 document.getElementById('legendBtn').onclick = e => { e.stopPropagation(); legendEl.hidden = !legendEl.hidden; };
@@ -3644,15 +3908,6 @@ document.getElementById('reshuffleBtn').onclick = () => {
   sim3.alpha(1).restart();
 };
 
-window.addEventListener('resize', () => {
-  const c = document.getElementById('graphView');
-  const r = c.getBoundingClientRect();
-  if (!r.width || !sim3) return;
-  graphW = r.width; graphH = r.height;
-  applySpacing();
-  drawYearGrid(state.nodes);
-});
-
 // ---- language ----
 const langSel = document.getElementById('uiLang');
 langSel.onchange = () => {
@@ -3670,6 +3925,15 @@ try {
 } catch (e) { /* private mode */ }
 langSel.value = lang;
 applyLang();   // before first paint, same as the palette below
+
+// panel collapse persists like palette/language above; skipped on a narrow screen so a phone
+// user can never load into an unreachable panel (mobile has its own #toolsBtn/sheet mechanisms)
+try {
+  if (!isNarrow() && localStorage.getItem('gp-tools-collapsed') === '1') setToolsCollapsed(true);
+  else setHandleLabel(toolsHandleEl, false);
+  if (!isNarrow() && localStorage.getItem('gp-detail-collapsed') === '1') setDetailCollapsed(true);
+  else setHandleLabel(detailHandleEl, false);
+} catch (e) { /* private mode */ }
 
 const SURPRISE_FILTER = 'referenced_works_count:>9,has_doi:true,type:article';
 
@@ -4091,8 +4355,10 @@ function refreshPrompt(){
 
 document.getElementById('storyBtn').onclick = () => {
   if (!state.seed) { setError(t('loadGraphFirst')); return; }
+  const panel = document.getElementById('promptPanel');
+  if (!panel.hidden) { panel.hidden = true; return; }   // pressing the button again closes it
   document.getElementById('citePanel').hidden = true;
-  document.getElementById('promptPanel').hidden = false;
+  panel.hidden = false;
   refreshPrompt();
 };
 document.getElementById('promptClose').onclick = () => { document.getElementById('promptPanel').hidden = true; };
@@ -4179,6 +4445,8 @@ function openCitePanel(scope, work){
 
 document.getElementById('citeToolbarBtn').onclick = () => {
   if (!state.seed) { setError(t('loadGraphFirst')); return; }
+  const panel = document.getElementById('citePanel');
+  if (!panel.hidden) { panel.hidden = true; return; }   // pressing the button again closes it
   openCitePanel(isBridgeView() ? (state.bridge.route ? 'route' : 'all') : 'visible');
 };
 document.getElementById('citeClose').onclick = () => { document.getElementById('citePanel').hidden = true; };
@@ -4201,6 +4469,135 @@ document.getElementById('citeDownload').onclick = () => {
   document.body.appendChild(a); a.click(); document.body.removeChild(a);
   URL.revokeObjectURL(url);
 };
+
+// ---- export graph as image (camera button) ----
+// Google Fonts (Geist/Geist Mono) are not embedded in the exported SVG -- an <img>-rendered SVG
+// is a standalone resource with no access to the page's stylesheet or its @font-face fetches, so
+// text falls back to a plain system stack instead.
+const EXPORT_SANS = "-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif";
+const EXPORT_MONO = 'ui-monospace,SFMono-Regular,Menlo,Consolas,monospace';
+
+const slugify = s => ((s || 'graph').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 60)) || 'graph';
+
+// tight bounding box, in layout space (i.e. before the live pan/zoom transform -- see below), of
+// every node's own <g>: each carries transform="translate(x,y)" plus its circle radius and label
+// text, so this IS "every node plus its label and radius" without re-deriving any of it by hand.
+// getBBox() on a node's own <g> reports its children in that group's UNTRANSFORMED space, so every
+// node returned a box around the origin and the union was one node wide -- which is how the export
+// came out blank. Ask the zoom group instead: its getBBox() is measured before its own transform is
+// applied, so it already spans every child's translate, i.e. exactly the layout extent, and it is
+// unaffected by the current pan/zoom (which lives on that same element).
+function computeNodesBBox(zoomGroup){
+  const g = zoomGroup && (zoomGroup.node ? zoomGroup.node() : zoomGroup);
+  if (!g) return { minX: Infinity, minY: Infinity, maxX: -Infinity, maxY: -Infinity };
+  const b = g.getBBox();
+  if (!b || !b.width || !b.height) return { minX: Infinity, minY: Infinity, maxX: -Infinity, maxY: -Infinity };
+  return { minX: b.x, minY: b.y, maxX: b.x + b.width, maxY: b.y + b.height };
+}
+
+async function saveImageBlob(blob, filename){
+  if (window.showSaveFilePicker) {
+    try {
+      const handle = await window.showSaveFilePicker({
+        suggestedName: filename,
+        types: [{ description: 'PNG image', accept: { 'image/png': ['.png'] } }]
+      });
+      const writable = await handle.createWritable();
+      await writable.write(blob);
+      await writable.close();
+      return 'picker';
+    } catch (e) {
+      if (e && e.name === 'AbortError') return 'cancelled';   // user closed the dialog
+      // anything else (not actually wired up, permission refused, ...) falls through to the anchor
+    }
+  }
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  return 'anchor';
+}
+
+async function exportGraphImage(){
+  const btn = document.getElementById('cameraBtn');
+  if (btn.disabled) return;
+  const bridge = isBridgeView();
+  const activeNodeSel = bridge ? bridgeNodeSel : nodeSel;
+  const svgEl = document.querySelector('#graphView > svg');
+  if (!activeNodeSel || !svgEl) return;
+
+  const margin = 24;
+  const box = computeNodesBBox(bridge ? bridgeZoomG : zoomG);
+  if (!isFinite(box.minX)) return;   // no nodes -- shouldn't happen while the button is enabled
+  const exportW = Math.max(1, Math.round(box.maxX - box.minX + margin * 2));
+  const exportH = Math.max(1, Math.round(box.maxY - box.minY + margin * 2));
+  const offsetX = margin - box.minX, offsetY = margin - box.minY;
+
+  const clone = svgEl.cloneNode(true);
+  clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+  clone.setAttribute('width', exportW);
+  clone.setAttribute('height', exportH);
+
+  // the zoom/content group has no class of its own -- it's whichever direct <g> child is NOT the
+  // year-grid group (the grid is inserted BEFORE it: svg.insert('g', () => g.node()), so it is not
+  // simply "the first <g>"). Shift it by the node bbox's own offset so the FULL layout -- not the
+  // current pan/zoom viewport -- fits the export; node positions relative to each other are untouched.
+  const zoomGroupClone = Array.from(clone.children).find(el => el.tagName === 'g' && !el.classList.contains('year-grid'));
+  if (zoomGroupClone) zoomGroupClone.setAttribute('transform', 'translate(' + offsetX + ',' + offsetY + ')');
+
+  // Timeline mode: re-lay the grid against the EXPORT's own width, not the live screen's, and
+  // drop the live view's off-screen culling -- otherwise gridlines stop at the old (screen) width
+  // and the year labels (pinned to that old right edge) strand mid-canvas on a wider export.
+  const gridClone = clone.querySelector('.year-grid');
+  if (gridClone && layoutMode === 'timeline' && gridRows.length){
+    const rows = gridClone.children;   // line, plate, text per row, same order as gridRows (see drawYearGrid)
+    gridRows.forEach((row, i) => {
+      const y = row.y + offsetY;
+      const line = rows[i * 3], plate = rows[i * 3 + 1], text = rows[i * 3 + 2];
+      if (!line || !plate || !text) return;
+      line.setAttribute('x1', 0); line.setAttribute('x2', exportW);
+      line.setAttribute('y1', y); line.setAttribute('y2', y);
+      line.style.display = '';
+      plate.setAttribute('x', exportW - 38); plate.setAttribute('y', y - 13);
+      plate.style.display = '';
+      text.setAttribute('x', exportW - 8); text.setAttribute('y', y - 4);
+      text.style.display = '';
+    });
+  }
+
+  // node-label/year-grid text (and .dim) render through the page's stylesheet -- CSS custom
+  // properties and Google Fonts -- rather than baked SVG attributes, so inline the resolved values
+  // here or they're lost on serialisation. Node/link colours are already baked as attrs (see
+  // renderGraph/renderBridgeGraph) and need nothing.
+  const rootPx = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
+  const styleEl = document.createElementNS('http://www.w3.org/2000/svg', 'style');
+  styleEl.textContent =
+    '.node-label{font-size:' + (0.625 * rootPx).toFixed(2) + 'px; fill:' + cssVar('--ink') + '; font-family:' + EXPORT_SANS + '}' +
+    '.year-grid line{stroke:' + cssVar('--rule') + '}' +
+    '.year-grid text{font-family:' + EXPORT_MONO + '; font-size:' + (0.5 * rootPx).toFixed(2) + 'px; fill:' + cssVar('--soft') + '}' +
+    '.trail-badge-text{font-family:' + EXPORT_MONO + '; font-size:' + (0.5625 * rootPx).toFixed(2) + 'px}' +
+    '.dim{opacity:0.12}';
+  clone.insertBefore(styleEl, clone.firstChild);
+
+  const svgString = new XMLSerializer().serializeToString(clone);
+  const svgUrl = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svgString);
+
+  const img = new Image();
+  await new Promise((resolve, reject) => { img.onload = resolve; img.onerror = reject; img.src = svgUrl; });
+
+  const canvas = document.createElement('canvas');
+  canvas.width = exportW; canvas.height = exportH;
+  canvas.getContext('2d').drawImage(img, 0, 0, exportW, exportH);
+
+  const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+  if (!blob) return;
+
+  const titleSlug = slugify(state.seed && state.seed.display_name);
+  const dateStr = new Date().toISOString().slice(0, 10);
+  await saveImageBlob(blob, titleSlug + '-' + dateStr + '.png');
+}
+document.getElementById('cameraBtn').onclick = () => { exportGraphImage().catch(err => console.error('image export failed', err)); };
 
 document.getElementById('ackBtn').onclick = () => document.getElementById('ackDlg').showModal();
 document.getElementById('graphEmptyHint').onclick = openTourChooser;

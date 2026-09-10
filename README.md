@@ -9,7 +9,7 @@
 
 # GraphPapers
 
-**v0.12.1** · [Open it in a browser](https://oddthumb.github.io/GraphPapers/)
+**v1.0** · [Open it in a browser](https://oddthumb.github.io/GraphPapers/)
 
 A free, single-file paper-graph tool. Enter a paper, get a graph of the forty works most related to it — then go where following citations cannot take you.
 
@@ -202,6 +202,6 @@ Paper data from [OpenAlex](https://openalex.org). Graph layout by [d3](https://d
 
 Licensed under the [MIT License](LICENSE). Free to use, modify, and sell, provided the copyright notice is kept.
 
-Still 0.x: the shape of this changes often. 1.0 is reserved for when it has been used on a real manuscript and earned the right to stop moving.
+1.0 means the shape has settled, not that the work is finished. Everything described here has been used, not just built. What comes next is written above the line, not below it — a bibliography audit against your own `.bib`, and better answers to questions the citation record alone cannot settle.
 
 GraphPapers is an independent project. It is not affiliated with, endorsed by, or derived from the code or design of Connected Papers; the comparison in this document is descriptive only.
