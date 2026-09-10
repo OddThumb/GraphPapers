@@ -9,7 +9,7 @@
 
 # GraphPapers
 
-**v0.9.1** · [Open it in a browser](https://oddthumb.github.io/GraphPapers/)
+**v0.11** · [Open it in a browser](https://oddthumb.github.io/GraphPapers/)
 
 A free, single-file alternative to Connected Papers. Enter a paper, get a force-directed graph of about 40 works most related to it, then export a ready-made prompt that turns that graph into a narrative history — in your own LLM, at no cost.
 
@@ -87,6 +87,35 @@ Both are corrected for fame — a raw count of shared citations just returns whi
 
 Hover the trail to see why two papers were linked: the works that cite them both, or the references they share.
 
+### Bridge between two papers
+
+Quantum Jump leaves one conversation for another. **Bridge** asks the opposite question: given two particular papers, how are they connected at all?
+
+Press **Bridge to another paper**, then enter a second paper — or press **Surprise me** to draw one at random. The app searches outward from both papers at once and returns the chain of papers linking them, drawn as two clusters with the route running between.
+
+Two ways to choose the route, because "closest" has two meanings:
+
+| | It returns |
+|---|---|
+| **Fewest steps** | The shortest chain, counting papers |
+| **Strongest link** | The chain whose links are strongest, even when it is longer |
+
+Strongest link charges each step as 1/similarity and takes the cheapest total, so a long chain of tight links can beat a short chain of weak ones — while every step still costs something, so length is never free. Fewest steps is the same calculation with every step costing exactly 1.
+
+The search stops at five steps. If nothing is found by then, the two papers have no path through the citation record — which is an answer in itself.
+
+The route stays highlighted and everything else stays dimmed; that is the resting state, not a hover effect. Click any dimmed paper to bring it and its neighbours forward without losing the route. Route edges carry no arrowhead: each step's citation may point either way, so the path has no single direction.
+
+If the second paper is one the first already cites, the app says so — there is no intermediate paper to find, and both modes return the same answer.
+
+While it searches, a bundle of field lines runs between the two papers, blooming outward and then narrowing as the candidate routes narrow. It is driven by the search itself rather than a timer, so what you see is how much is still undecided.
+
+The left-hand control panel adapts: Layout, Spacing, Advanced and Reshuffle stay and act on the bridge graph, while the filters and the citation overlay are hidden — a filter that hid a paper on the route would remove the only thing this view exists to show.
+
+**Timeline** works here too, and shows more than it does on a single graph: year runs down the screen while the two papers keep their own sides, so you can see whether the route runs back through an older common ancestor or forward through recent work.
+
+**Export citations** gains a **Route only** scope — the intermediate papers are the evidence for the connection — alongside everything on screen. **Story prompt** switches too: instead of a chronological history it asks what each research line does not know about the other, why each intermediate paper ties to both, what question an actual link would pose, and — explicitly — whether the connection is spurious, so the model is invited to say no.
+
 ### Citation export
 
 **Export citations** writes the papers out as BibTeX, RIS, APA, MLA, or Chicago — one paper, everything the filters currently show, or all 40. Copy it, or download a `.bib` / `.ris` file and drag it straight into Zotero, EndNote, or Overleaf.
@@ -126,7 +155,7 @@ There is no local cache and no database. Every lookup goes straight to OpenAlex,
 
 The cost of that guarantee is that **the app needs an internet connection**. Without one it opens and renders, but cannot fetch papers, and says so.
 
-OpenAlex allows 1,000 requests a day, counted per IP address — your own, not shared with anyone else using GraphPapers. A graph costs four to eight requests and a Quantum Jump one to six, so the ceiling is somewhere above a hundred graphs a day and most people will never approach it. The bottom-right corner shows what you have left and when it resets, and turns the accent colour as it runs low, so the limit is visible before it is reached rather than arriving as an unexplained failure.
+OpenAlex allows 1,000 requests a day, counted per IP address — your own, not shared with anyone else using GraphPapers. A graph costs four to eight requests, a Quantum Jump one to six, and a bridge search six to twelve, so the ceiling is somewhere above a hundred graphs a day and most people will never approach it. The bottom-right corner shows what you have left and when it resets, and turns the accent colour as it runs low, so the limit is visible before it is reached rather than arriving as an unexplained failure.
 
 ---
 

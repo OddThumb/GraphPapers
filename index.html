@@ -68,6 +68,20 @@ header{
 #dropdown div:hover{background:var(--paper-2)}
 .res-title{font-size:12px}
 .res-meta{font-family:'Geist Mono',monospace; font-size:9px; color:var(--soft); letter-spacing:0.04em; margin-top:2px}
+#searchInputB{
+  width:100%; padding:8px 12px; border:1px solid var(--rule); border-radius:4px;
+  background:var(--paper); color:var(--ink); font:inherit;
+}
+#searchInputB:focus{outline:none; border-color:var(--soft)}
+#dropdownB{
+  position:absolute; top:calc(100% + 4px); left:0; right:0; background:var(--paper);
+  border:1px solid var(--rule); border-radius:6px; max-height:320px; overflow:auto; z-index:10;
+}
+#dropdownB div{padding:8px 12px; border-bottom:1px solid var(--rule); cursor:pointer}
+#dropdownB div:last-child{border-bottom:none}
+#dropdownB div:hover{background:var(--paper-2)}
+#bridgeToggleBtn{white-space:nowrap; font-size:12px; padding:6px 10px}
+#bridgeToggleBtn.active{border-color:var(--accent); color:var(--accent)}
 #surpriseBtn{white-space:nowrap; font-size:12px; padding:6px 10px}
 #statusLine{font-family:'Geist Mono',monospace; font-size:10px; color:var(--soft);
   letter-spacing:0.04em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
@@ -86,6 +100,20 @@ header{
   border-bottom:1px solid var(--accent); color:var(--ink); font-size:12px;
 }
 #netBar[hidden]{display:none}
+#bridgeBar{
+  flex:0 0 auto; display:flex; align-items:center; gap:16px; padding:8px 24px;
+  border-bottom:1px solid var(--rule); background:var(--paper-2);
+}
+#bridgeBar[hidden]{display:none}
+#bridgeModeCtl{display:flex; align-items:center; gap:8px}
+#bridgeModeCtl span{font-family:'Geist Mono',monospace; font-size:9px; text-transform:uppercase;
+  letter-spacing:0.18em; color:var(--soft)}
+#bridgeMode{font:inherit; font-size:11px; padding:4px 8px; border:1px solid var(--rule);
+  border-radius:4px; background:var(--paper); color:var(--ink); cursor:pointer}
+#bridgeMode:disabled{color:var(--soft); cursor:default}
+#findBridgeBtn{font-size:12px; padding:6px 10px}
+#findBridgeBtn:disabled{color:var(--soft); cursor:default}
+#bridgeReadout{white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
 main{flex:1; display:flex; overflow:hidden; min-height:0}
 #leftPanel{flex:0 0 68%; display:flex; flex-direction:column; border-right:1px solid var(--rule); min-width:0}
 #tabs{display:flex; gap:20px; padding:0 16px; border-bottom:1px solid var(--rule); flex:0 0 auto}
@@ -129,6 +157,10 @@ main{flex:1; display:flex; overflow:hidden; min-height:0}
   letter-spacing:0.14em; color:var(--soft)}
 #spacing{width:100%; accent-color:var(--muted); cursor:pointer}
 #citeLinkCtl, #oaCtl{display:flex; align-items:center; gap:6px; cursor:pointer}
+/* wraps the Filter section so bridge-view JS can hide it in one line; reproduces the
+   gt-head-not(:first-child) separator that wrapping this in a div would otherwise swallow */
+#filterSection{display:flex; flex-direction:column; gap:8px; margin-top:8px; padding-top:12px; border-top:1px solid var(--rule)}
+#filterSection .gt-head{margin-top:0; padding-top:0; border-top:none}
 #showCiteLinks, #fOA{accent-color:var(--muted); cursor:pointer}
 .gt-field{display:flex; flex-direction:column; gap:4px}
 .gt-pair{display:flex; gap:4px}
@@ -368,16 +400,22 @@ a{color:var(--link)}
   #promptHead .grow, #citeHead .grow{display:none}
   #promptHead .btn, #citeHead .btn{flex:1 1 0; min-width:76px}
   #promptHead label, #citeHead label{display:flex; flex-direction:column; gap:4px}
+
+  /* #searchWrapB now lives in #bridgeBar (a non-wrapping row); give it its own line like the
+     header's main .search-wrap does, instead of squeezing the mode select and Find bridge. */
+  #bridgeBar{flex-wrap:wrap; gap:8px 12px; padding:8px 12px}
+  #searchWrapB{order:0; flex:1 1 100%; max-width:none}
 }
 </style>
 </head>
 <body>
 <header>
-  <h1 id="titleBtn" data-i18n-attr="title:resetTitle" title="Start over">GraphPapers</h1><span id="version">v0.9.1</span>
+  <h1 id="titleBtn" data-i18n-attr="title:resetTitle" title="Start over">GraphPapers</h1><span id="version">v0.11</span>
   <div class="search-wrap">
     <input id="searchInput" type="text" data-i18n-attr="placeholder:searchPlaceholder" placeholder="Search by title, DOI, or OpenAlex ID">
     <div id="dropdown" hidden></div>
   </div>
+  <button class="btn" id="bridgeToggleBtn" data-i18n="bridgeToggle" data-i18n-attr="title:bridgeToggleTitle" title="Compare with a second paper and find the route between them">Bridge to another paper</button>
   <button class="btn" id="surpriseBtn" data-i18n="surprise">Surprise me</button>
   <span id="statusLine"></span>
   <label id="langCtl"><span data-i18n="uiLanguage">Language</span>
@@ -400,6 +438,20 @@ a{color:var(--link)}
     <svg viewBox="0 0 16 16" width="18" height="18" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
   </a>
 </header>
+<div id="bridgeBar" hidden>
+  <div class="search-wrap" id="searchWrapB">
+    <input id="searchInputB" type="text" data-i18n-attr="placeholder:bridgeSearchPlaceholder" placeholder="Search for a second paper">
+    <div id="dropdownB" hidden></div>
+  </div>
+  <label id="bridgeModeCtl"><span data-i18n="bridgeModeLabel">Bridge</span>
+    <select id="bridgeMode" disabled>
+      <option value="strongest" data-i18n="bridgeStrongest">Strongest link</option>
+      <option value="fewest" data-i18n="bridgeFewest">Fewest steps</option>
+    </select>
+  </label>
+  <button class="btn" id="findBridgeBtn" data-i18n="findBridgeBtn" disabled>Find bridge</button>
+  <span class="mono" id="bridgeReadout"></span>
+</div>
 <div id="netBar" hidden data-i18n="offlineBanner">Offline — GraphPapers needs an internet connection to fetch papers from OpenAlex.</div>
 <main>
   <div id="leftPanel">
@@ -446,6 +498,7 @@ a{color:var(--link)}
         <button class="btn" id="reshuffleBtn" data-i18n="reshuffle" data-i18n-attr="title:reshuffleTitle" title="Throw the nodes to new random positions and let the layout settle again">Reshuffle</button>
         <label id="citeLinkCtl" data-i18n-attr="title:citeLinksTitle" title="Graph edges are similarity links, not citations. Tick this to overlay every real citation between the papers on screen."><input type="checkbox" id="showCiteLinks"><span data-i18n="citeLinks">Citation links</span></label>
 
+        <div id="filterSection">
         <p class="gt-head" data-i18n="filter">Filter</p>
         <label class="gt-field"><span data-i18n="keyword">Keyword</span><input id="fKeyword" type="text"></label>
         <label class="gt-field"><span data-i18n="years">Years</span>
@@ -461,6 +514,7 @@ a{color:var(--link)}
         </label>
         <label id="oaCtl"><input id="fOA" type="checkbox"><span data-i18n="oaOnly">OA only</span></label>
         <div class="gt-foot"><span class="mono" id="fCount"></span><button class="btn" id="fReset" data-i18n="reset">Reset</button></div>
+        </div>
       </div>
       <button id="legendBtn" data-i18n-attr="title:legendBtnTitle,aria-label:legend" title="What the graph shows" aria-label="Legend">i</button>
       <div id="legend" hidden>
@@ -527,6 +581,7 @@ a{color:var(--link)}
           <label class="mono"><span data-i18n="scope">Scope</span>
             <select id="citeScope">
               <option value="single" data-i18n="scopeSingle">This paper</option>
+              <option value="route" data-i18n="scopeRoute" hidden>Route only</option>
               <option value="visible" data-i18n="scopeVisible">Visible papers</option>
               <option value="all" data-i18n="scopeAll">All 40 papers</option>
             </select>
@@ -567,7 +622,7 @@ a{color:var(--link)}
 </dialog>
 
 <script>
-const APP_VERSION = 'v0.9.1';
+const APP_VERSION = 'v0.11';
 const API = 'https://api.openalex.org';
 const MAILTO = 'astrphscst@gmail.com';
 const bare = id => (id || '').replace(/^https?:\/\/openalex\.org\//, '');
@@ -611,6 +666,7 @@ const I18N = {
     copy: 'Copy', close: 'Close', copied: 'Copied', pressCmdC: 'Press Cmd+C',
     promptCount: '{n} papers · {chars} chars',
     format: 'Format', scope: 'Scope', scopeSingle: 'This paper', scopeVisible: 'Visible papers',
+    scopeRoute: 'Route only', scopeAllBridge: 'Everything on screen',
     scopeAll: 'All 40 papers', citeCount: '{n} entries', download: 'Download',
     detail: 'Detail', detailEmpty: 'Search for a paper to begin.', closeDetails: 'Close details',
     noDOI: 'No DOI', readPdf: 'Read the free PDF →', noAbstract: 'No abstract', cite: 'Cite',
@@ -641,7 +697,18 @@ const I18N = {
     ackBody: 'GraphPapers is a small open project. Ideas, bug reports, and pull requests are all welcome — contributors will be credited here.',
     freshnessTitle: 'No local cache — every lookup is fetched live from OpenAlex',
     freshnessLine: 'OpenAlex · live fetch · {ts}', recordUpdated: 'Record updated: {date}',
-    quotaLine: 'Your daily OpenAlex quota: {left} of {total} left · resets in {reset}'
+    quotaLine: 'Your daily OpenAlex quota: {left} of {total} left · resets in {reset}',
+    bridgeToggle: 'Bridge to another paper', bridgeToggleTitle: 'Compare with a second paper and find the route between them',
+    bridgeSearchPlaceholder: 'Search for a second paper',
+    bridgeModeLabel: 'Bridge', bridgeFewest: 'Fewest steps', bridgeStrongest: 'Strongest link',
+    findBridgeBtn: 'Find bridge', findingBridge: 'Finding…',
+    bridgeSamePaper: 'That is the same paper.',
+    bridgeNoRoute: 'No route found within {n} steps.',
+    bridgeReadout: '{distance} step(s) · {mode} · {requests} request(s)',
+    bridgeDirect: 'These two papers are directly linked by a citation, so there is no intermediate paper -- both modes give the same answer.',
+    bridgeShorterRejected: 'A shorter, {n}-step route exists but was rejected as weaker.',
+    bridgeStepLabel: 'step {i} of {n}',
+    bridgeSearchStep: 'Searching, step {n}…'
   },
   ko: {
     uiLanguage: '언어', palette: '팔레트', paletteSystem: '시스템', paletteEditorial: '에디토리얼',
@@ -679,6 +746,7 @@ const I18N = {
     copy: '복사', close: '닫기', copied: '복사됨', pressCmdC: 'Cmd+C를 누르세요',
     promptCount: '{n}개 논문 · {chars}자',
     format: '형식', scope: '범위', scopeSingle: '이 논문', scopeVisible: '화면에 표시된 논문',
+    scopeRoute: '경로만', scopeAllBridge: '화면의 전체 논문',
     scopeAll: '전체 40개 논문', citeCount: '{n}개 항목', download: '다운로드',
     detail: '상세', detailEmpty: '시작하려면 논문을 검색하세요.', closeDetails: '상세 정보 닫기',
     noDOI: 'DOI 없음', readPdf: '무료 PDF로 읽기 →', noAbstract: '초록 없음', cite: '인용',
@@ -709,7 +777,18 @@ const I18N = {
     ackBody: 'GraphPapers는 작은 오픈소스 프로젝트입니다. 아이디어, 버그 제보, 풀 리퀘스트를 환영하며 기여자는 이곳에 기록됩니다.',
     freshnessTitle: '로컬 캐시 없음 — 모든 조회는 OpenAlex에서 실시간으로 가져옵니다',
     freshnessLine: 'OpenAlex · 실시간 조회 · {ts}', recordUpdated: '레코드 업데이트: {date}',
-    quotaLine: '오늘 남은 OpenAlex 요청: {total}회 중 {left}회 · {reset} 후 초기화'
+    quotaLine: '오늘 남은 OpenAlex 요청: {total}회 중 {left}회 · {reset} 후 초기화',
+    bridgeToggle: '다른 논문과 연결하기', bridgeToggleTitle: '두 번째 논문을 비교하고 그 사이의 경로를 찾습니다',
+    bridgeSearchPlaceholder: '두 번째 논문 검색',
+    bridgeModeLabel: '연결 방식', bridgeFewest: '최단 경로', bridgeStrongest: '가장 강한 연결',
+    findBridgeBtn: '연결 찾기', findingBridge: '찾는 중…',
+    bridgeSamePaper: '같은 논문입니다.',
+    bridgeNoRoute: '{n}단계 이내에서 경로를 찾지 못했습니다.',
+    bridgeReadout: '{distance}단계 · {mode} · 요청 {requests}회',
+    bridgeDirect: '두 논문은 인용으로 직접 연결되어 있어 중간 논문이 없습니다 -- 두 방식 모두 같은 답을 줍니다.',
+    bridgeShorterRejected: '더 짧은 {n}단계 경로가 있지만 더 약하다고 판단해 제외했습니다.',
+    bridgeStepLabel: '{n}단계 중 {i}단계',
+    bridgeSearchStep: '{n}단계 탐색 중…'
   }
 };
 let lang = 'en';
@@ -816,6 +895,19 @@ async function fetchRefs(refIds){
   return results.flat();
 }
 
+// bridge search: everyone who cites ANY of `ids`, in one batched request (OpenAlex ORs repeated
+// values pipe-joined on the SAME filter key -- unlike the AND behaviour of comma-joining different
+// keys that fetchIdeasWorks relies on). Same 2-chunk-of-50 safety cap as fetchRefs.
+async function fetchCitersOfMany(ids){
+  if (!ids.length) return [];
+  const chunks = chunk(ids, 50).slice(0, 2);
+  const results = await Promise.all(chunks.map(cids =>
+    fetchJSON(API + '/works?filter=cites:' + cids.join('|') + '&per-page=100&select=' + SELECT_WORK)
+      .then(d => (d.results || []).map(normalizeWork))
+  ));
+  return results.flat();
+}
+
 // bare source id of a work's primary-location journal, or undefined if none
 const nodeSourceId = w => w.primary_location && w.primary_location.source && bare(w.primary_location.source.id);
 // primary field name of a work, or null if it has no primary_topic
@@ -897,14 +989,15 @@ function simScorer(pool){
 }
 
 // pure: pool = array of normalized works (includes seed). Returns {nodes, edges}.
-function computeGraph(seedId, pool){
+function computeGraph(seedId, pool, cap){
+  cap = cap || 40;   // bridge view halves this per side so two clusters + a route stay readable
   const map = new Map(pool.map(w => [w.id, w]));
   const sim = simScorer(pool);
   const Rmap = sim.Rmap;
 
   const others = pool.filter(w => w.id !== seedId);
   const scored = others.map(w => ({ id: w.id, s: sim(seedId, w.id) })).sort((a, b) => b.s - a.s);
-  const nodeIds = [seedId, ...scored.slice(0, 39).map(x => x.id)].filter(id => map.has(id));
+  const nodeIds = [seedId, ...scored.slice(0, cap - 1).map(x => x.id)].filter(id => map.has(id));
 
   const simCache = new Map(); // "a|b" (a<b) -> sim
   const pairSim = (a, b) => {
@@ -937,6 +1030,175 @@ function citationEdges(nodes){
     for (const ref of (n.referenced_works || []))
       if (ids.has(ref) && ref !== n.id) out.push({ from: n.id, to: ref });
   return out;
+}
+
+// ---- bridge search (find what connects two papers) ----
+// pure: every neighbour of `id` derivable from a pool of full work records -- what it cites
+// (its own referenced_works, only known if id's own record is in `pool`) union what cites it (any
+// pool member whose referenced_works includes id, however that member was fetched). Ids outside
+// the pool are still valid neighbours -- they're just not expandable further yet.
+function neighboursOf(id, pool){
+  const out = new Set();
+  for (const w of pool) {
+    if (w.id === id) { for (const ref of (w.referenced_works || [])) out.add(ref); }
+    else if ((w.referenced_works || []).includes(id)) out.add(w.id);
+  }
+  return out;
+}
+
+// pure: one BFS layer outward from `frontier` (Map id -> unused), skipping anything in `visited`.
+// Returns a Map(newId -> parentId) -- the parent pointer path reconstruction walks back through.
+function expandLayer(frontier, pool, visited){
+  const next = new Map();
+  for (const id of frontier.keys())
+    for (const nb of neighboursOf(id, pool))
+      if (!visited.has(nb) && !next.has(nb)) next.set(nb, id);
+  return next;
+}
+
+// pure: walks both sides' parent-pointer maps back from the node where they met to rebuild the
+// full A..B path.
+function reconstructRoute(aId, bId, meetId, visitedA, visitedB){
+  const left = [meetId];
+  for (let cur = meetId; cur !== aId; ) { cur = visitedA.get(cur); left.unshift(cur); }
+  const right = [];
+  for (let cur = meetId; cur !== bId; ) { cur = visitedB.get(cur); right.push(cur); }
+  return left.concat(right);
+}
+
+// pure: bidirectional BFS between aId and bId over a pool of full work records, expanding
+// whichever side's frontier is smaller (the standard trick). Distance = edge count (a direct
+// citation is 1, a shared neighbour is 2, ...). Collects candidate routes at every distance where
+// the frontiers meet; by default stops one round after the first success (opts.keepGoing: false
+// stops immediately, which is all 'Fewest steps' needs -- opts.keepGoing left at its default true
+// is what lets 'Strongest link' see one distance deeper than the shortest route, so a longer-but-
+// stronger route has something to beat it with. ponytail: looks only one round past the first hit,
+// not all the way to maxDepth -- widen if a real search needs to compare 3+ distances.)
+// opts.fetchedIds, when given, gates expansion: a frontier containing an id NOT in fetchedIds
+// can't be expanded (its neighbours may be incomplete), so the function stops there and returns
+// `needsFetch` (the ids that must be fetched next) instead of guessing. Omitted entirely for tests,
+// where the fixture pool already holds the whole reachable graph.
+function bridgeSearch(aId, bId, pool, maxDepth, opts){
+  opts = opts || {};
+  if (aId === bId) return { firstDistance: 0, candidatesByDistance: new Map([[0, [[aId]]]]) };
+
+  const nA0 = neighboursOf(aId, pool), nB0 = neighboursOf(bId, pool);
+  if (nA0.has(bId) || nB0.has(aId))
+    return { firstDistance: 1, candidatesByDistance: new Map([[1, [[aId, bId]]]]) };
+
+  let visitedA = new Map([[aId, null]]), visitedB = new Map([[bId, null]]);
+  let frontA = new Map(), frontB = new Map();
+  for (const id of nA0) { frontA.set(id, aId); visitedA.set(id, aId); }
+  for (const id of nB0) { frontB.set(id, bId); visitedB.set(id, bId); }
+  let dA = 1, dB = 1, firstDistance = null;
+  const candidatesByDistance = new Map();
+
+  const meetIds = () => {
+    const s = new Set();
+    for (const id of frontA.keys()) if (visitedB.has(id)) s.add(id);
+    for (const id of frontB.keys()) if (visitedA.has(id)) s.add(id);
+    return [...s];
+  };
+  const record = () => {
+    const ms = meetIds();
+    if (!ms.length) return false;
+    candidatesByDistance.set(dA + dB, ms.map(m => reconstructRoute(aId, bId, m, visitedA, visitedB)));
+    return true;
+  };
+  if (record()) firstDistance = dA + dB;
+
+  while (dA + dB < maxDepth) {
+    if (firstDistance !== null && (opts.keepGoing === false || dA + dB >= firstDistance + 1)) break;
+    const side = frontA.size <= frontB.size ? 'A' : 'B';
+    const frontier = side === 'A' ? frontA : frontB;
+    if (opts.fetchedIds) {
+      const missing = [...frontier.keys()].filter(id => !opts.fetchedIds.has(id));
+      if (missing.length) return { firstDistance, candidatesByDistance, needsFetch: missing };
+    }
+    const next = expandLayer(frontier, pool, side === 'A' ? visitedA : visitedB);
+    if (!next.size) break;   // genuine dead end -- nothing left to expand into
+    if (side === 'A') { frontA = next; for (const [id, p] of next) visitedA.set(id, p); dA++; }
+    else { frontB = next; for (const [id, p] of next) visitedB.set(id, p); dB++; }
+    if (record() && firstDistance === null) firstDistance = dA + dB;
+  }
+  return { firstDistance, candidatesByDistance };
+}
+
+// pure: total cost of a route under a weight function w(a,b). Passing w = () => 1 makes this
+// exactly the hop count -- the same routine 'Fewest steps' and 'Strongest link' both use, just
+// with different weights, rather than two separate algorithms.
+function routeCost(route, w){
+  let cost = 0;
+  for (let i = 0; i < route.length - 1; i++) cost += w(route[i], route[i + 1]);
+  return cost;
+}
+
+// pure: the cheapest route across every distance in candidatesByDistance (Map distance -> routes[]).
+function pickBestRoute(candidatesByDistance, w){
+  let route = null, cost = Infinity, distance = null;
+  for (const [d, routes] of candidatesByDistance) {
+    for (const r of routes) {
+      const c = routeCost(r, w);
+      if (c < cost) { cost = c; route = r; distance = d; }
+    }
+  }
+  return { route, distance, cost };
+}
+
+// pure: picks the route BFS should report for `mode`, given full records for every candidate node
+// are already in `pool`. 'fewest' takes the first route at the smallest distance, no scoring at
+// all. 'strongest' costs every candidate at every collected distance at 1/sim(a,b) (sim = 1 would
+// collapse this to hop count -- one Dijkstra, two weight functions) and keeps the cheapest, so a
+// longer route only wins when its links are strong enough to pay for the extra step(s).
+function chooseBridgeRoute(candidatesByDistance, pool, mode){
+  const distances = [...candidatesByDistance.keys()];
+  const shortest = Math.min(...distances);
+  if (mode === 'fewest')
+    return { route: candidatesByDistance.get(shortest)[0], distance: shortest, shorterRejected: null };
+  const sim = simScorer(pool);
+  const w = (a, b) => 1 / Math.max(sim(a, b), 1e-3);
+  const best = pickBestRoute(candidatesByDistance, w);
+  return { route: best.route, distance: best.distance, shorterRejected: best.distance > shortest ? shortest : null };
+}
+
+// pure: total candidate routes bridgeSearch has recorded so far, across every distance -- this is
+// what "how many possible routes are still in play" means for the search animation's strand count.
+function countBridgeCandidates(candidatesByDistance){
+  let n = 0;
+  for (const routes of candidatesByDistance.values()) n += routes.length;
+  return n;
+}
+
+// pure: folds one findBridge onProgress payload ({depth,frontierSize,candidateCount,phase,poolSize})
+// into the running strand-count/spread state for the bridge-search field-line animation. Strand
+// count and spread are clamped against `prev` so they only ever shrink, and phase 'done' always
+// collapses to exactly one strand at zero spread -- so a fast search still plays a fast collapse
+// rather than being cut off mid-bundle. The same fold drives the live animation frame-by-frame
+// (see startBridgeRings/onBridgeSearchProgress) and, in selfTest, a whole recorded sequence.
+const BRIDGE_MAX_STRANDS = 14;
+// spread narrows with pool GROWTH, not candidateCount: candidateCount stays 0 for most of a real
+// search (frontiers meet late), while pool.length grows every single round, so it is the only
+// honestly-gradual signal findBridge emits. Measured on a real search (W3022475691<->W2252795400,
+// 'strongest', 12.5s): poolSize went 108 -> 216 -> 394 -> 454 across its progress payloads. 100
+// as the half-life puts that run's steps at spread ~0.48/0.32/0.20/0.18 -- a real, visible traverse
+// of most of the 0..1 range instead of sitting at 0 until the very end.
+const BRIDGE_SPREAD_POOL_HALFLIFE = 100;
+function nextBridgeStrand(prev, progress){
+  prev = prev || { strands: BRIDGE_MAX_STRANDS, spread: 1 };
+  if (!progress || progress.phase === 'done') return { strands: 1, spread: 0 };
+  // strand COUNT only tracks real candidates found so far -- while still expanding with nothing
+  // found, every route is still possible, so stay wide; once candidates exist (expanding or
+  // scoring), strands track that count directly, capped at max. Untouched by poolSize on purpose.
+  const desired = (progress.phase === 'expanding' && !progress.candidateCount)
+    ? BRIDGE_MAX_STRANDS
+    : Math.min(BRIDGE_MAX_STRANDS, Math.max(1, progress.candidateCount || 0));
+  const strands = Math.max(1, Math.min(prev.strands, desired));
+  // spread is its own honest signal off poolSize: 1/(1+poolSize/halflife) decays smoothly and
+  // monotonically as the pool grows, clamped to prev (never widens) and forced to 0 once strands
+  // has collapsed to 1 -- same discipline strand count already has.
+  const fromPool = 1 / (1 + Math.max(0, progress.poolSize || 0) / BRIDGE_SPREAD_POOL_HALFLIFE);
+  const spread = strands <= 1 ? 0 : Math.min(prev.spread, fromPool);
+  return { strands, spread };
 }
 
 // pure: Map(id -> co-citation count) for papers that co-occur with the seed in other papers'
@@ -1398,7 +1660,8 @@ function formatCitation(w, style){
 
 // ---- app state / UI ----
 const state = { seed: null, refs: [], citers: [], nodes: [], edges: [], sim: null, activeTab: 'graph',
-  pool: [], trail: [], trailEdges: [], tried: new Map(), jumpPool: new Map(), trailEvidence: new Map() };
+  pool: [], trail: [], trailEdges: [], tried: new Map(), jumpPool: new Map(), trailEvidence: new Map(),
+  bridge: null };   // { b, bPool, route, distance, mode, requests, pool, shorterRejected } once a 2nd paper is chosen
 // quantum-jump option selections, held here (not in the detail markup) so they survive panel re-renders
 let qFindByVal = 'cocite', qFieldVal = 'any';
 const detailBody = document.getElementById('detailBody');
@@ -1681,6 +1944,20 @@ function yearScaleFor(nodes){
   return f;
 }
 
+// Timeline mode: a node's Y is data (its publication year), not a force outcome. Spacing scales
+// collide radius and charge, and both push in every direction including vertically, so a plain
+// forceY can't hold a row against them at high spacing. Pinning y directly every tick -- after
+// the sim's own forces have run -- makes the row placement independent of spacing entirely; only
+// x is left for the simulation to resolve. Shared by both renderers' tick handlers (see
+// renderGraph and renderBridgeGraph) so there is one implementation of "what row is this node on".
+// A dragged node stays pinned to its row too (this runs unconditionally, after fx/fy are applied
+// by the simulation's own tick), since the row IS the node's year -- dragging shouldn't change it.
+function pinTimelineY(nodes){
+  if (layoutMode !== 'timeline' || !tlScale) return;
+  const newest = tlScale.domain()[1];
+  for (const n of nodes) { n.y = tlScale(n.publication_year || newest); n.vy = 0; }
+}
+
 // the legend's "Publication year, ___" range -- recomputed here so a language switch
 // (which rebuilds the legend's translated markup) never loses the live range
 function updateLegendYears(){
@@ -1736,14 +2013,15 @@ function positionHoverCard(event){
   hoverCard.style.left = Math.max(0, x) + 'px';
   hoverCard.style.top = Math.max(0, y) + 'px';
 }
-function showHoverCard(d, event, hop){
+function showHoverCard(d, event, hop, extraLine){
   const first = (d.authorships || [])[0];
   const authorsText = first && first.author ? esc(first.author.display_name) + ((d.authorships || []).length > 1 ? t('etAlSuffix') : '') : t('unknownAuthors');
   const oa = d.open_access && d.open_access.is_oa ? ' · OA' : '';
   hoverCard.innerHTML =
     '<div class="hc-title">' + esc(d.display_name || t('untitled')) + '</div>' +
     '<div class="hc-authors">' + authorsText + '</div>' +
-    '<div class="hc-meta">' + (d.publication_year || '?') + ' · ' + tf('citedCount', { n: d.cited_by_count || 0 }) + ' · ' + tf('hopLabel', { h: hop == null ? '?' : hop }) + oa + '</div>';
+    '<div class="hc-meta">' + (d.publication_year || '?') + ' · ' + tf('citedCount', { n: d.cited_by_count || 0 }) + ' · ' + tf('hopLabel', { h: hop == null ? '?' : hop }) + oa + '</div>' +
+    (extraLine ? '<div class="hc-meta">' + esc(extraLine) + '</div>' : '');
   hoverCard.hidden = false;
   positionHoverCard(event);
 }
@@ -1754,6 +2032,7 @@ function renderGraph(nodes, edges, seedId){
   const rect = container.getBoundingClientRect();
   const w = rect.width || 800, h = rect.height || 600;
   graphW = w; graphH = h;
+  syncGraphToolsForView();
 
   const years = nodes.map(n => n.publication_year).filter(Boolean);
   const yMin = years.length ? Math.min(...years) : 0, yMax = years.length ? Math.max(...years) : 0;
@@ -1985,12 +2264,9 @@ function renderGraph(nodes, edges, seedId){
         this.setAttribute('x1', x1); this.setAttribute('y1', y1);
         this.setAttribute('x2', x2); this.setAttribute('y2', y2);
       });
-      if (layoutMode === 'timeline' && tlScale) {
-        const newest = tlScale.domain()[1];
-        for (const n of nodes) {
-          n.y = tlScale(n.publication_year || newest); n.vy = 0;
-          n.x = Math.max(n.r + 4, Math.min(graphW - n.r - 4, n.x));
-        }
+      if (layoutMode === 'timeline') {
+        pinTimelineY(nodes);
+        for (const n of nodes) n.x = Math.max(n.r + 4, Math.min(graphW - n.r - 4, n.x));
       }
       positionCiteLinks();
       positionTrailLinks();
@@ -2027,6 +2303,419 @@ function renderGraph(nodes, edges, seedId){
   }
 }
 
+// ---- bridge view rendering (two-cluster graph + persistent route highlight) ----
+let bridgeSim, bridgeNodeSel, bridgeLinkSel, bridgeZoomG, bridgeFieldG, bridgeAddedIds = new Set();
+
+// true once the bridge view is actually the thing rendered in #graphView -- the same guard
+// already used at the palette-switch call site, promoted to one place so every other spot
+// (graphTools visibility, spacing/reshuffle routing, citation scope, the LLM prompt) agrees.
+const isBridgeView = () => !!(state.bridge && state.bridge.b && !state.bridge.samePaper);
+
+// #graphTools controls that only make sense against the main graph -- a filter can hide a node
+// that is ON the route, and the citation overlay fights the persistent route highlight -- are
+// hidden while the bridge view is on screen. Layout/spacing/advanced-forces/reshuffle stay and
+// are routed to whichever graph is displayed (see applySpacingForView, reshuffleBtn, layoutCtl).
+function syncGraphToolsForView(){
+  const hide = isBridgeView() ? 'none' : '';
+  document.getElementById('citeLinkCtl').style.display = hide;
+  document.getElementById('filterSection').style.display = hide;
+}
+
+// ---- bridge search animation: a bundle of field-line strands between the two papers that
+// narrows as the real search narrows, then snaps onto the chosen route. Strand count and spread
+// come straight from findBridge's onProgress payloads via nextBridgeStrand -- nothing here runs
+// on a timer. (Quantum Jump's own rings -- startRingLoop/ringBurst -- are untouched by this.)
+const BRIDGE_MAX_SPREAD_FRAC = 0.32;   // spread=1 bows a strand out this fraction of the A-B distance
+let bridgeFieldRAF = null, bridgeFieldStrand = null, bridgeFieldConv = 0, bridgeFieldSpread = 0, bridgeFieldStep = 0;
+// the two papers' ids, NOT a position snapshot -- bridgeLiveAnchors(aId, bId) resolves the live
+// node objects from these fresh on every frame (see drawBridgeField), so if paper B's own pool is
+// still loading when a search starts (state.bridge.nodeById not populated yet), the bundle snaps
+// onto the real nodes the instant renderBridgePreview() populates it instead of staying stuck on
+// the bridgeClusterAnchors() fallback for the rest of the search.
+let bridgeFieldAId = null, bridgeFieldBId = null;
+// real elapsed ms since the current startBridgeRings call -- drives the entrance bloom envelope
+// in drawBridgeField. Kept separate from tSec (drawBridgeField's drift-phase argument) because
+// resolveBridgeSearch's one-off final-frame draw passes tSec=0 for the drift phase while still
+// needing the entrance to read as "already bloomed".
+let bridgeFieldElapsedMs = 0;
+
+// pure: bridgeFieldStrand.strands -> convergence ratio (0 = widest bundle, 1 = narrowed to one
+// strand). Drives strand COUNT and stroke opacity/width only -- see bridgeFieldSpread below for
+// the bow-width signal, which now comes from poolSize instead of riding along with this. It runs
+// 0->1, is monotone (nextBridgeStrand's clamp guarantees it), and reaches exactly 1 on phase 'done'.
+function bridgeFieldConvOf(strands){
+  return strands <= 1 ? 1 : 1 - (strands - 1) / (BRIDGE_MAX_STRANDS - 1);
+}
+
+// eases the DISPLAYED convergence and spread toward their real targets once per frame -- smooths
+// the jump between two real onProgress-derived values, it is not itself the driver: the
+// destinations are always exactly bridgeFieldConvOf(bridgeFieldStrand.strands) and
+// bridgeFieldStrand.spread, so a fast search cannot truncate this the way a time-based ease of
+// absolute values could -- the search finishing simply IS convergence = 1 / spread = 0, and
+// onBridgeSearchProgress snaps both there directly on 'done' (see below) rather than waiting for
+// an easing frame that may not come in time.
+function easeBridgeFieldConv(){
+  if (!bridgeFieldStrand) return;
+  const target = bridgeFieldConvOf(bridgeFieldStrand.strands);
+  bridgeFieldConv += (target - bridgeFieldConv) * 0.15;
+  if (Math.abs(target - bridgeFieldConv) < 0.004) bridgeFieldConv = target;
+  const spreadTarget = bridgeFieldStrand.spread;
+  bridgeFieldSpread += (spreadTarget - bridgeFieldSpread) * 0.15;
+  if (Math.abs(spreadTarget - bridgeFieldSpread) < 0.004) bridgeFieldSpread = spreadTarget;
+}
+
+// pure: one strand's cubic-Bezier path, control points offset perpendicular to the A-B axis by
+// k (a signed fraction of the A-B length) plus a slow per-strand drift so the bundle breathes.
+function bridgeStrandPath(posA, posB, k, i, tSec){
+  const dx = posB.x - posA.x, dy = posB.y - posA.y;
+  const len = Math.sqrt(dx * dx + dy * dy) || 1;
+  const px = -dy / len, py = dx / len;
+  const drift = Math.sin(tSec * 0.6 + i * 1.9) * 0.08 * len;
+  const off = k * len + drift;
+  const c1x = posA.x + dx / 3 + px * off, c1y = posA.y + dy / 3 + py * off;
+  const c2x = posA.x + dx * 2 / 3 + px * off, c2y = posA.y + dy * 2 / 3 + py * off;
+  return 'M' + posA.x + ',' + posA.y + ' C' + c1x + ',' + c1y + ' ' + c2x + ',' + c2y + ' ' + posB.x + ',' + posB.y;
+}
+
+function drawBridgeField(tSec){
+  // resolved fresh EVERY frame from the ids (see bridgeFieldAId/BId) -- not a snapshot taken once
+  // at search start -- so posA/posB become the LIVE node objects the bridge force simulation
+  // mutates every tick the moment they exist, instead of staying pinned to whatever
+  // bridgeLiveAnchors() happened to return (possibly the bridgeClusterAnchors() fallback) back
+  // when the search began.
+  if (bridgeFieldAId == null || bridgeFieldBId == null) return;
+  const { posA, posB } = bridgeLiveAnchors(bridgeFieldAId, bridgeFieldBId);
+  if (!bridgeFieldG || !posA || !posB || posA.x == null || posB.x == null) return;
+  // strand count/opacity/width come from the eased convergence scalar (candidateCount-driven);
+  // bow width comes from the separately-eased spread scalar (poolSize-driven) -- see
+  // easeBridgeFieldConv/bridgeFieldConvOf/nextBridgeStrand for why a fast search can't leave
+  // either stuck partway: 'done' snaps both straight to their end value, not just the target.
+  // Displayed strand count is the MIN of that progress-driven count and a time-based entrance
+  // envelope (1 -> BRIDGE_MAX_STRANDS over BRIDGE_ENTRANCE_MS since startBridgeRings) -- this
+  // blooms the bundle in over the dead time before the first onProgress payload, and can never
+  // exceed (let alone override) the progress-driven count, so the 'done' snap above still lands
+  // on exactly 1 strand regardless of how far the entrance has bloomed.
+  const conv = bridgeFieldConv;
+  const spread = bridgeFieldSpread;
+  const progressCount = Math.max(1, Math.round(1 + (1 - conv) * (BRIDGE_MAX_STRANDS - 1)));
+  const entranceFrac = Math.min(1, Math.max(0, bridgeFieldElapsedMs) / BRIDGE_ENTRANCE_MS);
+  const entranceCount = 1 + entranceFrac * (BRIDGE_MAX_STRANDS - 1);
+  const strandCount = Math.max(1, Math.round(Math.min(entranceCount, progressCount)));
+  const maxK = spread * BRIDGE_MAX_SPREAD_FRAC;
+  const data = [];
+  for (let i = 0; i < strandCount; i++) {
+    const frac = strandCount === 1 ? 0 : (i / (strandCount - 1)) * 2 - 1;   // -1..1, fans out symmetrically
+    // per-strand fade-in: strand i (a fixed identity, not the current fan position) blooms in
+    // once the entrance envelope first reaches it, fading over BRIDGE_FIELD_FADE_MS -- this is
+    // the ONLY opacity fade in the bundle now; there is no separate whole-bundle fade.
+    const appearAtMs = (i / (BRIDGE_MAX_STRANDS - 1)) * BRIDGE_ENTRANCE_MS;
+    const fadeFrac = Math.min(1, Math.max(0, (bridgeFieldElapsedMs - appearAtMs) / BRIDGE_FIELD_FADE_MS));
+    data.push({ i, k: frac * maxK, fadeFrac });
+  }
+  bridgeFieldG.selectAll('path.bridge-strand').data(data, d => d.i).join('path')
+    .attr('class', 'bridge-strand').attr('fill', 'none').attr('stroke', cssVar('--accent'))
+    .attr('stroke-width', 1.5 + conv * 1.0)
+    .attr('stroke-opacity', d => (0.15 + conv * 0.7) * d.fadeFrac)
+    .attr('d', d => bridgeStrandPath(posA, posB, d.k, d.i, tSec));
+}
+
+// pure-ish FALLBACK ONLY: the two cluster-centre forceX *targets* -- not where nodes actually end
+// up (forceX strength is only 0.15, so charge/collide pull nodes well away from these), and these
+// are screen coordinates while the bundle lives inside bridgeZoomG, which carries the zoom
+// transform -- so any pan/zoom widens the mismatch further. Used only by bridgeLiveAnchors() below
+// when a live node or its x/y is genuinely missing (e.g. before renderBridgePreview has ever run).
+function bridgeClusterAnchors(){
+  return {
+    posA: { x: graphW * 0.22, y: graphH / 2, r: 16 },
+    posB: { x: graphW * 0.78, y: graphH / 2, r: 16 }
+  };
+}
+
+// the two anchors the search's rings and field-line bundle actually use: the LIVE node objects
+// for aId/bId out of state.bridge.nodeById. Called fresh by ID on every frame (see
+// drawBridgeField), not once and cached -- so once renderBridgePreview() populates nodeById
+// (which can still be in flight when this first runs -- paper B's own pool fetch in chooseBridgeB
+// races the Find bridge button, see its comment), the very next frame snaps onto the real nodes
+// instead of drawing against a stale fallback for the rest of the search.
+// Falls back to bridgeClusterAnchors() only for whichever side's node isn't there yet.
+function bridgeLiveAnchors(aId, bId){
+  const fallback = bridgeClusterAnchors();
+  const byId = state.bridge && state.bridge.nodeById;
+  const a = byId && aId != null && byId.get(aId);
+  const b = byId && bId != null && byId.get(bId);
+  return {
+    posA: (a && a.x != null) ? a : fallback.posA,
+    posB: (b && b.x != null) ? b : fallback.posB
+  };
+}
+
+// One ring burst per anchor (not the repeating loop -- that's Quantum Jump's own startRingLoop,
+// untouched) says the bidirectional search departs from both papers at once; the field-line
+// bundle blooms in underneath over BRIDGE_ENTRANCE_MS (see drawBridgeField's entrance envelope)
+// and is the only thing still running once the rings finish, carrying the rest of the search on
+// its own, driven solely by onProgress.
+const BRIDGE_FIELD_FADE_MS = 500;   // per-strand fade-in duration as each strand blooms in
+const BRIDGE_ENTRANCE_MS = 3000;    // time for the entrance envelope to reach the full bundle
+function startBridgeRings(g, aId, bId){
+  stopBridgeRings();
+  stopRingLoop();   // in case a Quantum Jump ring loop is still running from just before this
+  bridgeFieldStrand = { strands: BRIDGE_MAX_STRANDS, spread: 1 };
+  bridgeFieldConv = 0;
+  bridgeFieldSpread = 1;
+  bridgeFieldStep = 0;
+  bridgeFieldElapsedMs = 0;
+  bridgeFieldAId = aId; bridgeFieldBId = bId;
+  const { posA, posB } = bridgeLiveAnchors(aId, bId);
+  if (!g || !posA || !posB || reducedMotion()) return;   // reduced motion: text stage readout instead
+  ringBurst(g, posA.x, posA.y, posA.r, 1);
+  ringBurst(g, posB.x, posB.y, posB.r, 1);
+  const t0 = performance.now();
+  const tick = now => {
+    const elapsed = now - t0;
+    bridgeFieldElapsedMs = elapsed;
+    easeBridgeFieldConv();
+    drawBridgeField(elapsed / 1000);
+    bridgeFieldRAF = requestAnimationFrame(tick);
+  };
+  bridgeFieldRAF = requestAnimationFrame(tick);
+}
+function stopBridgeRings(){
+  if (bridgeFieldRAF) { cancelAnimationFrame(bridgeFieldRAF); bridgeFieldRAF = null; }
+  if (bridgeFieldG) bridgeFieldG.selectAll('*').remove();
+  bridgeFieldAId = null; bridgeFieldBId = null;
+}
+
+// onProgress hook passed to findBridge: folds the real search numbers into the strand state, and
+// (reduced motion only) writes the text stage readout in place of the animation. 'done' snaps the
+// displayed convergence/spread straight to their end values -- the search finishing is a certain,
+// terminal fact, not something to keep easing toward on some future animation frame that may
+// never come before the caller reads it (see resolveBridgeSearch, which draws one frame from this
+// immediately after).
+function onBridgeSearchProgress(progress){
+  bridgeFieldStrand = nextBridgeStrand(bridgeFieldStrand, progress);
+  bridgeFieldStep++;
+  if (progress && progress.phase === 'done') { bridgeFieldConv = 1; bridgeFieldSpread = 0; }
+  if (reducedMotion() && progress && progress.phase !== 'done') {
+    bridgeReadoutEl.textContent = tf('bridgeSearchStep', { n: bridgeFieldStep });
+  }
+}
+
+// on success: morphs the surviving strand from its last bowed curve into the actual route. The
+// caller (findBridgeBtn handler) renders the route's graph FIRST, so state.bridge.nodeById here is
+// already the post-route map -- every route node normally has a real x/y already, and the
+// line-interpolation branch below is a fallback for the rare id that genuinely isn't in it, not
+// the common case it used to be when this ran before that render. No-op (falls straight to
+// stopBridgeRings) under reduced motion, since nothing was drawn to morph.
+function resolveBridgeSearch(route){
+  if (bridgeFieldRAF) { cancelAnimationFrame(bridgeFieldRAF); bridgeFieldRAF = null; }
+  if (!bridgeFieldG || reducedMotion() || !route || route.length < 2 || bridgeFieldAId == null || bridgeFieldBId == null) {
+    stopBridgeRings();
+    return Promise.resolve();
+  }
+  drawBridgeField(0);   // one last frame at the fully-narrowed (1-strand) state before morphing
+  const { posA, posB } = bridgeLiveAnchors(bridgeFieldAId, bridgeFieldBId);
+  const byId = state.bridge.nodeById || new Map();
+  const pts = route.map((id, i) => {
+    const known = byId.get(id);
+    if (known && known.x != null) return known;
+    const frac = i / (route.length - 1);
+    return { x: posA.x + (posB.x - posA.x) * frac, y: posA.y + (posB.y - posA.y) * frac };
+  });
+  const d = 'M' + pts.map(p => p.x + ',' + p.y).join('L');
+  return bridgeFieldG.selectAll('path.bridge-strand').transition().duration(400).ease(d3.easeCubicInOut)
+    .attr('d', d).attr('stroke-opacity', 1)
+    .end().catch(() => {}).then(stopBridgeRings);
+}
+
+// pure: merges both papers' own similarity graphs (capped smaller per side so two clusters + a
+// route stay readable, instead of two full 40-node graphs side by side) into one, tagging cluster
+// membership ('A'/'B') and route membership (_onRoute).
+function buildBridgeGraph(seedA, poolA, seedB, poolB, route, routePool){
+  const gA = computeGraph(seedA.id, poolA, 16);
+  const gB = computeGraph(seedB.id, poolB, 16);
+  const nodeMap = new Map();
+  // a node present in BOTH subgraphs (other than the two seeds themselves) is a shared neighbour
+  // of A and B -- it belongs at the w*0.5 midpoint, not dragged into either side's cluster.
+  const idsA = new Set(gA.nodes.map(n => n.id)), idsB = new Set(gB.nodes.map(n => n.id));
+  gA.nodes.forEach(n => nodeMap.set(n.id, Object.assign({}, n,
+    { _cluster: (n.id !== seedA.id && idsB.has(n.id)) ? 'shared' : 'A' })));
+  gB.nodes.forEach(n => { if (!nodeMap.has(n.id)) nodeMap.set(n.id, Object.assign({}, n,
+    { _cluster: (n.id !== seedB.id && idsA.has(n.id)) ? 'shared' : 'B' })); });
+  // seedB (bId) is unconditionally 'B' even if it's one of A's own top-16 neighbours, catching
+  // it whether the line above tagged it 'A' (inserted via the gA pass) or 'shared' -- aId is
+  // already effectively 'A' the same way, by insertion order, so it needs no equivalent force.
+  if (nodeMap.has(seedB.id)) nodeMap.get(seedB.id)._cluster = 'B';
+  const routeWorks = new Map((routePool || []).map(w => [w.id, w]));
+  (route || []).forEach(id => {
+    if (!nodeMap.has(id)) {
+      const w = routeWorks.get(id) || { id, display_name: '', cited_by_count: 0, referenced_works: [] };
+      nodeMap.set(id, Object.assign({}, w, { _cluster: 'route' }));
+    }
+  });
+  const routeSet = new Set(route || []);
+  for (const n of nodeMap.values()) if (routeSet.has(n.id)) n._onRoute = true;
+
+  const key = (x, y) => x < y ? x + '|' + y : y + '|' + x;
+  const edgeMap = new Map();
+  [...gA.edges, ...gB.edges].forEach(e => {
+    const s = eid(e.source), tgt = eid(e.target);
+    if (!nodeMap.has(s) || !nodeMap.has(tgt)) return;
+    edgeMap.set(key(s, tgt), Object.assign({}, e, { source: s, target: tgt }));
+  });
+  const sim = routePool && routePool.length ? simScorer(routePool) : null;
+  for (let i = 0; i < (route || []).length - 1; i++) {
+    const s = route[i], tgt = route[i + 1], k = key(s, tgt);
+    const existing = edgeMap.get(k);
+    if (existing) { existing._isRoute = true; continue; }
+    edgeMap.set(k, { source: s, target: tgt, sim: sim ? Math.max(sim(s, tgt), 0.05) : 0.3, dir: null, _isRoute: true });
+  }
+  return { nodes: [...nodeMap.values()], edges: [...edgeMap.values()] };
+}
+
+// renders the merged bridge graph: two force clusters (forceX pulling A left / B right) with the
+// route (if any) sitting between them. The route is a PERSISTENT highlight layer: it is the default
+// and never clears on hover; clicking a dimmed node ADDS it (and its neighbours) to the highlight
+// without removing the route; clicking empty canvas clears only that added selection.
+function renderBridgeGraph(nodes, edges, aId, bId, route){
+  const container = document.getElementById('graphView');
+  container.innerHTML = '';
+  const rect = container.getBoundingClientRect();
+  const w = rect.width || 800, h = rect.height || 600;
+  graphW = w; graphH = h;
+  bridgeAddedIds = new Set();
+  const routeIds = new Set(route || []);
+
+  // carry x/y/vx/vy forward from the previous render's live nodes for any id still present, so a
+  // renderBridgePreview() call (route found, panel toggled, etc.) doesn't reshuffle the whole
+  // layout back into d3's default spiral -- only genuinely new nodes (a fresh route hop) get a
+  // fresh starting position. Read BEFORE this function's return value overwrites it.
+  const prevNodeById = state.bridge && state.bridge.nodeById;
+  if (prevNodeById) {
+    nodes.forEach(n => {
+      const prev = prevNodeById.get(n.id);
+      if (prev && prev.x != null) { n.x = prev.x; n.y = prev.y; n.vx = prev.vx || 0; n.vy = prev.vy || 0; }
+    });
+  }
+
+  const cVals = nodes.map(n => Math.sqrt(n.cited_by_count || 0));
+  const cLo = Math.min(...cVals), cHi = Math.max(...cVals);
+  const rFor = n => {
+    const frac = cHi === cLo ? 0.5 : (Math.sqrt(n.cited_by_count || 0) - cLo) / (cHi - cLo);
+    return 6 + frac * 20;
+  };
+  nodes.forEach(n => { n.r = Math.max(rFor(n), (n.id === aId || n.id === bId) ? 16 : 0); });
+
+  const svg = d3.select(container).append('svg');
+  const g = svg.append('g');
+  bridgeZoomG = g;
+  // grid group lives outside g, same as the main graph's, so the year type spans full width and
+  // never scales with zoom; gridSel/gridRows/tlScale/zoomT are shared module state -- safe because
+  // only one of the two graphs is ever on screen, and both renderers reset them on every render.
+  gridSel = svg.insert('g', () => g.node()).attr('class', 'year-grid');
+  zoomT = d3.zoomIdentity;
+  gridRows = [];
+  svg.call(d3.zoom().scaleExtent([0.2, 4]).on('zoom', e => {
+    g.attr('transform', e.transform);
+    zoomT = e.transform;
+    layoutYearGrid();
+  }));
+
+  const isHighlighted = id => routeIds.has(id) || bridgeAddedIds.has(id);
+
+  const link = g.append('g').selectAll('line').data(edges).join('line')
+    .attr('class', 'link')
+    .attr('stroke', d => d._isRoute ? cssVar('--accent') : cssVar('--muted'))
+    .attr('stroke-width', d => d._isRoute ? 4 : 1.5 + Math.min(2, (d.sim || 0) * 3))
+    .attr('stroke-opacity', d => d._isRoute ? 1 : 0.5);
+    // no marker-end: a bridge route has no single direction -- each hop's citation may point
+    // either way, so an arrowhead along the whole path would assert a flow that isn't there.
+
+  // search-in-progress field-line bundle lives here: above the links, below the nodes, cleared
+  // (see stopBridgeRings) once the search ends or this view re-renders.
+  bridgeFieldG = g.append('g').attr('class', 'bridge-field-lines');
+
+  const node = g.append('g').selectAll('g').data(nodes).join('g')
+    .attr('cursor', 'pointer')
+    .call(d3.drag()
+      .on('start', (e, d) => { if (!e.active) bridgeSim.alphaTarget(0.3).restart(); d.fx = d.x; d.fy = d.y; })
+      .on('drag', (e, d) => { d.fx = e.x; d.fy = e.y; })
+      .on('end', (e, d) => { if (!e.active) bridgeSim.alphaTarget(0); d.fx = null; d.fy = null; }));
+
+  // both bridge endpoints get the seed treatment: accent ring + halo, label always shown
+  node.filter(d => d.id === aId || d.id === bId).append('circle')
+    .attr('class', 'seed-halo').attr('r', d => d.r + 12)
+    .attr('fill', 'none').attr('stroke', cssVar('--accent'))
+    .attr('stroke-width', 1.5).attr('stroke-opacity', 0.35);
+
+  node.append('circle').attr('class', 'node-dot')
+    .attr('r', d => d.r)
+    .attr('fill', d => (d.id === aId || d.id === bId) ? cssVar('--accent')
+      : d._onRoute ? cssVar('--accent-strong') : cssVar('--soft'))
+    .attr('stroke', d => (d.id === aId || d.id === bId) ? cssVar('--accent') : 'none')
+    .attr('stroke-width', d => (d.id === aId || d.id === bId) ? 3 : 0);
+
+  const showLabel = d => d.id === aId || d.id === bId || d._onRoute || isHighlighted(d.id);
+  const label = node.append('text')
+    .attr('class', 'node-label')
+    .attr('dy', d => d.r + 10)
+    .attr('text-anchor', 'middle')
+    .style('display', d => showLabel(d) ? 'block' : 'none')
+    .text(d => (d.display_name || '').replace(/<[^>]+>/g, '').slice(0, 34));
+
+  const applyDim = () => {
+    node.classed('dim', n => !isHighlighted(n.id));
+    link.classed('dim', l => !isHighlighted(eid(l.source)) || !isHighlighted(eid(l.target)));
+    label.style('display', n => showLabel(n) ? 'block' : 'none');
+  };
+  applyDim();
+
+  node.on('click', (e, d) => {
+    e.stopPropagation();
+    if (!isHighlighted(d.id)) {
+      bridgeAddedIds.add(d.id);
+      edges.forEach(l => {
+        if (eid(l.source) === d.id) bridgeAddedIds.add(eid(l.target));
+        if (eid(l.target) === d.id) bridgeAddedIds.add(eid(l.source));
+      });
+      applyDim();
+    }
+    renderDetail(d);
+    openSheet();
+  });
+  svg.on('click', () => { bridgeAddedIds = new Set(); applyDim(); });
+
+  node.on('mouseenter', (e, d) => {
+    const idx = route ? route.indexOf(d.id) : -1;
+    showHoverCard(d, e, null, idx >= 0 ? tf('bridgeStepLabel', { i: idx + 1, n: route.length }) : null);
+  });
+  node.on('mousemove', e => { if (!hoverCard.hidden) positionHoverCard(e); });
+  node.on('mouseleave', () => { hoverCard.hidden = true; });
+
+  bridgeNodeSel = node; bridgeLinkSel = link;
+
+  bridgeSim = d3.forceSimulation(nodes)
+    .velocityDecay(0.35)
+    .force('link', d3.forceLink(edges).id(d => d.id).distance(60).strength(0.5))
+    .force('charge', d3.forceManyBody().strength(-160).distanceMax(420))
+    .force('collide', d3.forceCollide().radius(d => d.r + 8).strength(1).iterations(3))
+    .force('x', d3.forceX(d => d._cluster === 'A' ? w * 0.22 : d._cluster === 'B' ? w * 0.78 : w * 0.5).strength(0.15))
+    .force('y', d3.forceY(h / 2).strength(0.05))
+    .on('tick', () => {
+      link.each(function(d){
+        this.setAttribute('x1', d.source.x); this.setAttribute('y1', d.source.y);
+        this.setAttribute('x2', d.target.x); this.setAttribute('y2', d.target.y);
+      });
+      pinTimelineY(nodes);
+      node.attr('transform', d => 'translate(' + d.x + ',' + d.y + ')');
+    });
+
+  drawYearGrid(nodes);
+  applyBridgeSpacing();
+  syncGraphToolsForView();
+
+  return new Map(nodes.map(n => [n.id, n]));
+}
+
 // Spacing is a master multiplier over the whole layout; forceParams (Advanced) exposes
 // each force underneath it individually. d3 needs an alpha kick to re-settle after either.
 function applySpacing(){
@@ -2048,10 +2737,9 @@ function applySpacing(){
   sim3.force('collide').radius(d => d.r + forceParams.gap * spacing).iterations(3);
   sim3.force('charge').distanceMax(420);
   if (layoutMode === 'timeline') {
-    const yearScale = tlScale = yearScaleFor(state.nodes);
-    const hi = yearScale.domain()[1];
+    tlScale = yearScaleFor(state.nodes);
     sim3.force('center', null);
-    sim3.force('y', d3.forceY(d => yearScale(d.publication_year || hi)).strength(1));
+    sim3.force('y', null);   // y is pinned directly in the tick handler (pinTimelineY), not a force
     sim3.force('x', d3.forceX(graphW / 2).strength(0.09));
     sim3.force('charge').strength(-160 * spacing * forceParams.push);
   } else {
@@ -2063,10 +2751,36 @@ function applySpacing(){
   sim3.alpha(0.6).restart();
 }
 
+// bridge equivalent of applySpacing() -- scales bridgeSim's OWN baseline forces (the literals
+// renderBridgeGraph seeds it with: link distance 60/strength .5, charge -160, collide r+8) by the
+// same spacing/forceParams sliders, as ratios over FORCE_DEFAULTS -- not the main graph's absolute
+// numbers, which are tuned for a different edge set and mean something else. forceX (cluster
+// membership, A left / B right) is never touched here -- that's what item 2's Timeline needs kept.
+function applyBridgeSpacing(){
+  if (!bridgeSim) return;
+  bridgeSim.force('link')
+    .distance(() => 60 * (forceParams.distance / FORCE_DEFAULTS.distance) * spacing)
+    .strength(() => 0.5 * (forceParams.pull / FORCE_DEFAULTS.pull));
+  bridgeSim.force('collide').radius(d => d.r + forceParams.gap * spacing).iterations(3);
+  bridgeSim.force('charge').strength(-160 * (forceParams.push / FORCE_DEFAULTS.push) * spacing).distanceMax(420);
+  if (layoutMode === 'timeline') {
+    tlScale = yearScaleFor(bridgeSim.nodes());
+    bridgeSim.force('y', null);   // y is pinned directly in the tick handler (pinTimelineY), not a force
+  } else {
+    bridgeSim.force('y', d3.forceY(graphH / 2).strength(0.05));
+  }
+  bridgeSim.alpha(0.6).restart();
+}
+
+// dispatches Spacing/Advanced-force changes to whichever graph is actually on screen
+function applySpacingForView(){
+  if (isBridgeView()) applyBridgeSpacing(); else applySpacing();
+}
+
 document.getElementById('spacing').addEventListener('input', e => {
   spacing = +e.target.value;
   saveForces();
-  applySpacing();
+  applySpacingForView();
 });
 
 // ---- advanced force sliders (persisted together with spacing under gp-forces) ----
@@ -2096,14 +2810,14 @@ Object.keys(forceSliders).forEach(key => {
     document.getElementById(forceSliders[key] + 'Val').textContent =
       key === 'gap' ? e.target.value : (+e.target.value).toFixed(2);
     saveForces();
-    applySpacing();
+    applySpacingForView();
   });
 });
 document.getElementById('resetForcesBtn').addEventListener('click', () => {
   forceParams = { ...FORCE_DEFAULTS };
   syncForceUI();
   saveForces();
-  applySpacing();
+  applySpacingForView();
 });
 
 document.getElementById('layoutCtl').addEventListener('click', e => {
@@ -2112,6 +2826,12 @@ document.getElementById('layoutCtl').addEventListener('click', e => {
   document.querySelectorAll('.layoutBtn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
   layoutMode = btn.dataset.layout;
+  if (isBridgeView()) {
+    applyBridgeSpacing();
+    drawYearGrid(bridgeSim.nodes());
+    bridgeSim.alpha(0.8).restart();
+    return;
+  }
   if (labelSel) labelSel.style('display', d => labelShown(d) ? 'block' : 'none');
   applySpacing();
   drawYearGrid(state.nodes);
@@ -2182,6 +2902,17 @@ function resetApp(){
   state.sourceImpact = new Map(); state.fetchedAt = null;
   pinnedId = null; nodeSel = linkSel = labelSel = citeGroupSel = citeLayerSel = null;
   stopRingLoop();
+  bridgeSearchToken++;
+  stopBridgeRings();
+  state.bridge = null;
+  syncGraphToolsForView();
+  bridgeBar.hidden = true;
+  bridgeToggleBtn.classList.remove('active');
+  searchInputB.value = '';
+  dropdownB.hidden = true;
+  document.getElementById('bridgeMode').disabled = true;
+  const resetFindBtn = document.getElementById('findBridgeBtn');
+  resetFindBtn.disabled = true; resetFindBtn.textContent = t('findBridgeBtn');
   resetFilterInputs();
   document.getElementById('searchInput').value = '';
   document.getElementById('dropdown').hidden = true;
@@ -2256,6 +2987,34 @@ async function loadAndBuildGraph(seedId, opts){
     state.fetchedAt = new Date();
     if (!(opts && opts.keepHistory)) state.history = [];
     renderGraph(nodes, edges, seed.id);
+    if (state.bridge && state.bridge.b) {
+      // paper A changed (or was just chosen for the first time) under an open bridge search --
+      // any in-flight/previous route is stale
+      bridgeSearchToken++;
+      stopBridgeRings();
+      bridgeBar.hidden = false;
+      document.getElementById('bridgeMode').disabled = false;
+      // Find bridge stays disabled until the bridge preview actually renders below (same reason
+      // as chooseBridgeB: starting a search before nodeById is populated leaves the field-line
+      // bundle stuck on its fallback anchors for the whole search)
+      const seedFindBtn = document.getElementById('findBridgeBtn');
+      seedFindBtn.disabled = true; seedFindBtn.textContent = t('findBridgeBtn');
+      state.bridge.route = null; state.bridge.distance = null; state.bridge.noRoute = false; state.bridge.samePaper = false;
+      if (state.bridge.b.id === seed.id) { state.bridge.samePaper = true; updateBridgeReadout(); }
+      else {
+        updateBridgeReadout();
+        if (!state.bridge.bPool.length) {
+          Promise.all([fetchRefs(state.bridge.b.referenced_works || []), fetchCiters(state.bridge.b.id)])
+            .then(([refs, citers]) => {
+              const seen = new Set(); const bPool = [];
+              for (const x of [state.bridge.b, ...refs, ...citers]) if (!seen.has(x.id)) { seen.add(x.id); bPool.push(x); }
+              state.bridge.bPool = bPool;
+              renderBridgePreview();
+              seedFindBtn.disabled = false;
+            }).catch(err => { seedFindBtn.disabled = false; setError(netMessage(err)); });
+        } else { renderBridgePreview(); seedFindBtn.disabled = false; }
+      }
+    }
     applyFilters();
     renderList(document.getElementById('refsView'), refs);
     renderList(document.getElementById('citersView'), citers);
@@ -2270,6 +3029,91 @@ async function loadAndBuildGraph(seedId, opts){
     setStatus('');
     setError(netMessage(err));
   }
+}
+
+// ---- bridge search orchestration ----
+// fetches just enough of the graph around aId/bId to answer bridgeSearch, round by round (each
+// round = one batched fetch of a frontier's own references + one batched fetch of their citers),
+// then hands the pure search the fully-known pool it needs. Returns:
+//   { samePaper: true } | { noRoute: true, a, b, requests } |
+//   { a, b, route, distance, shorterRejected, requests, mode, pool }
+async function findBridge(aId, bId, mode, onProgress){
+  const progress = onProgress || (() => {});
+  let requests = 0;
+  const byId = new Map(); const pool = []; const fetchedIds = new Set();
+  const addPool = works => { for (const w of works) if (!byId.has(w.id)) { byId.set(w.id, w); pool.push(w); } };
+
+  const [a, b] = await Promise.all([fetchSeed(aId), fetchSeed(bId)]);
+  requests += 2;
+  if (a.id === b.id) {
+    progress({ depth: 0, frontierSize: 0, candidateCount: 1, phase: 'done', poolSize: pool.length });
+    return { samePaper: true, a, b, requests };
+  }
+  addPool([a, b]); fetchedIds.add(a.id); fetchedIds.add(b.id);
+
+  const [citersA, citersB] = await Promise.all([fetchCiters(a.id), fetchCiters(b.id)]);
+  requests += 2;
+  addPool(citersA); addPool(citersB);
+  citersA.forEach(w => fetchedIds.add(w.id)); citersB.forEach(w => fetchedIds.add(w.id));
+  progress({ depth: 0, frontierSize: citersA.length + citersB.length, candidateCount: 0, phase: 'expanding', poolSize: pool.length });
+
+  const maxDepth = 5;   // "stop at distance 5" per spec
+  let result, bestResult = null;
+  // ponytail: a round only fetches (and marks fetched) the first 100 ids of a frontier -- a hub
+  // paper's frontier can run into the thousands. Marking the untried excess "fetched" would call a
+  // real dead end after sampling a lucky-or-unlucky 100, so only the ids actually queried are
+  // marked; a wider bound (not maxDepth) lets a huge frontier page through in several rounds
+  // instead. Growing the pool can also change which side looks smaller at an EARLIER step (a
+  // citer discovered incidentally for one frontier can enlarge another id's neighbour set), so a
+  // fresh recompute can regress from an already-found distance back to null while it re-explores
+  // -- bestResult remembers the last distance actually found so a detour can't lose it. And once
+  // something is found, 'Strongest link's one extra round is abandoned rather than chased through
+  // an enormous frontier (a hub's citer set), falling back to bestResult instead. Upgrade: rank the
+  // frontier by citation count (like shortlistIds) before truncating, so both the 100-per-round
+  // sample and this bailout threshold are hitting the most-connected ids first.
+  for (let round = 0; round < maxDepth * 4; round++) {
+    result = bridgeSearch(a.id, b.id, pool, maxDepth, { keepGoing: mode === 'strongest', fetchedIds });
+    if (result.firstDistance != null) bestResult = result;
+    progress({ depth: result.firstDistance != null ? result.firstDistance : round + 1,
+               frontierSize: result.needsFetch ? result.needsFetch.length : 0,
+               candidateCount: countBridgeCandidates(result.candidatesByDistance),
+               phase: result.needsFetch ? 'expanding' : 'scoring', poolSize: pool.length });
+    if (!result.needsFetch) { bestResult = result; break; }
+    if (bestResult && result.needsFetch.length > 300) break;
+    const ids = result.needsFetch;
+    const queried = chunk(ids, 50).slice(0, 2).flat();
+    const [refWorks, citerWorks] = await Promise.all([fetchRefs(queried), fetchCitersOfMany(queried)]);
+    requests += chunk(ids, 50).slice(0, 2).length * 2;   // two batched requests per round, each up to 2 chunks
+    addPool(refWorks); addPool(citerWorks);
+    queried.forEach(id => fetchedIds.add(id));
+  }
+  result = bestResult || result;
+
+  if (!result.firstDistance) {
+    progress({ depth: 0, frontierSize: 0, candidateCount: 0, phase: 'done', poolSize: pool.length });
+    return { noRoute: true, a, b, requests };
+  }
+
+  if (mode === 'strongest') {
+    // score needs full records (referenced_works) for every node on every candidate route --
+    // "a few dozen, not the whole frontier" per spec.
+    const routeIds = new Set();
+    for (const routes of result.candidatesByDistance.values())
+      for (const r of routes) r.forEach(id => routeIds.add(id));
+    const missing = [...routeIds].filter(id => !byId.has(id));
+    if (missing.length) { addPool(await fetchRefs(missing)); requests += chunk(missing, 50).slice(0, 2).length; }
+    progress({ depth: result.firstDistance, frontierSize: 0,
+               candidateCount: countBridgeCandidates(result.candidatesByDistance), phase: 'scoring', poolSize: pool.length });
+  }
+
+  const chosen = chooseBridgeRoute(result.candidatesByDistance, pool, mode);
+  // rendering needs display data for the chosen route regardless of mode -- a handful of ids,
+  // nothing like the whole-candidate-set fetch 'strongest' does above for scoring.
+  const missingChosen = chosen.route.filter(id => !byId.has(id));
+  if (missingChosen.length) { addPool(await fetchRefs(missingChosen)); requests += chunk(missingChosen, 50).slice(0, 2).length; }
+  progress({ depth: chosen.distance, frontierSize: 0, candidateCount: 1, phase: 'done', poolSize: pool.length });
+  return { a, b, route: chosen.route, distance: chosen.distance, shorterRejected: chosen.shorterRejected,
+           requests, mode, pool };
 }
 
 // ---- quantum jump ----
@@ -2509,6 +3353,17 @@ document.getElementById('showCiteLinks').onchange = e => {
 // a force layout settles into whichever local arrangement its start positions lead to;
 // re-throwing the nodes is the only reliable way out of a tangled one
 document.getElementById('reshuffleBtn').onclick = () => {
+  if (isBridgeView()) {
+    if (!bridgeSim) return;
+    for (const n of bridgeSim.nodes()) {
+      n.fx = null; n.fy = null;
+      n.x = Math.random() * graphW;
+      if (layoutMode !== 'timeline') n.y = Math.random() * graphH;   // timeline y is the year, never randomise it
+      n.vx = 0; n.vy = 0;
+    }
+    bridgeSim.alpha(1).restart();
+    return;
+  }
   if (!sim3 || !state.nodes.length) return;
   for (const n of state.nodes) {
     n.fx = null; n.fy = null;
@@ -2547,16 +3402,52 @@ langSel.value = lang;
 applyLang();   // before first paint, same as the palette below
 
 const SURPRISE_FILTER = 'referenced_works_count:>9,has_doi:true,type:article';
-async function surpriseMe(){
+
+// one random paper id matching SURPRISE_FILTER, or null if the sample came up empty.
+async function drawSurpriseId(){
+  const seed = Math.floor(Math.random() * 1e9);
+  const d = await fetchJSON(API + '/works?sample=1&seed=' + seed +
+                            '&per-page=1&filter=' + SURPRISE_FILTER + '&select=id');
+  const w = (d.results || [])[0];
+  return w ? bare(w.id) : null;
+}
+
+// default target: replace the main graph with a random paper, then show its title in the box
+// (not blank it) so the user can see what they were given without opening the detail panel.
+async function surpriseSeed(){
   setStatus(t('findingRandom'));
   try {
-    const seed = Math.floor(Math.random() * 1e9);
-    const d = await fetchJSON(API + '/works?sample=1&seed=' + seed +
-                              '&per-page=1&filter=' + SURPRISE_FILTER + '&select=id');
-    const w = (d.results || [])[0];
-    if (w) { document.getElementById('searchInput').value = ''; loadAndBuildGraph(bare(w.id)); }
-    else { setStatus(''); setError(t('noRandom')); }
+    const id = await drawSurpriseId();
+    if (!id) { setStatus(''); setError(t('noRandom')); return; }
+    await loadAndBuildGraph(id);
+    if (state.seed && state.seed.id === id) document.getElementById('searchInput').value = state.seed.display_name || '';
   } catch (err) { setStatus(''); setError(netMessage(err)); }
+}
+
+// bridge panel open with a first paper already set: draw a random SECOND paper instead of
+// replacing the first, and hand it to chooseBridgeB -- exactly what picking it from the second
+// dropdown would do. Never draws the paper already chosen as A; a couple of retries on a
+// collision, then reports it rather than looping. Does not start the search.
+async function surpriseBridgeB(){
+  setStatus(t('findingRandom'));
+  try {
+    const excludeId = state.seed.id;
+    let id = null;
+    for (let attempt = 0; attempt < 3 && !id; attempt++) {
+      const drawn = await drawSurpriseId();
+      if (drawn && drawn !== excludeId) id = drawn;
+    }
+    if (!id) { setStatus(''); setError(t('noRandom')); return; }
+    const w = await fetchSeed(id);
+    setStatus('');
+    searchInputB.value = w.display_name || '';
+    dropdownB.hidden = true;
+    await chooseBridgeB(w);
+  } catch (err) { setStatus(''); setError(netMessage(err)); }
+}
+
+function surpriseMe(){
+  return (!bridgeBar.hidden && state.seed) ? surpriseBridgeB() : surpriseSeed();
 }
 document.getElementById('surpriseBtn').onclick = surpriseMe;
 
@@ -2564,6 +3455,15 @@ document.getElementById('surpriseBtn').onclick = surpriseMe;
 function applyPalette(name){
   document.documentElement.dataset.palette = resolvePalette(name);
   try { localStorage.setItem('gp-palette', name); } catch (e) { /* private mode */ }
+  // the bridge preview is a full re-render (not a per-attribute repaint like the main graph
+  // below) because renderBridgePreview/renderBridgeGraph read cssVar() fresh for every element --
+  // that's the root fix for bridge colours never following a palette switch, rather than
+  // enumerating each bridge-view element here too and having the list drift from this one.
+  // Safe to re-render like this because renderBridgeGraph carries x/y/vx/vy forward from the
+  // previous nodeById, so this doesn't reshuffle the layout. Only reached once renderBridgePreview
+  // has actually drawn the bridge view (chooseBridgeB skips it for samePaper), matching every
+  // other call site's guard.
+  if (state.bridge && state.bridge.b && !state.bridge.samePaper) { renderBridgePreview(); return; }
   if (!nodeSel || !state.seed) return;
   const seedId = state.seed.id;
   const years = state.nodes.map(n => n.publication_year).filter(Boolean);
@@ -2666,7 +3566,34 @@ const PROMPT_I18N = {
     countAll: '{n} papers from the whole graph around the center. Source: OpenAlex, fetched {ts}.',
     countHops: '{n} papers within {d} hop(s) of the center. Source: OpenAlex, fetched {ts}.',
     authorsMore: '{names} et al. ({n} more)', etAl: ' et al.', unknown: 'unknown',
-    untitled: '(untitled)', nd: 'n.d.', hop: 'hop {h}'
+    untitled: '(untitled)', nd: 'n.d.', hop: 'hop {h}',
+    // used instead of the fields above when the bridge view is on screen with a route found --
+    // "write a history of this line" is the wrong question for two papers that may share no
+    // literature at all, so this frames it as evaluating a claimed connection instead.
+    bridge: {
+      intro: 'You are helping a researcher evaluate a possible connection between two papers that may not obviously belong to the same research line.',
+      graphDesc: [
+        'Below are two papers (A and B), the chain of intermediate papers a citation-similarity search found connecting them, and the cluster of papers surrounding each one, extracted from OpenAlex.',
+        'The route is a chain of similarity links, not a chain of citations — finding it does not by itself prove the two papers are actually related.',
+        'Each cluster lists the papers most similar to that side, for context on what that research line already covers.'
+      ],
+      reqHeader: 'Evaluate this connection. Requirements:',
+      req: [
+        '- Write the entire answer in {lang}. This overrides the language of this prompt.',
+        '- Briefly describe the problem each paper, A and B, addresses.',
+        "- Walk through the route: for each intermediate paper, explain why it plausibly connects to both A's side and B's side.",
+        '- State what each side’s research line appears not to know about the other.',
+        '- Propose one concrete research question that an actual link between A and B would raise.',
+        '- Explicitly judge whether this connection is spurious — e.g. shared vocabulary, a widely-cited generic methods paper, or a coincidental co-citation, rather than genuine shared substance. Say so plainly if it looks spurious; do not manufacture a connection the evidence does not support.',
+        '- Refer to papers by their [n] index and title.',
+        '- If you are not confident about what a paper actually did, say so instead of inventing it.',
+        '- Length: roughly 400-700 words. Prose, not a bullet list.'
+      ],
+      paperAHeader: 'PAPER A', paperBHeader: 'PAPER B',
+      routeHeader: 'ROUTE (intermediate papers from A to B)',
+      clusterAHeader: "CLUSTER AROUND PAPER A", clusterBHeader: "CLUSTER AROUND PAPER B",
+      countBridge: '{nRoute} intermediate paper(s) on the route, {nA} around A, {nB} around B. Source: OpenAlex, fetched {ts}.'
+    }
   },
   Korean: {
     langName: '한국어',
@@ -2694,7 +3621,31 @@ const PROMPT_I18N = {
     countAll: '중심 논문을 둘러싼 전체 그래프에서 {n}개 논문. 출처: OpenAlex, {ts} 조회.',
     countHops: '중심 논문에서 {d}단계 이내의 논문 {n}개. 출처: OpenAlex, {ts} 조회.',
     authorsMore: '{names} 외 {n}명', etAl: ' 외', unknown: '미상',
-    untitled: '(제목 없음)', nd: '미상', hop: '{h}단계'
+    untitled: '(제목 없음)', nd: '미상', hop: '{h}단계',
+    bridge: {
+      intro: '두 논문이 같은 연구 흐름에 속하는지 분명하지 않을 수 있는 상황에서, 연구자가 그 연결 가능성을 평가하도록 돕는 역할입니다.',
+      graphDesc: [
+        '아래는 두 논문(A와 B), 인용 유사도 검색이 찾아낸 둘을 잇는 중간 논문들의 경로, 그리고 각 논문 주변의 논문 군집입니다. OpenAlex에서 추출했습니다.',
+        '이 경로는 유사도 연결의 사슬이지 인용의 사슬이 아닙니다 — 경로를 찾았다는 사실 자체가 두 논문이 실제로 관련되어 있음을 증명하지는 않습니다.',
+        '각 군집은 그 논문과 가장 유사한 논문들을 나열한 것으로, 해당 연구 흐름이 이미 다루고 있는 내용을 보여주기 위한 맥락입니다.'
+      ],
+      reqHeader: '이 연결을 평가하세요. 요구사항:',
+      req: [
+        '- 전체 답변을 {lang}로 작성하세요. 이 지시가 이 프롬프트 자체의 언어보다 우선합니다.',
+        '- 논문 A와 B가 각각 다루는 문제를 간단히 설명하세요.',
+        '- 경로를 따라가며, 각 중간 논문이 A쪽과 B쪽 모두와 왜 연결되는지 설명하세요.',
+        '- 각 연구 흐름이 상대편에 대해 모르고 있는 것으로 보이는 부분을 밝히세요.',
+        '- A와 B 사이에 실제 연결이 있다면 제기될 만한 구체적인 연구 질문을 하나 제안하세요.',
+        '- 이 연결이 허구적인지 명시적으로 판단하세요 — 예를 들어 공유 어휘, 널리 인용되는 범용 방법론 논문, 우연한 동시 인용일 뿐 실질적인 내용 공유가 아닐 수 있습니다. 허구적으로 보인다면 그렇다고 분명히 말하고, 근거 없는 연결을 지어내지 마세요.',
+        '- 논문은 [n] 번호와 제목으로 지칭하세요.',
+        '- 논문이 실제로 한 일을 확신할 수 없다면, 지어내지 말고 그렇다고 밝히세요.',
+        '- 분량: 약 400~700 단어. 목록이 아닌 산문으로 작성하세요.'
+      ],
+      paperAHeader: '논문 A', paperBHeader: '논문 B',
+      routeHeader: '경로 (A에서 B로 이어지는 중간 논문)',
+      clusterAHeader: '논문 A 주변 군집', clusterBHeader: '논문 B 주변 군집',
+      countBridge: '경로상의 중간 논문 {nRoute}개, A 주변 {nA}개, B 주변 {nB}개. 출처: OpenAlex, {ts} 조회.'
+    }
   }
 };
 const ptf = (s, vars) => Object.keys(vars || {}).reduce((r, k) => r.split('{' + k + '}').join(vars[k]), s);
@@ -2772,11 +3723,95 @@ directive
   ].join('\n');
 }
 
+// true once the bridge prompt (not the single-paper history prompt) is what Story prompt builds --
+// requires an actual route, not just the bridge view being open (no route yet means nothing to evaluate)
+const usesBridgePrompt = () => isBridgeView() && !!state.bridge.route;
+
+// bridge variant of buildPrompt(): "write a narrative history" is the wrong question when the two
+// papers may share no literature at all, so this asks the model to evaluate a claimed connection
+// instead -- describing A, B, the route between them, and each side's surrounding cluster, then
+// explicitly inviting the negative answer (the connection may be spurious).
+// Depth has no natural meaning here (buildBridgeGraph already fixes each side to a small top-16
+// cluster, not a set nested by hop-distance from a route) so promptDepth is disabled in this mode
+// (see refreshPrompt) rather than repurposed -- the whole ~35-node bridge graph always goes in.
+function buildBridgePrompt(lang){
+  const bridge = state.bridge;
+  if (!state.seed || !bridge || !bridge.b || !bridge.route) return '';
+  const Ptop = PROMPT_I18N[lang] || PROMPT_I18N.English;
+  const P = Ptop.bridge;
+  const a = state.seed, b = bridge.b;
+  const nodes = bridge.nodeById ? [...bridge.nodeById.values()] : [];
+  const byId = new Map(nodes.map(n => [n.id, n]));
+  const inRoute = new Set(bridge.route);
+  const routeMids = bridge.route.filter(id => id !== a.id && id !== b.id);
+  const byCitesDesc = (x, y) => (byId.get(y).cited_by_count || 0) - (byId.get(x).cited_by_count || 0);
+  const clusterA = nodes.filter(n => n._cluster === 'A' && n.id !== a.id && !inRoute.has(n.id)).map(n => n.id).sort(byCitesDesc);
+  const clusterB = nodes.filter(n => n._cluster === 'B' && n.id !== b.id && !inRoute.has(n.id)).map(n => n.id).sort(byCitesDesc);
+
+  let i = 2;
+  const idx = new Map([[a.id, 0], [b.id, 1]]);
+  [...routeMids, ...clusterA, ...clusterB].forEach(id => { if (!idx.has(id)) idx.set(id, i++); });
+
+  const promptAuthors = authorships => {
+    const names = (authorships || []).map(x => x.author && x.author.display_name).filter(Boolean);
+    if (!names.length) return Ptop.unknown;
+    const shown = names.slice(0, 5).join(', ');
+    return names.length <= 5 ? shown : ptf(Ptop.authorsMore, { names: shown, n: names.length - 5 });
+  };
+  const paperBlock = w => [
+    '[' + idx.get(w.id) + '] ' + (w.display_name || Ptop.untitled) + ' (' + (w.publication_year || Ptop.nd) + ')',
+    '    ' + Ptop.authors + promptAuthors(w.authorships),
+    '    ' + ptf(Ptop.cited, { n: w.cited_by_count || 0 }) + (w.doi ? ' | ' + w.doi : ''),
+    '    ' + Ptop.abstract + (reconstructAbstract(w.abstract_inverted_index) || Ptop.notAvailable)
+  ].join('\n');
+  const line = id => {
+    const w = byId.get(id) || {};
+    const first = (w.authorships || [])[0];
+    const who = first && first.author ? first.author.display_name + ((w.authorships || []).length > 1 ? Ptop.etAl : '') : Ptop.unknown;
+    return '[' + idx.get(id) + '] ' + (w.display_name || Ptop.untitled) + ' (' + (w.publication_year || Ptop.nd) + ')' +
+           ' — ' + who + ' | ' + ptf(Ptop.citedShort, { n: w.cited_by_count || 0 });
+  };
+  const section = (title, ids) => ids.length ? '\n=== ' + title + ' ===\n' + ids.map(line).join('\n') + '\n' : '';
+
+  const native = { Korean: '답변은 반드시 처음부터 끝까지 한국어로 작성하세요.', English: '' }[lang] || '';
+  const directive = 'ANSWER LANGUAGE: ' + lang + '. Write the entire response in ' + lang +
+                    ', including headings.' + (native ? ' ' + native : '');
+
+  return [
+directive,
+'',
+P.intro,
+'',
+P.graphDesc[0],
+P.graphDesc[1],
+P.graphDesc[2],
+'',
+P.reqHeader,
+...P.req.map(r => ptf(r, { lang: Ptop.langName })),
+'',
+'=== ' + P.paperAHeader + ' ===',
+paperBlock(a),
+'',
+'=== ' + P.paperBHeader + ' ===',
+paperBlock(b),
+section(P.routeHeader, routeMids) +
+section(P.clusterAHeader, clusterA) +
+section(P.clusterBHeader, clusterB),
+'---',
+ptf(Ptop.generatedBy, { v: APP_VERSION }),
+ptf(P.countBridge, { nRoute: routeMids.length, nA: clusterA.length, nB: clusterB.length, ts: new Date().toISOString().slice(0, 16).replace('T', ' ') }),
+'',
+directive
+  ].join('\n');
+}
+
 function refreshPrompt(){
   if (!state.seed) return;
+  const bridgeMode = usesBridgePrompt();
+  document.getElementById('promptDepth').disabled = bridgeMode;
   const depth = +document.getElementById('promptDepth').value;
   const lang = document.getElementById('promptLang').value;
-  const text = buildPrompt(depth, lang);
+  const text = bridgeMode ? buildBridgePrompt(lang) : buildPrompt(depth, lang);
   document.getElementById('promptText').value = text;
   document.getElementById('promptCount').textContent = tf('promptCount', { n: (text.match(/^\[\d+\]/gm) || []).length, chars: text.length });
 }
@@ -2805,11 +3840,33 @@ let citeSinglePaper = null;
 
 function citeScopeWorks(scope){
   if (scope === 'single') return citeSinglePaper ? [citeSinglePaper] : [];
+  if (isBridgeView()) {
+    const nodes = state.bridge.nodeById ? [...state.bridge.nodeById.values()] : [];
+    if (scope === 'route') {
+      const routeIds = new Set(state.bridge.route || []);
+      return nodes.filter(n => routeIds.has(n.id));
+    }
+    return nodes; // 'all' here means "everything on screen" -- the ~35 bridge nodes, see syncCiteScopeOptions
+  }
   if (scope === 'visible') {
     const f = currentFilters();
     return state.nodes.filter(n => n.id === state.seed.id || nodeMatchesFilters(n, f));
   }
   return state.nodes; // 'all'
+}
+
+// #citeScope's option set differs by view: bridge hides "Visible papers" (filters are hidden
+// there too, so it has no meaning) and offers "Route only" instead, and its "all" option is
+// relabeled -- the bridge graph holds ~35 nodes, not the 40 the main-view wording promises.
+function syncCiteScopeOptions(){
+  const sel = document.getElementById('citeScope');
+  const bridge = isBridgeView();
+  sel.querySelector('option[value="visible"]').hidden = bridge;
+  sel.querySelector('option[value="route"]').hidden = !bridge;
+  sel.querySelector('option[value="all"]').textContent = t(bridge ? 'scopeAllBridge' : 'scopeAll');
+  if (sel.selectedOptions[0] && sel.selectedOptions[0].hidden) {
+    sel.value = bridge ? (state.bridge.route ? 'route' : 'all') : 'visible';
+  }
 }
 
 // sort ascending by year, then first-author family name
@@ -2825,6 +3882,7 @@ function sortedWorks(works){
 
 function refreshCitePanel(){
   if (!state.seed) return;
+  syncCiteScopeOptions();
   const format = document.getElementById('citeFormat').value;
   const scope = document.getElementById('citeScope').value;
   const entries = sortedWorks(citeScopeWorks(scope)).map(w => formatCitation(w, format));
@@ -2842,7 +3900,7 @@ function openCitePanel(scope, work){
 
 document.getElementById('citeToolbarBtn').onclick = () => {
   if (!state.seed) { setError(t('loadGraphFirst')); return; }
-  openCitePanel('visible');
+  openCitePanel(isBridgeView() ? (state.bridge.route ? 'route' : 'all') : 'visible');
 };
 document.getElementById('citeClose').onclick = () => { document.getElementById('citePanel').hidden = true; };
 document.getElementById('citeFormat').onchange = refreshCitePanel;
@@ -2869,40 +3927,164 @@ document.getElementById('ackBtn').onclick = () => document.getElementById('ackDl
 document.getElementById('ackClose').onclick = () => document.getElementById('ackDlg').close();
 
 // ---- search UI ----
+// shared by both the primary search box and the bridge's second one -- onChoose(work) does
+// whatever picking a result means for that box.
+function wireSearchBox(input, dropdown, onChoose){
+  let searchTimer;
+  input.addEventListener('input', () => {
+    clearTimeout(searchTimer);
+    const q = input.value.trim();
+    if (!q) { dropdown.hidden = true; return; }
+    searchTimer = setTimeout(async () => {
+      try {
+        const results = await searchWorks(q);
+        if (!results.length) { dropdown.hidden = true; return; }
+        dropdown.innerHTML = '';
+        results.forEach(w => {
+          const row = document.createElement('div');
+          row.innerHTML = '<div class="res-title">' + esc(w.display_name || t('untitled')) + '</div>' +
+            '<div class="res-meta">' + (w.publication_year || '?') + ' · ' + tf('citedCount', { n: w.cited_by_count || 0 }) + ' · ' + esc(fmtAuthors(w.authorships)) + '</div>';
+          const choose = ev => {
+            ev.preventDefault();
+            dropdown.hidden = true;
+            input.value = w.display_name || '';
+            input.blur();
+            onChoose(w);
+          };
+          row.addEventListener('pointerdown', choose);
+          dropdown.appendChild(row);
+        });
+        dropdown.hidden = false;
+      } catch (err) {
+        dropdown.innerHTML = '<div class="status-line" style="padding:8px 12px">' + esc(netMessage(err)) + '</div>';
+        dropdown.hidden = false;
+      }
+    }, 350);
+  });
+}
 const searchInput = document.getElementById('searchInput');
 const dropdown = document.getElementById('dropdown');
-let searchTimer;
-searchInput.addEventListener('input', () => {
-  clearTimeout(searchTimer);
-  const q = searchInput.value.trim();
-  if (!q) { dropdown.hidden = true; return; }
-  searchTimer = setTimeout(async () => {
-    try {
-      const results = await searchWorks(q);
-      if (!results.length) { dropdown.hidden = true; return; }
-      dropdown.innerHTML = '';
-      results.forEach(w => {
-        const row = document.createElement('div');
-        row.innerHTML = '<div class="res-title">' + esc(w.display_name || t('untitled')) + '</div>' +
-          '<div class="res-meta">' + (w.publication_year || '?') + ' · ' + tf('citedCount', { n: w.cited_by_count || 0 }) + ' · ' + esc(fmtAuthors(w.authorships)) + '</div>';
-        const choose = ev => {
-          ev.preventDefault();
-          dropdown.hidden = true;
-          searchInput.value = w.display_name || '';
-          searchInput.blur();
-          loadAndBuildGraph(w.id);
-        };
-        row.addEventListener('pointerdown', choose);
-        dropdown.appendChild(row);
-      });
-      dropdown.hidden = false;
-    } catch (err) {
-      dropdown.innerHTML = '<div class="status-line" style="padding:8px 12px">' + esc(netMessage(err)) + '</div>';
-      dropdown.hidden = false;
-    }
-  }, 350);
+wireSearchBox(searchInput, dropdown, w => loadAndBuildGraph(w.id));
+document.addEventListener('click', e => {
+  if (!e.target.closest('.search-wrap')) { dropdown.hidden = true; dropdownB.hidden = true; }
 });
-document.addEventListener('click', e => { if (!e.target.closest('.search-wrap')) dropdown.hidden = true; });
+
+// ---- bridge search UI ----
+const bridgeToggleBtn = document.getElementById('bridgeToggleBtn');
+const searchInputB = document.getElementById('searchInputB');
+const dropdownB = document.getElementById('dropdownB');
+const bridgeBar = document.getElementById('bridgeBar');
+const bridgeReadoutEl = document.getElementById('bridgeReadout');
+let bridgeSearchToken = 0;   // bumped to cancel an in-flight search (toggle-off, new search, app reset)
+
+function bridgeName(mode){ return mode === 'fewest' ? t('bridgeFewest') : t('bridgeStrongest'); }
+
+// (re)draws the two-cluster preview -- both papers' own graphs, plus the route if one has been found.
+function renderBridgePreview(){
+  if (!state.seed || !state.bridge || !state.bridge.b) return;
+  const routePool = (state.bridge.pool || []).length ? state.bridge.pool : null;
+  const { nodes, edges } = buildBridgeGraph(state.seed, state.pool, state.bridge.b, state.bridge.bPool,
+    state.bridge.route, routePool);
+  state.bridge.nodeById = renderBridgeGraph(nodes, edges, state.seed.id, state.bridge.b.id, state.bridge.route);
+}
+
+function updateBridgeReadout(){
+  if (!state.bridge) { bridgeReadoutEl.textContent = ''; return; }
+  if (state.bridge.samePaper) { bridgeReadoutEl.textContent = t('bridgeSamePaper'); return; }
+  if (state.bridge.noRoute) { bridgeReadoutEl.textContent = tf('bridgeNoRoute', { n: 5 }); return; }
+  if (state.bridge.distance == null) { bridgeReadoutEl.textContent = ''; return; }
+  let line = tf('bridgeReadout', { distance: state.bridge.distance, mode: bridgeName(state.bridge.mode), requests: state.bridge.requests });
+  // distance 1 means bridgeSearch's early nA0.has(bId) return fired -- no intermediate paper, so
+  // 'Strongest link' and 'Fewest steps' can't differ here. Say so; don't block or change the result.
+  if (state.bridge.distance === 1) line += ' · ' + t('bridgeDirect');
+  if (state.bridge.shorterRejected != null) line += ' · ' + tf('bridgeShorterRejected', { n: state.bridge.shorterRejected });
+  bridgeReadoutEl.textContent = line;
+}
+
+// picks `w` as bridge paper B -- shared by the dropdown (a search result) and Surprise me (a
+// full record fetched via fetchSeed) so both prepare paper B exactly the same way.
+async function chooseBridgeB(w){
+  bridgeSearchToken++;   // cancels any in-flight search for the previous B -- restore its button below
+  state.bridge = { b: w, bPool: [], route: null, distance: null, requests: 0,
+    mode: document.getElementById('bridgeMode').value };
+  bridgeReadoutEl.textContent = '';
+  // the bridge bar itself is already open (the toggle button shows it) -- B being set enables the
+  // mode select right away, but Find bridge stays disabled until paper B's own preview has
+  // actually rendered below (state.bridge.nodeById populated). Enabling it earlier let a search
+  // start while that fetch was still in flight; findBridge's field-line bundle anchors itself via
+  // bridgeLiveAnchors(), which found no live nodes yet and fell back to guessed positions for the
+  // whole search (see startBridgeRings / bridgeClusterAnchors).
+  document.getElementById('bridgeMode').disabled = false;
+  const chooseFindBtn = document.getElementById('findBridgeBtn');
+  chooseFindBtn.disabled = true; chooseFindBtn.textContent = t('findBridgeBtn');
+  if (!state.seed) return;   // the search itself still needs paper A
+  if (w.id === state.seed.id) { state.bridge.samePaper = true; updateBridgeReadout(); return; }
+  // paper B's own similarity-graph pool (paper A's is already state.pool from the main flow)
+  try {
+    const [refs, citers] = await Promise.all([fetchRefs(w.referenced_works || []), fetchCiters(w.id)]);
+    const seen = new Set(); const pool = [];
+    for (const x of [w, ...refs, ...citers]) if (!seen.has(x.id)) { seen.add(x.id); pool.push(x); }
+    state.bridge.bPool = pool;
+    renderBridgePreview();
+    chooseFindBtn.disabled = false;
+  } catch (err) {
+    chooseFindBtn.disabled = false;   // don't strand the button permanently disabled on a failed fetch
+    setError(netMessage(err));
+  }
+}
+wireSearchBox(searchInputB, dropdownB, chooseBridgeB);
+
+bridgeToggleBtn.addEventListener('click', () => {
+  const opening = bridgeBar.hidden;
+  bridgeBar.hidden = !opening;
+  bridgeToggleBtn.classList.toggle('active', opening);
+  if (!opening) {
+    bridgeSearchToken++;   // cancels any in-flight search -- restore the button it left disabled below
+    stopBridgeRings();
+    state.bridge = null;
+    searchInputB.value = '';
+    document.getElementById('bridgeMode').disabled = true;
+    const btn = document.getElementById('findBridgeBtn');
+    btn.disabled = true; btn.textContent = t('findBridgeBtn');
+    if (state.seed) renderGraph(state.nodes, state.edges, state.seed.id);
+  }
+});
+
+document.getElementById('findBridgeBtn').addEventListener('click', async () => {
+  if (!state.seed || !state.bridge || !state.bridge.b) return;
+  if (state.bridge.b.id === state.seed.id) { state.bridge.samePaper = true; updateBridgeReadout(); return; }
+  const myToken = ++bridgeSearchToken;
+  const mode = document.getElementById('bridgeMode').value;
+  state.bridge.mode = mode;
+  state.bridge.route = null; state.bridge.noRoute = false; state.bridge.samePaper = false;
+  renderBridgePreview();
+  const btn = document.getElementById('findBridgeBtn');
+  btn.disabled = true; btn.textContent = t('findingBridge');
+  bridgeReadoutEl.textContent = '';
+  startBridgeRings(bridgeZoomG, state.seed.id, state.bridge.b.id);
+  try {
+    const result = await findBridge(state.seed.id, state.bridge.b.id, mode, onBridgeSearchProgress);
+    if (myToken !== bridgeSearchToken) return;   // superseded -- a newer search or a cancel won
+    btn.disabled = false; btn.textContent = t('findBridgeBtn');
+    if (result.samePaper) { stopBridgeRings(); state.bridge.samePaper = true; updateBridgeReadout(); return; }
+    if (result.noRoute) { stopBridgeRings(); state.bridge.noRoute = true; updateBridgeReadout(); return; }
+    state.bridge.route = result.route; state.bridge.distance = result.distance;
+    state.bridge.requests = result.requests; state.bridge.shorterRejected = result.shorterRejected;
+    state.bridge.pool = result.pool;
+    // render the REAL route/layout FIRST (route nodes now exist, and (per renderBridgeGraph's
+    // position carry-forward) the surrounding layout doesn't jump), THEN morph the surviving
+    // strand onto those live positions -- so the morph target and the final layout are the same
+    // thing, not two different guesses that visibly bounce between each other.
+    renderBridgePreview();
+    await resolveBridgeSearch(result.route);   // morphs the last strand onto the real route, then clears
+    updateBridgeReadout();
+  } catch (err) {
+    if (myToken !== bridgeSearchToken) return;
+    stopBridgeRings();
+    btn.disabled = false; btn.textContent = t('findBridgeBtn');
+    setError(netMessage(err));
+  }
+});
 
 // ---- tabs ----
 document.getElementById('tabs').addEventListener('click', e => {
@@ -3181,6 +4363,104 @@ function selfTest(){
     ];
     const chainSame = chainCandidates(chainFieldSeed, chainFieldCands, chainFieldMerged, { field: 'same' });
     assert('chainCandidates field:same keeps only the matching field', chainSame.length === 1 && chainSame[0].id === 'CF1');
+  }
+
+  // ---- bridge search (find what connects two papers) ----
+  {
+    // direct citation -> distance 1
+    const bA = { id: 'BA', referenced_works: ['BB'] };
+    const bB = { id: 'BB', referenced_works: [] };
+    const r1 = bridgeSearch('BA', 'BB', [bA, bB], 5);
+    assert('bridgeSearch: a direct citation gives distance 1', r1.firstDistance === 1);
+    assert('bridgeSearch: the distance-1 route is just [A, B]',
+      r1.candidatesByDistance.get(1)[0].join(',') === 'BA,BB');
+
+    // planted shared neighbour -> distance 2, naming that neighbour
+    const s2A = { id: 'S2A', referenced_works: ['SharedX'] };
+    const s2B = { id: 'S2B', referenced_works: ['SharedX'] };
+    const r2 = bridgeSearch('S2A', 'S2B', [s2A, s2B], 5);
+    assert('bridgeSearch: a planted shared neighbour gives distance 2', r2.firstDistance === 2);
+    assert('bridgeSearch: the distance-2 route names the shared neighbour',
+      r2.candidatesByDistance.get(2)[0].join(',') === 'S2A,SharedX,S2B');
+
+    // planted chain (no shared neighbour) -> distance 3, naming both intermediates in order
+    const cA = { id: 'CA', referenced_works: ['CX'] };
+    const cX = { id: 'CX', referenced_works: ['CY'] };
+    const cY = { id: 'CY', referenced_works: ['CB'] };
+    const cB = { id: 'CB', referenced_works: [] };
+    const r3 = bridgeSearch('CA', 'CB', [cA, cX, cY, cB], 5);
+    assert('bridgeSearch: a planted chain (no shared neighbour) gives distance 3', r3.firstDistance === 3);
+    assert('bridgeSearch: the distance-3 route names both correct intermediates in order',
+      r3.candidatesByDistance.get(3)[0].join(',') === 'CA,CX,CY,CB');
+
+    // weighted scorer: a 3-step route through a high-citation hub vs. a 4-step route through two
+    // specific, low-citation papers. bibCoupling (fame-corrected via reference-list-size
+    // normalisation) is engineered to exactly 0.3 per hop on the hub route and 0.5 per hop on the
+    // specific route -- reproducing the worked example (3 * 1/0.3 = 10.0 loses to 4 * 1/0.5 = 8.0).
+    const hubPool = [
+      { id: 'brA', referenced_works: ['h1', 'h2', 'h3', 's1', 's2', 's3', 's4', 's5', 'p1', 'p2'] },
+      { id: 'brH1', referenced_works: ['h1', 'h2', 'h3', 'k1', 'k2', 'k3', 'q1', 'q2', 'q3', 'q4'] },
+      { id: 'brH2', referenced_works: ['k1', 'k2', 'k3', 'm1', 'm2', 'm3', 'n1', 'n2', 'n3', 'n4'] },
+      { id: 'brB', referenced_works: ['m1', 'm2', 'm3', 't1', 't2', 't3', 't4', 't5', 'p3', 'p4'] },
+      { id: 'brS1', referenced_works: ['s1', 's2', 's3', 's4', 's5', 'u1', 'u2', 'u3', 'u4', 'u5'] },
+      { id: 'brS2', referenced_works: ['u1', 'u2', 'u3', 'u4', 'u5', 'v1', 'v2', 'v3', 'v4', 'v5'] },
+      { id: 'brS3', referenced_works: ['v1', 'v2', 'v3', 'v4', 'v5', 't1', 't2', 't3', 't4', 't5'] }
+    ];
+    const bridgeCandidates = new Map([
+      [3, [['brA', 'brH1', 'brH2', 'brB']]],
+      [4, [['brA', 'brS1', 'brS2', 'brS3', 'brB']]]
+    ]);
+    const strongest = chooseBridgeRoute(bridgeCandidates, hubPool, 'strongest');
+    assert('chooseBridgeRoute: strongest link prefers the 4-step specific route over the 3-step hub route',
+      strongest.distance === 4 && strongest.route.join(',') === 'brA,brS1,brS2,brS3,brB');
+    assert('chooseBridgeRoute: strongest link reports the shorter route it rejected as weaker',
+      strongest.shorterRejected === 3);
+    const fewest = chooseBridgeRoute(bridgeCandidates, hubPool, 'fewest');
+    assert('chooseBridgeRoute: fewest steps takes the 3-step hub route without scoring',
+      fewest.distance === 3 && fewest.route.join(',') === 'brA,brH1,brH2,brB');
+
+    // nextBridgeStrand: the pure fold behind the bridge-search field-line animation. Fed a
+    // realistic onProgress sequence (wide at first, narrowing as candidates are found, widening
+    // back up briefly the way a real search's candidate count can as it explores further --
+    // clamping must still hold the line -- then converging through scoring to done, with poolSize
+    // growing every step the way a real search's pool.length does), the strand count and spread it
+    // produces must never increase and must end at exactly one strand.
+    const progressSeq = [
+      { depth: 0, frontierSize: 40, candidateCount: 0, phase: 'expanding', poolSize: 20 },
+      { depth: 2, frontierSize: 30, candidateCount: 3, phase: 'expanding', poolSize: 60 },
+      { depth: 2, frontierSize: 55, candidateCount: 9, phase: 'expanding', poolSize: 90 },   // candidates grew back up
+      { depth: 3, frontierSize: 0, candidateCount: 5, phase: 'scoring', poolSize: 150 },
+      { depth: 3, frontierSize: 0, candidateCount: 1, phase: 'done', poolSize: 150 }
+    ];
+    let strandState = null;
+    const strandSeq = progressSeq.map(p => (strandState = nextBridgeStrand(strandState, p)));
+    const nonIncreasing = arr => arr.every((v, i) => i === 0 || v <= arr[i - 1]);
+    assert('nextBridgeStrand: strand count never increases across a progress sequence',
+      nonIncreasing(strandSeq.map(s => s.strands)));
+    assert('nextBridgeStrand: spread never increases across a progress sequence',
+      nonIncreasing(strandSeq.map(s => s.spread)));
+    assert('nextBridgeStrand: ends at exactly 1 strand on phase "done"',
+      strandSeq[strandSeq.length - 1].strands === 1 && strandSeq[strandSeq.length - 1].spread === 0);
+    assert('nextBridgeStrand: starts at the fixed maximum when nothing has been found yet',
+      strandSeq[0].strands === BRIDGE_MAX_STRANDS);
+    // spread is driven by poolSize, not candidateCount -- it must keep narrowing step to step even
+    // while poolSize is the only thing growing (candidateCount jumps around, even backward, above).
+    assert('nextBridgeStrand: spread actually narrows as poolSize grows (not stuck at 1)',
+      strandSeq[0].spread > strandSeq[1].spread && strandSeq[1].spread > strandSeq[2].spread);
+    // decoupling: two payloads with the SAME poolSize but a dropping candidateCount must move
+    // strand count but leave spread exactly where it was (spread cares about poolSize, not this).
+    const sameePool = nextBridgeStrand({ strands: BRIDGE_MAX_STRANDS, spread: 1 },
+      { candidateCount: 8, phase: 'expanding', poolSize: 50 });
+    const sameePoolFewerCandidates = nextBridgeStrand(sameePool,
+      { candidateCount: 3, phase: 'expanding', poolSize: 50 });
+    assert('nextBridgeStrand: same poolSize, fewer candidates -> strand count drops, spread unchanged',
+      sameePoolFewerCandidates.strands < sameePool.strands && sameePoolFewerCandidates.spread === sameePool.spread);
+
+    // a search that resolves immediately (e.g. same-paper or a distance-1 hit) must still collapse
+    // to 1 strand on its very first 'done' call, not get stuck at the wide starting bundle.
+    const fastDone = nextBridgeStrand(null, { depth: 1, frontierSize: 0, candidateCount: 1, phase: 'done', poolSize: 4 });
+    assert('nextBridgeStrand: an immediate "done" (fast search) still collapses to 1 strand',
+      fastDone.strands === 1 && fastDone.spread === 0);
   }
 
   // ---- citation formatting ----
