@@ -130,10 +130,10 @@ main{flex:1; display:flex; overflow:hidden; min-height:0}
 }
 .tab.active{color:var(--ink); border-bottom-color:var(--accent)}
 #spacingCtl span{font-family:'Geist Mono',monospace; font-size:0.5625rem; text-transform:uppercase; letter-spacing:0.18em; color:var(--soft)}
-#spacing{width:6rem; accent-color:var(--muted); cursor:pointer}
+#spacing{width:6rem; accent-color:var(--accent); cursor:pointer}
 #citeLinkCtl span{font-family:'Geist Mono',monospace; font-size:0.5625rem; text-transform:uppercase;
   letter-spacing:0.18em; color:var(--soft)}
-#showCiteLinks{accent-color:var(--muted); cursor:pointer}
+#showCiteLinks{accent-color:var(--accent); cursor:pointer}
 #graphCtls{margin-left:auto; display:flex; align-items:center; gap:16px; padding-right:4px}
 #graphTools{
   /* same top and bottom as #detailPanel so the two read as a matched pair; 44px clears the
@@ -164,25 +164,27 @@ main{flex:1; display:flex; overflow:hidden; min-height:0}
   background:transparent; color:var(--muted); border:1px solid var(--rule)}
 #layoutCtl .layoutBtn:first-child{border-radius:4px 0 0 4px}
 #layoutCtl .layoutBtn:last-child{border-radius:0 4px 4px 0; border-left:none}
-#layoutCtl .layoutBtn.active{background:var(--paper-2); color:var(--ink)}
+/* the selected layout is a STATE, not a surface -- give it the palette accent like the
+   slider fill and the checkboxes, so every 'this is on' signal reads the same way */
+#layoutCtl .layoutBtn.active{background:var(--accent-tint); color:var(--accent)}
 #spacingCtl{display:flex; flex-direction:column; gap:4px}
 #spacingCtl span, .gt-field > span, #citeLinkCtl span, #oaCtl span{
   font-family:'Geist Mono',monospace; font-size:0.5625rem; text-transform:uppercase;
   letter-spacing:0.14em; color:var(--soft)}
-#spacing{width:100%; accent-color:var(--muted); cursor:pointer}
+#spacing{width:100%; accent-color:var(--accent); cursor:pointer}
 #citeLinkCtl, #oaCtl{display:flex; align-items:center; gap:6px; cursor:pointer}
 /* wraps the Filter section so bridge-view JS can hide it in one line; reproduces the
    gt-head-not(:first-child) separator that wrapping this in a div would otherwise swallow */
 #filterSection{display:flex; flex-direction:column; gap:8px; margin-top:8px; padding-top:12px; border-top:1px solid var(--rule)}
 #filterSection .gt-head{margin-top:0; padding-top:0; border-top:none}
-#showCiteLinks, #fOA{accent-color:var(--muted); cursor:pointer}
+#showCiteLinks, #fOA{accent-color:var(--accent); cursor:pointer}
 .gt-field{display:flex; flex-direction:column; gap:4px}
 .gt-pair{display:flex; gap:4px}
 #forceAdvanced{margin:0}
 #forceAdvanced summary{cursor:pointer}
 #forceAdvanced[open] summary{margin-bottom:4px}
 #forceAdvanced .gt-field{margin-top:6px}
-#forceAdvanced input[type=range]{width:100%; accent-color:var(--muted); cursor:pointer}
+#forceAdvanced input[type=range]{width:100%; accent-color:var(--accent); cursor:pointer}
 #forceAdvanced .btn{margin-top:2px}
 .gt-row{display:flex; justify-content:space-between; align-items:baseline; gap:6px}
 #graphTools .gt-val{font-family:'Geist Mono',monospace; text-transform:none; letter-spacing:normal; color:var(--soft)}
@@ -194,6 +196,11 @@ main{flex:1; display:flex; overflow:hidden; min-height:0}
 .gt-foot{display:flex; align-items:center; justify-content:space-between; gap:8px; margin-top:4px}
 .gt-foot .btn{width:auto}
 #fCount{white-space:nowrap; font-size:0.5625rem}
+/* while any filter narrows the graph, say so where the user can see it -- otherwise a
+   forgotten keyword just looks like a sparse literature */
+#filterSection.filtering > .gt-head{color:var(--accent)}
+#filterSection.filtering #fCount{color:var(--accent)}
+#filterSection.filtering #fReset{border-color:var(--accent); color:var(--accent)}
 #toolsBtn{display:none}
 #sheetClose{display:none}
 @media (max-width: 760px){
@@ -628,7 +635,7 @@ a{color:var(--link)}
 </head>
 <body>
 <header>
-  <h1 id="titleBtn" data-i18n-attr="title:resetTitle" title="Start over">GraphPapers</h1><span id="version">v1.0</span>
+  <h1 id="titleBtn" data-i18n-attr="title:resetTitle" title="Start over">GraphPapers</h1><span id="version">v1.0.1</span>
   <div class="search-wrap">
     <input id="searchInput" type="text" data-i18n-attr="placeholder:searchPlaceholder" placeholder="Search by title, DOI, or OpenAlex ID">
     <div id="dropdown" hidden></div>
@@ -906,7 +913,7 @@ a{color:var(--link)}
 </dialog>
 
 <script>
-const APP_VERSION = 'v1.0';
+const APP_VERSION = 'v1.0.1';
 const API = 'https://api.openalex.org';
 const MAILTO = 'astrphscst@gmail.com';
 const bare = id => (id || '').replace(/^https?:\/\/openalex\.org\//, '');
@@ -3331,6 +3338,15 @@ function applyFilters(){
   linkSel.style('display', d => (visible.get(eid(d.source)) && visible.get(eid(d.target))) ? null : 'none');
   const shown = [...visible.values()].filter(Boolean).length;
   document.getElementById('fCount').textContent = tf('fCount', { shown, total: state.nodes.length });
+  // A filter left on is invisible: the graph simply has fewer papers and nothing says why.
+  // Year inputs default to the graph's own range via their placeholder, so equalling the
+  // placeholder is "not filtering" -- only a narrower value counts.
+  const yearNarrowed = el => { const v = el.value.trim(); return !!v && v !== (el.placeholder || ''); };
+  const active = !!f.keyword || !!f.minCites || f.oaOnly || f.journal !== 'all'
+    || yearNarrowed(document.getElementById('fYearFrom'))
+    || yearNarrowed(document.getElementById('fYearTo'));
+  const sec = document.getElementById('filterSection');
+  if (sec) sec.classList.toggle('filtering', active);
 }
 
 ['fKeyword', 'fYearFrom', 'fYearTo', 'fMinCites'].forEach(id =>
@@ -4624,6 +4640,7 @@ const MANUAL_I18N = {
       'Searching or Surprise me builds a graph of about 40 related works, found by bibliographic coupling and co-citation.',
       'Node size shows citation count; colour shows publication year; a ring marks the seed paper.',
       'Edge thickness shows similarity strength; edge colour fades with distance from the seed.',
+      'Hover an edge for a moment to see why the two papers are linked: the papers that cite both, and the references they share, listed by title.',
       'Tick Citation links to overlay real citation edges on top of the similarity graph.',
       'Hover a node to preview its neighbours; click to pin the highlight; click empty canvas to release it.',
       'Select a paper to see its abstract, authors, and DOI in the detail panel, with a button to copy the abstract.',
@@ -4672,6 +4689,8 @@ const MANUAL_I18N = {
     ],
     s8h: 'Getting results out',
     s8p: [
+      'Press the camera button to save the graph as a PNG, in the graph view or the bridge view — it captures the full layout, not just the current zoomed-in view; in Timeline mode the year grid is redrawn for the exported width.',
+      'Chrome and Edge let you choose where to save it; Safari and Firefox lack that capability and just download it — that is expected, not a bug.',
       'Press Export citations to open the export panel.',
       'Choose a Format (BibTeX, RIS, APA, MLA, Chicago) and a Scope, then press Copy or Download.',
       'Family names are guessed as everything after each author’s last space, which misreads suffixes (Jr., III), multi-word family names (van der Berg), and “Family, Given” order.',
@@ -4681,10 +4700,11 @@ const MANUAL_I18N = {
     ],
     s9h: 'Good to know',
     s9p: [
-      'The status line shows your remaining daily OpenAlex quota and when it resets.',
+      'The status line shows a bar with your remaining daily OpenAlex quota, such as 934 / 1000; hover it for the full sentence, including when it resets.',
       'The detail panel shows when a record was last fetched — there is no local cache, every lookup is live.',
       'Offline, a banner appears; if OpenAlex is briefly overloaded, GraphPapers retries automatically.',
       'Press the i button to open the legend explaining what every mark on the graph means.',
+      'On desktop, a small arrow button straddles the inner edge of the control panel and the detail panel; press it to fold the panel to a tab, and press the tab to bring it back. The state is remembered between visits.',
       'On a phone, the graph and detail panel stack vertically and the controls move behind a small menu button.'
     ],
     tour: {
@@ -4706,7 +4726,9 @@ const MANUAL_I18N = {
       basics: [
         'Search by title, DOI, or OpenAlex ID — or press Surprise me for a random paper. Either builds a graph of about 40 related works.',
         'Hover a node to preview its neighbours, scroll to zoom, and drag a node to move it. Press Next when you’re ready to continue.',
+        'Hover an edge for a moment to see why the two papers it joins are linked — the papers that cite both, and the references they share. Press Next when you’re ready to continue.',
         'Click any node to see its title, authors, abstract, and DOI in the detail panel.',
+        'Press the camera button to save the graph as an image.',
         'Press Story prompt to open the LLM story-prompt panel.'
       ],
       quantum: [
@@ -4755,6 +4777,7 @@ const MANUAL_I18N = {
       '검색하거나 아무 논문이나를 누르면 같은 문헌을 인용하는 관계(bibliographic coupling)와 함께 인용되는 관계(co-citation)로 찾은 관련 논문 약 40개로 그래프가 만들어집니다.',
       '노드 크기는 피인용수, 색상은 발행 연도이며, 테두리는 기준 논문을 표시합니다.',
       '선의 굵기는 유사도, 선의 색상은 기준 논문으로부터의 거리에 따라 흐려집니다.',
+      '선 위에 마우스를 잠시 올리면 두 논문이 왜 이어졌는지 보여줍니다: 둘 다 인용한 논문들과 함께 공유하는 참고문헌을 제목으로 나열합니다.',
       '인용 연결선을 체크하면 유사도 선 위에 실제 인용 관계를 겹쳐서 보여줍니다.',
       '노드에 마우스를 올리면 이웃을 미리 보여주고, 클릭하면 강조가 고정됩니다. 빈 화면을 클릭하면 고정이 풀립니다.',
       '논문을 선택하면 상세 패널에 초록, 저자, DOI가 표시되며, 초록을 복사하는 버튼도 있습니다.',
@@ -4803,6 +4826,8 @@ const MANUAL_I18N = {
     ],
     s8h: '결과 내보내기',
     s8p: [
+      '카메라 버튼을 누르면 그래프를 PNG로 저장합니다. 유사도 그래프와 연결하기 화면 모두에서 쓸 수 있습니다 — 현재 확대된 화면이 아니라 배치 전체를 담으며, 연대순 모드에서는 연도 눈금이 내보내는 너비에 맞춰 다시 그려집니다.',
+      'Chrome과 Edge에서는 저장 위치를 고를 수 있고, Safari와 Firefox는 이 기능이 없어 그냥 다운로드됩니다 — 정상 동작이며 오류가 아닙니다.',
       '인용 내보내기를 눌러 내보내기 패널을 여세요.',
       '형식(BibTeX, RIS, APA, MLA, Chicago)과 범위를 고른 뒤 복사 또는 다운로드를 누르세요.',
       '저자의 성(family name)은 이름의 마지막 띄어쓰기 뒤 부분으로 추정하므로, 접미사(Jr., III), 여러 단어로 된 성(van der Berg), "성, 이름" 순서는 잘못 처리될 수 있습니다.',
@@ -4812,10 +4837,11 @@ const MANUAL_I18N = {
     ],
     s9h: '알아두면 좋은 것',
     s9p: [
-      '상태 표시줄에는 오늘 남은 OpenAlex 요청 수와 초기화 시점이 나타납니다.',
+      '상태 표시줄에는 오늘 남은 OpenAlex 요청 수를 보여주는 막대가 934 / 1000처럼 표시됩니다. 마우스를 올리면 초기화 시점을 포함한 전체 문장이 나타납니다.',
       '상세 패널에는 레코드를 마지막으로 가져온 시점이 표시됩니다 — 로컬 캐시가 없어 모든 조회가 실시간입니다.',
       '오프라인 상태면 배너가 나타나고, OpenAlex가 일시적으로 몰려 있으면 GraphPapers가 자동으로 다시 시도합니다.',
       'i 버튼을 누르면 그래프의 각 표시가 무엇을 의미하는지 설명하는 범례가 열립니다.',
+      '데스크톱 화면에서는 그래프 설정 패널과 상세 패널의 안쪽 가장자리에 작은 화살표 버튼이 있습니다. 누르면 패널이 탭 모양으로 접히고, 탭을 다시 누르면 펼쳐집니다. 이 상태는 다음 방문에도 기억됩니다.',
       '휴대폰 화면에서는 그래프와 상세 패널이 세로로 쌓이고, 설정 패널은 작은 메뉴 버튼 뒤로 숨겨집니다.'
     ],
     tour: {
@@ -4837,7 +4863,9 @@ const MANUAL_I18N = {
       basics: [
         '제목, DOI, OpenAlex ID로 검색하거나, 아무 논문이나를 눌러 무작위 논문을 불러오세요. 두 방법 모두 관련 논문 약 40개로 그래프를 만듭니다.',
         '노드에 마우스를 올리면 이웃을 미리 보여주고, 스크롤로 확대/축소하며, 노드를 드래그해 옮길 수 있습니다. 준비되면 다음을 누르세요.',
+        '선 위에 마우스를 잠시 올리면 그 선이 잇는 두 논문이 왜 이어졌는지 보여줍니다 — 둘 다 인용한 논문들과 함께 공유하는 참고문헌입니다. 준비되면 다음을 누르세요.',
         '아무 노드나 클릭하면 상세 패널에 제목, 저자, 초록, DOI가 표시됩니다.',
+        '카메라 버튼을 누르면 그래프를 이미지로 저장합니다.',
         '이야기 프롬프트를 눌러 LLM 프롬프트 패널을 여세요.'
       ],
       quantum: [
@@ -5174,7 +5202,9 @@ const TOUR_TRACKS = {
     { sel: ['#searchInput', '#surpriseBtn', '#dropdown'], before: tourGraphTab,
       check: () => !!state.seed && !!nodeSel },
     { sel: '#graphView', before: tourGraphTab, manual: true },
+    { sel: '#graphView', before: tourGraphTab, manual: true },
     { sel: '#graphView', before: tourGraphTab, check: () => pinnedId != null },
+    { sel: '#cameraBtn' },
     { sel: '#storyBtn', check: () => !document.getElementById('promptPanel').hidden }
   ],
   quantum: [

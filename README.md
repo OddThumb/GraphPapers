@@ -9,7 +9,7 @@
 
 # GraphPapers
 
-**v1.0** · [Open it in a browser](https://oddthumb.github.io/GraphPapers/)
+**v1.0.1** · [Open it in a browser](https://oddthumb.github.io/GraphPapers/)
 
 A free, single-file paper-graph tool. Enter a paper, get a graph of the forty works most related to it — then go where following citations cannot take you.
 
@@ -69,6 +69,8 @@ The 40 highest-scoring papers become the graph. Each node connects to its three 
 | Edge weight | Similarity between the two papers |
 | Edge colour | Distance from the seed — the accent, fading with each hop |
 
+Hover an edge for a moment and a card explains why the two papers it joins are linked: the papers that cite both of them, and the references they share, listed by title — deliberately, since a reader can check "these 7 papers cite both" and cannot check "0.34." The card waits a beat before appearing, so it does not flicker as the pointer crosses the graph; it is a similarity-graph feature only, not the bridge view.
+
 Everything that changes the graph lives in one panel at its top-left; everything that only reads from it — **Story prompt**, **Export citations** — stays in the tab bar. The **i** button at the top-right opens the full legend.
 
 Drag nodes, scroll to zoom, and use the **Spacing** slider to loosen or tighten the layout, or open **Advanced** for the four forces underneath it — link distance, pull, push and collision gap, each slider centred on the value the layout was tuned to.
@@ -76,6 +78,8 @@ Drag nodes, scroll to zoom, and use the **Spacing** slider to loosen or tighten 
 **Reshuffle** throws the nodes to new starting positions and lets the layout settle again — a force layout falls into whichever arrangement its start positions lead to, so a tangled graph often untangles on the second try. **Timeline** stacks the papers by year instead, oldest at the top, so citation arrows all point upward into the past; each year that actually occurs gets an equal band, so a single old reference cannot squash the recent decade into a sliver. Four colour palettes sit in the header, in two pairs — Editorial and Dark are the soft ones, Ink and Noir the high-contrast ones — plus System, which follows your operating system.
 
 Click a node to pin its neighbourhood; click empty canvas to release it. Click any node to see its abstract, authors, and DOI — and to rebuild the whole graph around it.
+
+The **camera** button next to **?** and **i** saves the graph as a PNG, in this view or the bridge view. It captures the full layout, not just whatever is currently zoomed into view, so zooming in never crops the export; in Timeline mode the year grid is redrawn for the exported width. Chrome and Edge let you choose where to save the file; Safari and Firefox lack that browser capability and just download it — that is expected, not a bug.
 
 ### Prior and derivative works
 
@@ -176,13 +180,17 @@ There is no local cache and no database. Every lookup goes straight to OpenAlex,
 
 The cost of that guarantee is that **the app needs an internet connection**. Without one it opens and renders, but cannot fetch papers, and says so.
 
-OpenAlex allows 1,000 requests a day, counted per IP address — your own, not shared with anyone else using GraphPapers. A graph costs four to eight requests, a Quantum Jump one to six, and a bridge search six to twelve, so the ceiling is somewhere above a hundred graphs a day and most people will never approach it. The bottom-right corner shows what you have left and when it resets, and turns the accent colour as it runs low, so the limit is visible before it is reached rather than arriving as an unexplained failure.
+OpenAlex allows 1,000 requests a day, counted per IP address — your own, not shared with anyone else using GraphPapers. A graph costs four to eight requests, a Quantum Jump one to six, and a bridge search six to twelve, so the ceiling is somewhere above a hundred graphs a day and most people will never approach it. The bottom-right corner shows a thin bar with the count beside it, such as `934 / 1000`, and turns the count accent-coloured as it runs low; hover it for the full sentence, including when it resets — so the limit is visible before it is reached rather than arriving as an unexplained failure.
 
 ---
 
 ## Requirements
 
 A modern browser. That is all.
+
+### Collapsible panels
+
+On desktop, a small arrow button straddles the inner edge of the control panel and the detail panel; press it to fold that panel to a slim tab — a sliders icon on the left, **Detail** on the right — and press the tab to bring the panel back. Each panel remembers whether you left it collapsed, between visits.
 
 ### On a phone
 
