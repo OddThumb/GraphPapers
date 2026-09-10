@@ -68,6 +68,7 @@ header{
 #dropdown div:hover{background:var(--paper-2)}
 .res-title{font-size:12px}
 .res-meta{font-family:'Geist Mono',monospace; font-size:9px; color:var(--soft); letter-spacing:0.04em; margin-top:2px}
+#surpriseBtn{white-space:nowrap; font-size:12px; padding:6px 10px}
 #statusLine{font-family:'Geist Mono',monospace; font-size:10px; color:var(--soft);
   letter-spacing:0.04em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
 #langCtl{margin-left:auto; display:flex; align-items:center; gap:8px}
@@ -153,7 +154,8 @@ main{flex:1; display:flex; overflow:hidden; min-height:0}
   header{flex-wrap:wrap; gap:8px 12px; padding:8px 12px}
   h1{font-size:1.35rem}
   .search-wrap{order:3; flex:1 1 100%; max-width:none}
-  #statusLine{order:4; flex:1 1 100%}
+  #surpriseBtn{white-space:nowrap; font-size:12px; padding:6px 10px}
+#statusLine{order:4; flex:1 1 100%}
   #langCtl span, #paletteCtl span{display:none}
 
   /* a 68/32 split leaves neither half usable on a phone -- stack them instead */
@@ -371,11 +373,12 @@ a{color:var(--link)}
 </head>
 <body>
 <header>
-  <h1 id="titleBtn" data-i18n-attr="title:resetTitle" title="Start over">GraphPapers</h1><span id="version">v0.9</span>
+  <h1 id="titleBtn" data-i18n-attr="title:resetTitle" title="Start over">GraphPapers</h1><span id="version">v0.9.1</span>
   <div class="search-wrap">
     <input id="searchInput" type="text" data-i18n-attr="placeholder:searchPlaceholder" placeholder="Search by title, DOI, or OpenAlex ID">
     <div id="dropdown" hidden></div>
   </div>
+  <button class="btn" id="surpriseBtn" data-i18n="surprise">Surprise me</button>
   <span id="statusLine"></span>
   <label id="langCtl"><span data-i18n="uiLanguage">Language</span>
     <select id="uiLang">
@@ -410,7 +413,7 @@ a{color:var(--link)}
       </div>
     </div>
     <div id="content">
-      <div id="graphView"><div class="status-line" data-i18n="graphEmpty">Search for a paper above to build a graph.</div></div>
+      <div id="graphView"><div class="status-line" data-i18n="graphEmpty">Search for a paper above to build a graph, or press Surprise me.</div></div>
       <div id="hoverCard" hidden></div>
       <div id="refsView" class="listView" hidden></div>
       <div id="citersView" class="listView" hidden></div>
@@ -564,7 +567,7 @@ a{color:var(--link)}
 </dialog>
 
 <script>
-const APP_VERSION = 'v0.9';
+const APP_VERSION = 'v0.9.1';
 const API = 'https://api.openalex.org';
 const MAILTO = 'astrphscst@gmail.com';
 const bare = id => (id || '').replace(/^https?:\/\/openalex\.org\//, '');
@@ -575,12 +578,13 @@ const I18N = {
   en: {
     uiLanguage: 'Language', palette: 'Palette', paletteSystem: 'System', paletteEditorial: 'Editorial',
     paletteDark: 'Dark', paletteInk: 'Ink', paletteNoir: 'Noir',
-    resetTitle: 'Start over', repoTitle: 'Source on GitHub',
+    resetTitle: 'Start over', surprise: 'Surprise me',
+    findingRandom: 'Picking a paper at random\u2026', noRandom: 'Could not find a random paper. Try again.', repoTitle: 'Source on GitHub',
     searchPlaceholder: 'Search by title, DOI, or OpenAlex ID',
     offlineBanner: 'Offline — GraphPapers needs an internet connection to fetch papers from OpenAlex.',
     tabGraph: 'Similarity graph', tabRefs: 'Prior works', tabCiters: 'Derivative works',
     storyBtn: 'Story prompt', exportCitations: 'Export citations',
-    graphEmpty: 'Search for a paper above to build a graph.',
+    graphEmpty: 'Search for a paper above to build a graph, or press Surprise me.',
     graphControls: 'Graph controls',
     layout: 'Layout', layoutForce: 'Free', layoutTimeline: 'Timeline',
     spacing: 'Spacing', reshuffle: 'Reshuffle',
@@ -642,12 +646,13 @@ const I18N = {
   ko: {
     uiLanguage: '언어', palette: '팔레트', paletteSystem: '시스템', paletteEditorial: '에디토리얼',
     paletteDark: '다크', paletteInk: '잉크', paletteNoir: '느와르',
-    resetTitle: '처음부터 다시 시작합니다', repoTitle: 'GitHub 저장소로 이동',
+    resetTitle: '처음부터 다시 시작합니다', surprise: '아무 논문이나',
+    findingRandom: '무작위로 논문을 고르는 중\u2026', noRandom: '무작위 논문을 찾지 못했습니다. 다시 시도해 주세요.', repoTitle: 'GitHub 저장소로 이동',
     searchPlaceholder: '제목, DOI, OpenAlex ID로 검색',
     offlineBanner: '오프라인 상태입니다 — GraphPapers는 OpenAlex에서 논문을 가져오려면 인터넷 연결이 필요합니다.',
     tabGraph: '유사도 그래프', tabRefs: '선행 논문', tabCiters: '후행 논문',
     storyBtn: '이야기 프롬프트', exportCitations: '인용 내보내기',
-    graphEmpty: '위에서 논문을 검색해 그래프를 만드세요.',
+    graphEmpty: '위에서 논문을 검색하거나, 아무 논문이나 버튼을 눌러 보세요.',
     graphControls: '그래프 설정',
     layout: '배치', layoutForce: '자유', layoutTimeline: '연대순',
     spacing: '간격', reshuffle: '다시 배치',
@@ -2540,6 +2545,18 @@ try {
 } catch (e) { /* private mode */ }
 langSel.value = lang;
 applyLang();   // before first paint, same as the palette below
+
+const SURPRISE_FILTER = 'referenced_works_count:>9,cited_by_count:>4,has_doi:true,type:article';
+async function surpriseMe(){
+  setStatus(t('findingRandom'));
+  try {
+    const d = await fetchJSON(API + '/works?sample=1&per-page=1&filter=' + SURPRISE_FILTER + '&select=id');
+    const w = (d.results || [])[0];
+    if (w) { document.getElementById('searchInput').value = ''; loadAndBuildGraph(bare(w.id)); }
+    else { setStatus(''); setError(t('noRandom')); }
+  } catch (err) { setStatus(''); setError(netMessage(err)); }
+}
+document.getElementById('surpriseBtn').onclick = surpriseMe;
 
 // ---- palette ----
 function applyPalette(name){

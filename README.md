@@ -9,7 +9,7 @@
 
 # GraphPapers
 
-**v0.9** · [Open it in a browser](https://oddthumb.github.io/GraphPapers/)
+**v0.9.1** · [Open it in a browser](https://oddthumb.github.io/GraphPapers/)
 
 A free, single-file alternative to Connected Papers. Enter a paper, get a force-directed graph of about 40 works most related to it, then export a ready-made prompt that turns that graph into a narrative history — in your own LLM, at no cost.
 
@@ -31,7 +31,7 @@ Sharing it means sending a link, or one file. Either way the recipient is workin
 
 ### Similarity graph
 
-Enter a title, DOI, or OpenAlex ID. The app pulls the seed paper's references and the works citing it, then scores every candidate against the seed using the same two measures Connected Papers uses:
+Enter a title, DOI, or OpenAlex ID. **Surprise me** picks a paper at random instead — from anywhere in OpenAlex, which in practice means anywhere in science. The app pulls the seed paper's references and the works citing it, then scores every candidate against the seed using the same two measures Connected Papers uses:
 
 - **Bibliographic coupling** — two papers that cite many of the same works are
 probably about the same thing.
