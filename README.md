@@ -11,7 +11,7 @@
 
 **v0.9** · [Open it in a browser](https://oddthumb.github.io/GraphPapers/)
 
-A free, single-file alternative to Connected Papers. Enter a paper, get a force-directed graph of the ~40 works most related to it, then export a ready-made prompt that turns that graph into a narrative history — in your own LLM, at no cost.
+A free, single-file alternative to Connected Papers. Enter a paper, get a force-directed graph of about 40 works most related to it, then export a ready-made prompt that turns that graph into a narrative history — in your own LLM, at no cost.
 
 No install. No account. No API key. No backend. One HTML file. Works on a phone as well as a desktop — the layout rearranges itself rather than shrinking.
 
@@ -105,9 +105,9 @@ Copy it into ChatGPT, Claude, Gemini, or anything else, and you get a written hi
 
 | Depth | Papers | Use it for |
 |---|---|---|
-| 1 | ~10 | A tight story about the paper's immediate neighbourhood |
-| 2 | ~25 | The default — enough context to see a lineage |
-| 3 | ~37 | The whole field around the paper |
+| 1 | about 10 | A tight story about the paper's immediate neighbourhood |
+| 2 | about 25 | The default — enough context to see a lineage |
+| 3 | about 37 | The whole field around the paper |
 | All | 39 | Everything in the graph |
 
 Output language is switchable between English and Korean, independently of the interface language: reading the app in Korean does not force a Korean prompt.
