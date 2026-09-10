@@ -71,6 +71,10 @@ header{
 #statusLine{font-family:'Geist Mono',monospace; font-size:10px; color:var(--soft);
   letter-spacing:0.04em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
 #langCtl{margin-left:auto; display:flex; align-items:center; gap:8px}
+#repoLink{
+  display:flex; align-items:center; color:var(--soft); text-decoration:none; padding:2px;
+}
+#repoLink:hover{color:var(--ink)}
 #paletteCtl{display:flex; align-items:center; gap:8px}
 #langCtl span, #paletteCtl span{font-family:'Geist Mono',monospace; font-size:9px; text-transform:uppercase;
   letter-spacing:0.18em; color:var(--soft)}
@@ -254,6 +258,7 @@ main{flex:1; display:flex; overflow:hidden; min-height:0}
   display:flex; flex-direction:column; gap:8px;
 }
 #qJumpBlock .eyebrow{color:var(--accent); margin:0}
+#rebuildBtns{display:grid; grid-template-columns:1fr 1fr; gap:8px}
 #quantumBtns{display:grid; grid-template-columns:1fr 1fr; gap:8px}
 #quantumJumpBtn{border-color:var(--accent); color:var(--accent); transition:background 150ms ease, color 150ms ease, transform 150ms ease}
 #quantumJumpBtn:hover:not(:disabled){background:var(--accent-tint)}
@@ -366,7 +371,7 @@ a{color:var(--link)}
 </head>
 <body>
 <header>
-  <h1 id="titleBtn" data-i18n-attr="title:resetTitle" title="Start over">GraphPapers</h1><span id="version">v0.8</span>
+  <h1 id="titleBtn" data-i18n-attr="title:resetTitle" title="Start over">GraphPapers</h1><span id="version">v0.9</span>
   <div class="search-wrap">
     <input id="searchInput" type="text" data-i18n-attr="placeholder:searchPlaceholder" placeholder="Search by title, DOI, or OpenAlex ID">
     <div id="dropdown" hidden></div>
@@ -387,6 +392,10 @@ a{color:var(--link)}
       <option value="noir" data-i18n="paletteNoir">Noir</option>
     </select>
   </label>
+  <a id="repoLink" href="https://github.com/OddThumb/GraphPapers" target="_blank" rel="noopener"
+     data-i18n-attr="title:repoTitle" title="Source on GitHub" aria-label="GitHub">
+    <svg viewBox="0 0 16 16" width="18" height="18" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
+  </a>
 </header>
 <div id="netBar" hidden data-i18n="offlineBanner">Offline — GraphPapers needs an internet connection to fetch papers from OpenAlex.</div>
 <main>
@@ -555,6 +564,7 @@ a{color:var(--link)}
 </dialog>
 
 <script>
+const APP_VERSION = 'v0.9';
 const API = 'https://api.openalex.org';
 const MAILTO = 'astrphscst@gmail.com';
 const bare = id => (id || '').replace(/^https?:\/\/openalex\.org\//, '');
@@ -565,7 +575,7 @@ const I18N = {
   en: {
     uiLanguage: 'Language', palette: 'Palette', paletteSystem: 'System', paletteEditorial: 'Editorial',
     paletteDark: 'Dark', paletteInk: 'Ink', paletteNoir: 'Noir',
-    resetTitle: 'Start over',
+    resetTitle: 'Start over', repoTitle: 'Source on GitHub',
     searchPlaceholder: 'Search by title, DOI, or OpenAlex ID',
     offlineBanner: 'Offline — GraphPapers needs an internet connection to fetch papers from OpenAlex.',
     tabGraph: 'Similarity graph', tabRefs: 'Prior works', tabCiters: 'Derivative works',
@@ -599,8 +609,8 @@ const I18N = {
     format: 'Format', scope: 'Scope', scopeSingle: 'This paper', scopeVisible: 'Visible papers',
     scopeAll: 'All 40 papers', citeCount: '{n} entries', download: 'Download',
     detail: 'Detail', detailEmpty: 'Search for a paper to begin.', closeDetails: 'Close details',
-    noDOI: 'No DOI', noAbstract: 'No abstract', cite: 'Cite',
-    rebuildGraph: 'Rebuild graph from this paper',
+    noDOI: 'No DOI', readPdf: 'Read the free PDF →', noAbstract: 'No abstract', cite: 'Cite',
+    rebuildGraph: 'Rebuild from this paper', undoStep: 'Undo',
     unknownAuthors: 'Unknown authors', authorsMore: '{names} et al. ({n} more)', etAlSuffix: ' et al.',
     citedCount: 'cited {n}×', hopLabel: 'hop {h}', untitled: '(untitled)',
     quantumJumpHeading: 'Quantum Jump', quantumJumpBtn: 'Quantum Jump!',
@@ -632,7 +642,7 @@ const I18N = {
   ko: {
     uiLanguage: '언어', palette: '팔레트', paletteSystem: '시스템', paletteEditorial: '에디토리얼',
     paletteDark: '다크', paletteInk: '잉크', paletteNoir: '느와르',
-    resetTitle: '처음부터 다시 시작합니다',
+    resetTitle: '처음부터 다시 시작합니다', repoTitle: 'GitHub 저장소로 이동',
     searchPlaceholder: '제목, DOI, OpenAlex ID로 검색',
     offlineBanner: '오프라인 상태입니다 — GraphPapers는 OpenAlex에서 논문을 가져오려면 인터넷 연결이 필요합니다.',
     tabGraph: '유사도 그래프', tabRefs: '선행 논문', tabCiters: '후행 논문',
@@ -653,23 +663,23 @@ const I18N = {
     lgNodeSize: '노드 크기', lgCitationCount: '피인용수',
     lgNodeColour: '노드 색상', lgPubYear: '발행 연도, <span id="lgYears">오래된순에서 최신순</span>',
     olderToNewer: '오래된순에서 최신순',
-    lgSeedRing: '시드 테두리', lgSeedVal: '그래프의 중심이 되는 논문',
+    lgSeedRing: '기준 논문 테두리', lgSeedVal: '그래프의 중심이 되는 논문',
     lgSolidEdge: '실선',
-    lgSolidVal: '인용이 아니라 유사도입니다 — 같은 문헌을 인용하거나 함께 인용되는 두 논문을 잇습니다. 시드에서 멀어질수록 흐려집니다.',
+    lgSolidVal: '인용이 아니라 유사도입니다 — 같은 문헌을 인용하거나 함께 인용되는 두 논문을 잇습니다. 기준 논문에서 멀어질수록 흐려집니다.',
     lgDashedEdge: '점선',
     lgDashedVal: '실제 인용 관계이며, 화살표는 더 오래된 논문을 가리킵니다. <b>인용 연결선</b>으로 켤 수 있습니다.',
     lgJumpTrail: '점프 경로',
-    lgJumpVal: '어디서 건너왔는지를 보여줍니다 &mdash; 네 가지 <b>찾는 방식</b> 중 무엇이 선택되었든: <b>함께 읽히는 논문</b>(동시인용), <b>같은 토대를 쓰는 논문</b>(공유 참고문헌), <b>같은 아이디어</b>(공유 주제 키워드, 인용 관계 전혀 없음), 또는 <b>제3의 논문 경유</b>(공유된 중간 논문). 어느 방식이든 두 논문 사이에 인용 관계가 없음을 보장하므로, 이 경로는 인용만으로는 찾을 수 없었던 길을 기록합니다. 경로가 잇는, 테두리가 있는 노드들은 이전 시드들이며, 경로를 따라 더 뒤에 있을수록 테두리가 흐려집니다.',
+    lgJumpVal: '어디서 건너왔는지를 보여줍니다 &mdash; 네 가지 <b>찾는 방식</b> 중 무엇이 선택되었든: <b>함께 읽히는 논문</b>(함께 인용됨), <b>같은 토대를 쓰는 논문</b>(참고문헌 겹침), <b>같은 아이디어</b>(공유 주제 키워드, 인용 관계 전혀 없음), 또는 <b>제3의 논문 경유</b>(공유된 중간 논문). 어느 방식이든 두 논문 사이에 인용 관계가 없음을 보장하므로, 이 경로는 인용만으로는 찾을 수 없었던 길을 기록합니다. 경로가 잇는, 테두리가 있는 노드들은 이전 기준 논문들이며, 경로를 따라 더 뒤에 있을수록 테두리가 흐려집니다.',
     promptHeading: 'LLM 이야기 프롬프트', depth: '깊이', depthAll: '전체', output: '출력',
     copy: '복사', close: '닫기', copied: '복사됨', pressCmdC: 'Cmd+C를 누르세요',
     promptCount: '{n}개 논문 · {chars}자',
     format: '형식', scope: '범위', scopeSingle: '이 논문', scopeVisible: '화면에 표시된 논문',
     scopeAll: '전체 40개 논문', citeCount: '{n}개 항목', download: '다운로드',
     detail: '상세', detailEmpty: '시작하려면 논문을 검색하세요.', closeDetails: '상세 정보 닫기',
-    noDOI: 'DOI 없음', noAbstract: '초록 없음', cite: '인용',
-    rebuildGraph: '이 논문으로 다시 그리기',
+    noDOI: 'DOI 없음', readPdf: '무료 PDF로 읽기 →', noAbstract: '초록 없음', cite: '인용',
+    rebuildGraph: '이 논문으로 다시 그리기', undoStep: '되돌리기',
     unknownAuthors: '저자 미상', authorsMore: '{names} 외 {n}명', etAlSuffix: ' 외',
-    citedCount: '피인용 {n}회', hopLabel: '홉 {h}', untitled: '(제목 없음)',
+    citedCount: '피인용 {n}회', hopLabel: '{h}단계', untitled: '(제목 없음)',
     quantumJumpHeading: 'Quantum Jump', quantumJumpBtn: 'Quantum Jump!',
     quantumJumpTitle: '현재 논문과 인용 관계가 없는, 유사도 높은 논문으로 무작위로 점프합니다',
     undoJump: '점프 되돌리기', undoJumpTitle: '마지막 점프를 되돌립니다',
@@ -684,7 +694,7 @@ const I18N = {
     jumpExhausted: '이 논문과 조건에 대해 Quantum Jump!가 모든 후보를 이미 뽑았습니다. 다시 시작하려면 뽑기 기록을 초기화하세요.',
     noJumpCandidates: '이 조건에 맞는 Quantum Jump 후보가 없습니다.',
     sharedKeywordCount: '공유 키워드 {n}개', chainVia: '{title}을(를) 통해 연결됨',
-    statusFetchingSeed: '시드 논문을 가져오는 중…', statusCollecting: '참고문헌과 인용 정보를 모으는 중…',
+    statusFetchingSeed: '기준 논문을 가져오는 중…', statusCollecting: '참고문헌과 인용 정보를 모으는 중…',
     statusComputing: '유사도를 계산하는 중…',
     couldNotReach: 'OpenAlex에 연결할 수 없습니다: {msg}',
     noConnection: '연결이 없습니다. GraphPapers는 모든 논문을 OpenAlex에서 실시간으로 가져오므로 인터넷이 필요합니다.',
@@ -1509,20 +1519,37 @@ function renderDetail(work){
   detailBody.removeAttribute('data-i18n');
   const abstract = reconstructAbstract(work.abstract_inverted_index);
   const doi = work.doi ? '<a href="' + esc(work.doi) + '" target="_blank" rel="noopener">' + esc(work.doi) + '</a>' : '<span class="mono">' + esc(t('noDOI')) + '</span>';
+  const oaUrl = (work.open_access && work.open_access.oa_url) || '';
+  const oaLink = oaUrl
+    ? '<div class="d-row"><a href="' + esc(oaUrl) + '" target="_blank" rel="noopener">' + esc(t('readPdf')) + '</a></div>'
+    : '';
   const showQuantum = !!(state.seed && work.id === state.seed.id);
   detailBody.innerHTML =
     '<div class="d-title">' + esc(work.display_name || t('untitled')) + '</div>' +
     '<div class="d-row">' + esc(fmtAuthors(work.authorships)) + '</div>' +
     '<div class="d-row mono">' + (work.publication_year || '?') + ' · ' + tf('citedCount', { n: work.cited_by_count || 0 }) + '</div>' +
     '<div class="d-row">' + doi + '</div>' +
+    oaLink +
     '<div style="text-align:right">' +
       (abstract ? '<button class="btn" id="abstractCopy" style="font-size:11px; padding:4px 8px">' + esc(t('copy')) + '</button> ' : '') +
       '<button class="btn" id="citeOneBtn" style="font-size:11px; padding:4px 8px">' + esc(t('cite')) + '</button>' +
     '</div>' +
     (abstract ? '<div class="d-abstract">' + esc(abstract) + '</div>' : '<div class="d-abstract mono">' + esc(t('noAbstract')) + '</div>') +
-    (showQuantum ? quantumBlockHtml() : '<button class="btn" id="redrawBtn">' + esc(t('rebuildGraph')) + '</button>');
+    (showQuantum ? quantumBlockHtml()
+      : '<div id="rebuildBtns">' +
+          '<button class="btn" id="redrawBtn">' + esc(t('rebuildGraph')) + '</button>' +
+          '<button class="btn" id="redrawUndoBtn"' + (state.history && state.history.length ? '' : ' disabled') +
+            '>' + esc(t('undoStep')) + '</button>' +
+        '</div>');
   const redrawBtn = document.getElementById('redrawBtn');
-  if (redrawBtn) redrawBtn.onclick = () => loadAndBuildGraph(work.id);
+  if (redrawBtn) redrawBtn.onclick = () => {
+    state.history = state.history || [];
+    state.history.push(snapshotGraph());
+    if (state.history.length > 20) state.history.shift();
+    loadAndBuildGraph(work.id, { keepHistory: true });
+  };
+  const redrawUndoBtn = document.getElementById('redrawUndoBtn');
+  if (redrawUndoBtn) redrawUndoBtn.onclick = undoStep;
   document.getElementById('citeOneBtn').onclick = () => openCitePanel('single', work);
   const abstractCopyBtn = document.getElementById('abstractCopy');
   if (abstractCopyBtn) {
@@ -2249,11 +2276,11 @@ const jumpKey = (seedId, route) => seedId + '|' + route;
 
 // Undo used to re-run the whole 5-request pipeline for a graph we had just been
 // looking at. Snapshot it on the way out and put it back instead.
-const GRAPH_SNAP_KEYS = ['seed','refs','citers','pool','nodes','baseNodes','edges','trailEdges',
+const GRAPH_SNAP_KEYS = ['seed','refs','citers','pool','nodes','baseNodes','edges','trail','trailEdges',
                          'sourceImpact','journalP75','journalP50','fetchedAt'];
 function snapshotGraph(){
   const snap = {};
-  for (const k of GRAPH_SNAP_KEYS) snap[k] = state[k];
+  for (const k of GRAPH_SNAP_KEYS) snap[k] = Array.isArray(state[k]) ? state[k].slice() : state[k];
   return snap;
 }
 function restoreGraph(snap){
@@ -2444,13 +2471,11 @@ async function quantumJump(){
   loadAndBuildGraph(chosen.id, { keepHistory: true });
 }
 
-function quantumUndo(){
-  if (!state.trail.length) return;
-  state.trail.pop();
+function undoStep(){
   const snap = (state.history || []).pop();
-  if (snap && snap.seed) restoreGraph(snap);
-  else loadAndBuildGraph(state.seed.id);   // no snapshot (e.g. reloaded page): fall back
+  if (snap && snap.seed) restoreGraph(snap);   // the snapshot carries the trail too
 }
+const quantumUndo = undoStep;
 
 const toolsEl = document.getElementById('graphTools');
 document.getElementById('toolsBtn').onclick = e => { e.stopPropagation(); toolsEl.classList.toggle('open'); };
@@ -2648,9 +2673,9 @@ const PROMPT_I18N = {
     abstract: '초록: ', notAvailable: '(제공되지 않음)',
     generatedBy: 'GraphPapers {v}으로 생성됨.',
     countAll: '중심 논문을 둘러싼 전체 그래프에서 {n}개 논문. 출처: OpenAlex, {ts} 조회.',
-    countHops: '중심 논문에서 {d}홉 이내의 논문 {n}개. 출처: OpenAlex, {ts} 조회.',
+    countHops: '중심 논문에서 {d}단계 이내의 논문 {n}개. 출처: OpenAlex, {ts} 조회.',
     authorsMore: '{names} 외 {n}명', etAl: ' 외', unknown: '미상',
-    untitled: '(제목 없음)', nd: '미상', hop: '홉 {h}'
+    untitled: '(제목 없음)', nd: '미상', hop: '{h}단계'
   }
 };
 const ptf = (s, vars) => Object.keys(vars || {}).reduce((r, k) => r.split('{' + k + '}').join(vars[k]), s);
@@ -2721,7 +2746,7 @@ section(P.priorHeader, prior) +
 section(P.laterHeader, deriv) +
 section(P.relatedHeader, other),
 '---',
-ptf(P.generatedBy, { v: 'v0.8' }),
+ptf(P.generatedBy, { v: APP_VERSION }),
 ptf(depth > 9 ? P.countAll : P.countHops, { n: picked.length, d: depth, ts: new Date().toISOString().slice(0, 16).replace('T', ' ') }),
 '',
 directive
