@@ -2550,7 +2550,9 @@ const SURPRISE_FILTER = 'referenced_works_count:>9,cited_by_count:>4,has_doi:tru
 async function surpriseMe(){
   setStatus(t('findingRandom'));
   try {
-    const d = await fetchJSON(API + '/works?sample=1&per-page=1&filter=' + SURPRISE_FILTER + '&select=id');
+    const seed = Math.floor(Math.random() * 1e9);
+    const d = await fetchJSON(API + '/works?sample=1&seed=' + seed +
+                              '&per-page=1&filter=' + SURPRISE_FILTER + '&select=id');
     const w = (d.results || [])[0];
     if (w) { document.getElementById('searchInput').value = ''; loadAndBuildGraph(bare(w.id)); }
     else { setStatus(''); setError(t('noRandom')); }
