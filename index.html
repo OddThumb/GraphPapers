@@ -2546,7 +2546,7 @@ try {
 langSel.value = lang;
 applyLang();   // before first paint, same as the palette below
 
-const SURPRISE_FILTER = 'referenced_works_count:>9,cited_by_count:>4,has_doi:true,type:article';
+const SURPRISE_FILTER = 'referenced_works_count:>9,has_doi:true,type:article';
 async function surpriseMe(){
   setStatus(t('findingRandom'));
   try {

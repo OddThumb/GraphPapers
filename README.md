@@ -31,7 +31,7 @@ Sharing it means sending a link, or one file. Either way the recipient is workin
 
 ### Similarity graph
 
-Enter a title, DOI, or OpenAlex ID. **Surprise me** picks a paper at random instead — from anywhere in OpenAlex, which in practice means anywhere in science. The app pulls the seed paper's references and the works citing it, then scores every candidate against the seed using the same two measures Connected Papers uses:
+Enter a title, DOI, or OpenAlex ID. **Surprise me** picks a paper at random instead — from anywhere in OpenAlex, which in practice means anywhere in science. The draw asks only for a bibliography, since that is what a graph is built from; it does not ask for citations, which would quietly exclude everything published recently. The app pulls the seed paper's references and the works citing it, then scores every candidate against the seed using the same two measures Connected Papers uses:
 
 - **Bibliographic coupling** — two papers that cite many of the same works are
 probably about the same thing.
