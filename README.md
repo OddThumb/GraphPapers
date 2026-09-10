@@ -11,9 +11,22 @@
 
 **v0.11** · [Open it in a browser](https://oddthumb.github.io/GraphPapers/)
 
-A free, single-file alternative to Connected Papers. Enter a paper, get a force-directed graph of about 40 works most related to it, then export a ready-made prompt that turns that graph into a narrative history — in your own LLM, at no cost.
+A free, single-file paper-graph tool. Enter a paper, get a graph of the forty works most related to it — then go where following citations cannot take you.
 
-No install. No account. No API key. No backend. One HTML file. Works on a phone as well as a desktop — the layout rearranges itself rather than shrinking.
+Tools of this kind show you the neighbourhood of one paper. These two are why this one exists:
+
+- **Quantum Jump** — moves to a paper with *no citation link* to the one you are reading, found four different ways, leaving a trail you can retrace and evidence for every step.
+- **Bridge** — give it two papers and it finds the chain connecting them, or tells you plainly that there isn't one.
+
+No install. No account. No API key. No backend. One HTML file, on a desktop or a phone.
+
+### Your first thirty seconds
+
+1. Open the link and type a paper title — or press **Surprise me** and take whatever comes.
+2. Click any node to read its abstract, or to rebuild the graph around it.
+3. Press **Story prompt**, copy the text, paste it into any LLM. You get a written history of that research line, at no cost.
+
+Then try **Quantum Jump!**, or **Bridge to another paper** with a second paper in mind. Everything below is reference — read it when you want to know why a line is drawn where it is.
 
 ---
 
