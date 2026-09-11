@@ -524,6 +524,7 @@ a{color:var(--link)}
   text-align:center; padding:1.5rem 13.75rem; pointer-events:none;
 }
 .error-box{font-size:0.75rem; color:var(--ink); padding:16px; border:1px solid var(--rule); border-radius:6px; margin:16px}
+#restoreJumpOptsBtn{display:block; margin-top:12px; font-size:0.6875rem; padding:5px 10px}
 #graphEmptyHint{
   display:block; margin:8px auto 0; background:none; border:none; padding:0; font:inherit;
   font-size:0.6875rem; color:var(--accent); cursor:pointer; text-decoration:underline;
@@ -1072,6 +1073,7 @@ const I18N = {
     quantumJumpHeading: 'Quantum Jump', quantumJumpBtn: 'Quantum Jump!',
     quantumJumpTitle: 'Jump to a random high-similarity paper with no citation link to the current one',
     undoJump: 'Undo jump', undoJumpTitle: 'Undo the last jump',
+    restoreJumpOpts: 'Previous options', backToPaper: 'Back to the paper',
     findBy: 'Find by', findByCocite: 'Read together', findByCoupling: 'Shared foundations',
     findByIdeas: 'Same ideas', findByChain: 'Linked through a third paper',
     field: 'Field', fieldAny: 'Any field', fieldSame: 'Same field', fieldCross: 'Different field',
@@ -1179,6 +1181,7 @@ const I18N = {
     quantumJumpHeading: 'Quantum Jump', quantumJumpBtn: 'Quantum Jump!',
     quantumJumpTitle: '현재 논문과 인용 관계가 없는, 유사도 높은 논문으로 무작위로 점프합니다',
     undoJump: '점프 되돌리기', undoJumpTitle: '마지막 점프를 되돌립니다',
+    restoreJumpOpts: '이전 설정으로', backToPaper: '논문으로 돌아가기',
     findBy: '찾는 방식', findByCocite: '함께 읽히는 논문', findByCoupling: '같은 토대를 쓰는 논문',
     findByIdeas: '같은 아이디어', findByChain: '제3의 논문 경유',
     field: '분야', fieldAny: '분야 무관', fieldSame: '같은 분야', fieldCross: '다른 분야',
@@ -2235,6 +2238,10 @@ const state = { seed: null, refs: [], citers: [], nodes: [], edges: [], sim: nul
   bridge: null };   // { b, bPool, route, distance, mode, requests, pool, shorterRejected } once a 2nd paper is chosen
 // quantum-jump option selections, held here (not in the detail markup) so they survive panel re-renders
 let qFindByVal = 'cocite', qFieldVal = 'any';
+// the Find by / Field pair used by the PREVIOUS jump attempt -- not the pair before the last
+// select change, because a reader who narrows both selects and then fails wants both back, not
+// the last one. Null until a second attempt has something to go back to.
+let prevJumpOpts = null, lastJumpOpts = null;
 const detailBody = document.getElementById('detailBody');
 const freshnessEl = document.getElementById('freshness');
 
@@ -2244,6 +2251,28 @@ function setStatus(msg){
 function setError(msg){
   detailBody.classList.remove('status-line');
   detailBody.innerHTML = '<div class="error-box">' + msg + '</div>';
+}
+
+// puts the previous Find by / Field pair back and redraws the detail panel, which is what brings
+// the (now restored) selects back on screen -- setError had replaced them with the message.
+function offerPrevJumpOpts(mayRestore){
+  const box = detailBody.querySelector('.error-box');
+  if (!box) return;
+  // 'already drawn every candidate' is not an options problem -- the answer there is Reset draws,
+  // which lives in the panel this error just replaced, so that case only needs the way back.
+  const restores = mayRestore && prevJumpOpts
+    && (prevJumpOpts.findBy !== qFindByVal || prevJumpOpts.field !== qFieldVal);
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'btn';
+  btn.id = 'restoreJumpOptsBtn';
+  btn.textContent = t(restores ? 'restoreJumpOpts' : 'backToPaper');
+  btn.onclick = () => {
+    if (restores) { qFindByVal = prevJumpOpts.findBy; qFieldVal = prevJumpOpts.field; }
+    prevJumpOpts = null;
+    renderDetail(state.seed);
+  };
+  box.appendChild(btn);
 }
 
 function fallbackCopy(text){
@@ -4090,6 +4119,9 @@ async function quantumJump(){
   if (seedNode && seedNode.x != null && zoomG) startRingLoop(zoomG, seedNode.x, seedNode.y, seedNode.r);
   if (btn) { btn.disabled = true; btn.textContent = t('jumping'); btn.classList.add('is-jumping'); }
 
+  prevJumpOpts = lastJumpOpts;
+  lastJumpOpts = { findBy: qFindByVal, field: qFieldVal };
+
   let jump;
   try {
     jump = await ensureJumpPool(seed, route);
@@ -4108,6 +4140,11 @@ async function quantumJump(){
     stopRingLoop();
     if (btn) { btn.disabled = false; btn.textContent = t('quantumJumpBtn'); btn.classList.remove('is-jumping'); }
     setError(all.length ? t('jumpExhausted') : t('noJumpCandidates'));
+    // no candidates at all means the options were narrowed past the point of matching anything --
+    // and setError has just replaced the panel that held those two selects, so the way back has
+    // to be offered here. 'Already drawn every candidate' is a different problem: the options are
+    // fine, the draws are used up, and Reset draws is the answer.
+    offerPrevJumpOpts(!all.length);
     return;
   }
   const chosen = untried[Math.floor(Math.random() * untried.length)];
