@@ -197,7 +197,6 @@ main{flex:1; display:flex; overflow:hidden; min-height:0}
   backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px);
   border:1px solid var(--rule); border-radius:6px;
 }
-#graphTools:hover{background:color-mix(in srgb, var(--paper) 96%, transparent)}
 /* the panel's actual content lives in here, sized to the panel and independently scrollable --
    kept as a separate box from #graphTools itself so that one can stay overflow:visible for the
    edge-straddling handle while this one still clips/scrolls the long controls list. */
@@ -456,7 +455,6 @@ body.landing-tour #graphView .status-line{visibility:hidden}
   /* overflow:visible (not auto) -- .panel-handle straddles this box's edge and must not be
      clipped by it; the actual scrolling/wrapping happens one level in, on .panel-body. */
 }
-#detailPanel:hover{background:color-mix(in srgb, var(--paper) 96%, transparent)}
 #detailPanel .panel-body{
   height:100%; overflow-y:auto; padding:1rem;
   /* a DOI is one unbreakable token, and it was wide enough to force a horizontal scrollbar on the
@@ -6057,9 +6055,23 @@ function tourActivateStep(){
   tour.flag = false;
   tour.seen = new Set();
   tour.missing = 0;
+  tour.revealed = false;
   if (step.before) step.before();
   step.doneFn = step.makeCheck ? step.makeCheck() : null;
   tourRenderCallout();
+}
+// opens whichever collapsed panel is hiding this step's target. Returns false when nothing was
+// collapsed, so the caller can fall through to its own give-up path.
+function tourReveal(targets){
+  let opened = false;
+  if (targets.some(el => toolsEl.contains(el)) && toolsEl.classList.contains('gt-collapsed')) {
+    setToolsCollapsed(false); opened = true;
+  }
+  if (targets.some(el => detailPanelEl.contains(el))
+      && (detailPanelEl.classList.contains('dp-collapsed') || isNarrow())) {
+    openSheet(); opened = true;
+  }
+  return opened;
 }
 function tourAdvance(){
   tour.idx++;
@@ -6081,6 +6093,13 @@ function tourTick(){
     tourPositionHole(rect);
     tourPositionCallout(rect);
     tourAttachNudge(targets);
+  } else if (targets.length && !tour.revealed && tourReveal(targets)) {
+    // a control in a collapsed panel still resolves, it just has no box -- which read as "this
+    // control does not exist" and skipped the step. With both panels collapsed that skipped every
+    // step of a track and dropped the reader straight on the summary. Open the panel instead.
+    tour.revealed = true;
+    requestAnimationFrame(tourTick);
+    return;
   } else {
     tour.missing++;
     tourShowDim(false);
