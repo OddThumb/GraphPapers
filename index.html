@@ -3142,11 +3142,16 @@ function drawBridgeField(tSec){
 // are screen coordinates while the bundle lives inside bridgeZoomG, which carries the zoom
 // transform -- so any pan/zoom widens the mismatch further. Used only by bridgeLiveAnchors() below
 // when a live node or its x/y is genuinely missing (e.g. before renderBridgePreview has ever run).
-function bridgeClusterAnchors(){
-  return {
-    posA: { x: graphW * 0.22, y: graphH / 2, r: 16 },
-    posB: { x: graphW * 0.78, y: graphH / 2, r: 16 }
+// last-resort anchors for a side whose node has not rendered yet. Takes the cluster letters so a
+// three-paper layout does not fall back to the two-paper geometry, which put the third paper's
+// end of the bundle where the SECOND paper sits.
+function bridgeClusterAnchors(aLetter, bLetter){
+  const n = bridgeClusterCount || 2;
+  const at = L => {
+    const f = bridgeClusterFrac(L, n);
+    return { x: graphW * f.x, y: graphH * (n >= 3 ? f.y : 0.5), r: 16 };
   };
+  return { posA: at(aLetter || 'A'), posB: at(bLetter || 'B') };
 }
 
 // the two anchors the search's rings and field-line bundle actually use: the LIVE node objects
@@ -3157,7 +3162,14 @@ function bridgeClusterAnchors(){
 // instead of drawing against a stale fallback for the rest of the search.
 // Falls back to bridgeClusterAnchors() only for whichever side's node isn't there yet.
 function bridgeLiveAnchors(aId, bId){
-  const fallback = bridgeClusterAnchors();
+  const letterOf = id => {
+    if (!state.bridge) return null;
+    if (state.seed && id === state.seed.id) return 'A';
+    if (state.bridge.b && id === state.bridge.b.id) return 'B';
+    if (state.bridge.c && state.bridge.c.w && id === state.bridge.c.w.id) return 'C';
+    return null;
+  };
+  const fallback = bridgeClusterAnchors(letterOf(aId), letterOf(bId));
   const byId = state.bridge && state.bridge.nodeById;
   const a = byId && aId != null && byId.get(aId);
   const b = byId && bId != null && byId.get(bId);
@@ -3540,14 +3552,16 @@ function applyBridgeSpacing(){
   // the fractions out from the centre by the same multiplier, clamped so a cluster never leaves
   // the canvas.
   const spread = f => Math.max(0.06, Math.min(0.94, 0.5 + (f - 0.5) * spacing));
+  // strength falls as spacing rises: a fixed anchor strength held every cluster at the same
+  // tightness however far the slider was pushed, which is why the clusters looked stuck.
   bridgeSim.force('x', d3.forceX(d => spread(bridgeClusterFrac(d._cluster, bridgeClusterCount).x) * graphW)
-    .strength(0.15));
+    .strength(0.15 / spacing));
   if (layoutMode === 'timeline') {
     tlScale = yearScaleFor(bridgeSim.nodes());
     bridgeSim.force('y', null);   // y is pinned directly in the tick handler (pinTimelineY), not a force
   } else {
     bridgeSim.force('y', d3.forceY(d => spread(bridgeClusterFrac(d._cluster, bridgeClusterCount).y) * graphH)
-      .strength(bridgeClusterCount >= 3 ? 0.12 : 0.05));
+      .strength((bridgeClusterCount >= 3 ? 0.12 : 0.05) / spacing));
   }
   bridgeSim.alpha(0.6).restart();
 }
@@ -5553,6 +5567,10 @@ async function chooseBridgeC(w){
     const seen = new Set(); const pool = [];
     for (const x of [w, ...refs, ...citers]) if (!seen.has(x.id)) { seen.add(x.id); pool.push(x); }
     state.bridge.c.pool = pool;
+    // draw the third cluster before searching FROM it. Otherwise its node is not in nodeById yet,
+    // bridgeLiveAnchors falls back for the whole A-C leg, and the field lines converge on an empty
+    // patch of canvas -- the 2-cluster fallback's right-hand point, which is where B sits.
+    renderBridgePreview();
     await growBridgeToThird();
   } catch (err) {
     state.bridge.c = null;
