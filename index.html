@@ -1036,6 +1036,7 @@ const I18N = {
     offlineBanner: 'Offline — GraphPapers needs an internet connection to fetch papers from OpenAlex.',
     tabGraph: 'Similarity graph', tabRefs: 'Prior works', tabCiters: 'Derivative works',
     storyBtn: 'Story prompt', exportCitations: 'Export citations',
+    ghostNodeTitle: 'The paper that is not there — open the story prompt to have a model write it',
     graphEmpty: 'Search for a paper above to build a graph, or press Surprise me.',
     graphEmptyHint: 'New here? Find the ? Manual button next to the legend icon, or take the guided tour.',
     graphControls: 'Graph controls', collapsePanel: 'Collapse panel', expandPanel: 'Expand panel',
@@ -1143,6 +1144,7 @@ const I18N = {
     offlineBanner: '오프라인 상태입니다 — GraphPapers는 OpenAlex에서 논문을 가져오려면 인터넷 연결이 필요합니다.',
     tabGraph: '유사도 그래프', tabRefs: '선행 논문', tabCiters: '후행 논문',
     storyBtn: '이야기 프롬프트', exportCitations: '인용 내보내기',
+    ghostNodeTitle: '존재하지 않는 논문 — 이야기 프롬프트를 열면 모델이 써 줍니다',
     graphEmpty: '위에서 논문을 검색하거나, 아무 논문이나 버튼을 눌러 보세요.',
     graphEmptyHint: '처음이신가요? 범례 아이콘 옆의 ? 설명서 버튼을 확인하거나, 가이드 투어를 시작해보세요.',
     graphControls: '그래프 설정', collapsePanel: '패널 접기', expandPanel: '패널 펼치기',
@@ -3022,7 +3024,7 @@ function renderGraph(nodes, edges, seedId){
 }
 
 // ---- bridge view rendering (two-cluster graph + persistent route highlight) ----
-let bridgeSim, bridgeNodeSel, bridgeLinkSel, bridgeZoomG, bridgeFieldG, bridgeAddedIds = new Set();
+let bridgeSim, bridgeNodeSel, bridgeLinkSel, bridgeZoomG, bridgeFieldG, bridgeGhostSel, bridgeAddedIds = new Set();
 
 // true once the bridge view is actually the thing rendered in #graphView -- the same guard
 // already used at the palette-switch call site, promoted to one place so every other spot
@@ -3177,6 +3179,29 @@ function bridgeLiveAnchors(aId, bId){
     posA: (a && a.x != null) ? a : fallback.posA,
     posB: (b && b.x != null) ? b : fallback.posB
   };
+}
+
+// where the ghost "paper that doesn't exist" node sits: the centroid of the LIVE seed papers,
+// resolved by id out of state.bridge.nodeById on every call -- same reasoning as bridgeLiveAnchors
+// above, never a snapshot. At 2 papers the plain midpoint sits ON the A-B route line and would
+// collide with its intermediate nodes, so it's nudged 52px perpendicular to the live A->B
+// direction; at 3 the triangle centroid is already off every edge, so no offset is needed.
+const GHOST_OFFSET = 52;
+function bridgeGhostCentroid(){
+  const bridge = state.bridge;
+  if (!state.seed || !bridge || !bridge.nodeById) return null;
+  const a = bridge.nodeById.get(state.seed.id);
+  const b = bridge.b && bridge.nodeById.get(bridge.b.id);
+  if (!a || a.x == null || !b || b.x == null) return null;
+  const c = bridge.c && bridge.c.w && bridge.nodeById.get(bridge.c.w.id);
+  if (c && c.x != null) return { x: (a.x + b.x + c.x) / 3, y: (a.y + b.y + c.y) / 3 };
+  const mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2;
+  const dx = b.x - a.x, dy = b.y - a.y;
+  const len = Math.hypot(dx, dy);
+  // fixed rotation of the A->B vector (not re-derived each time from scratch), so the side never
+  // flips as the layout settles; falls back to "straight up" only if A and B truly coincide.
+  const [px, py] = len > 1e-6 ? [-dy / len, dx / len] : [0, -1];
+  return { x: mx + px * GHOST_OFFSET, y: my + py * GHOST_OFFSET };
 }
 
 // One ring burst per anchor (not the repeating loop -- that's Quantum Jump's own startRingLoop,
@@ -3497,6 +3522,24 @@ function renderBridgeGraph(nodes, edges, seedIds, routes){
 
   bridgeNodeSel = node; bridgeLinkSel = link;
 
+  // ghost "paper that doesn't exist" node -- a standalone SVG group, NOT a simulation datum, so it
+  // never lands in nodeById (citeScopeWorks/buildBridgePrompt read that map for real papers only).
+  // Shown only once there's an actual route (usesBridgePrompt) -- bare clusters with nothing
+  // connecting them yet have no missing centre paper to point at.
+  if (usesBridgePrompt()) {
+    const ghost = g.append('g').attr('class', 'bridge-ghost').attr('cursor', 'pointer')
+      .attr('aria-label', t('ghostNodeTitle'))
+      .on('click', e => { e.stopPropagation(); document.getElementById('storyBtn').click(); });
+    ghost.append('title').text(t('ghostNodeTitle'));
+    ghost.append('circle').attr('r', 18).attr('fill', 'none')
+      .attr('stroke', cssVar('--accent')).attr('stroke-width', 2).attr('stroke-dasharray', '4,3');
+    ghost.append('text').attr('text-anchor', 'middle').attr('dominant-baseline', 'central')
+      .attr('fill', cssVar('--accent')).text('(?)');
+    bridgeGhostSel = ghost;
+  } else {
+    bridgeGhostSel = null;
+  }
+
   bridgeSim = d3.forceSimulation(nodes)
     .velocityDecay(0.35)
     .force('link', d3.forceLink(edges).id(d => d.id).distance(60).strength(0.5))
@@ -3512,6 +3555,11 @@ function renderBridgeGraph(nodes, edges, seedIds, routes){
       });
       pinTimelineY(nodes);
       node.attr('transform', d => 'translate(' + d.x + ',' + d.y + ')');
+      if (bridgeGhostSel) {
+        const c = bridgeGhostCentroid();
+        bridgeGhostSel.style('display', c ? null : 'none')
+          .attr('transform', c ? 'translate(' + c.x + ',' + c.y + ')' : null);
+      }
     });
 
   drawYearGrid(nodes);
@@ -4566,7 +4614,9 @@ const PROMPT_I18N = {
         '- Explicitly judge whether this connection is spurious — e.g. shared vocabulary, a widely-cited generic methods paper, or a coincidental co-citation, rather than genuine shared substance. Say so plainly if it looks spurious; do not manufacture a connection the evidence does not support.',
         '- Refer to papers by their [n] index and title.',
         '- If you are not confident about what a paper actually did, say so instead of inventing it.',
-        '- Length: roughly 400-700 words. Prose, not a bullet list.'
+        '- Length: roughly 400-700 words. Prose, not a bullet list.',
+        '- Finally, write the paper that should sit at the centre of this graph and does not exist. Give it: a title; a one-paragraph abstract; the list of [n] papers above it would cite, each with one line saying why that one is needed; the single question it answers that neither research line answers alone; and what is missing today that stops it being written — data, method, or instrument.',
+        '- If you judged the connection spurious above, leave that paper unwritten. Say instead what would have to be true for it to become writable.'
       ],
       paperAHeader: 'PAPER A', paperBHeader: 'PAPER B',
       routeHeader: 'ROUTE (intermediate papers from A to B)',
@@ -4588,7 +4638,9 @@ const PROMPT_I18N = {
         '- Explicitly judge whether each pairwise connection is spurious — e.g. shared vocabulary, a widely-cited generic methods paper, or a coincidental co-citation, rather than genuine shared substance. Say so plainly for any pair that looks spurious; do not manufacture a connection the evidence does not support.',
         '- Refer to papers by their [n] index and title.',
         '- If you are not confident about what a paper actually did, say so instead of inventing it.',
-        '- Length: roughly 550-850 words. Prose, not a bullet list.'
+        '- Length: roughly 550-850 words. Prose, not a bullet list.',
+        '- Finally, write the paper that should sit at the centre of this graph and does not exist. Give it: a title; a one-paragraph abstract; the list of [n] papers above it would cite, each with one line saying why that one is needed; the single question it answers that neither research line answers alone; and what is missing today that stops it being written — data, method, or instrument.',
+        '- If you judged the connection spurious above, leave that paper unwritten. Say instead what would have to be true for it to become writable.'
       ],
       paperCHeader: 'PAPER C',
       routeABHeader: 'ROUTE A-B (intermediate papers, {n} step(s))',
@@ -4642,7 +4694,9 @@ const PROMPT_I18N = {
         '- 이 연결이 허구적인지 명시적으로 판단하세요 — 예를 들어 공유 어휘, 널리 인용되는 범용 방법론 논문, 우연한 동시 인용일 뿐 실질적인 내용 공유가 아닐 수 있습니다. 허구적으로 보인다면 그렇다고 분명히 말하고, 근거 없는 연결을 지어내지 마세요.',
         '- 논문은 [n] 번호와 제목으로 지칭하세요.',
         '- 논문이 실제로 한 일을 확신할 수 없다면, 지어내지 말고 그렇다고 밝히세요.',
-        '- 분량: 약 400~700 단어. 목록이 아닌 산문으로 작성하세요.'
+        '- 분량: 약 400~700 단어. 목록이 아닌 산문으로 작성하세요.',
+        '- 마지막으로, 이 그래프의 중심에 있어야 하지만 존재하지 않는 논문을 한 편 쓰세요. 제목, 한 문단 초록, 위 [n] 중 인용할 논문 목록과 각각이 왜 필요한지 한 줄씩, 어느 연구 흐름도 혼자서는 답하지 못하는 질문 하나, 그리고 지금 그 논문을 쓸 수 없게 막는 것(데이터·방법·장비 중 무엇이 빠졌는지)을 적으세요.',
+        '- 앞에서 이 연결이 허구라고 판단했다면 그 논문은 쓰지 마세요. 대신 무엇이 사실이어야 쓸 수 있게 되는지 적으세요.'
       ],
       paperAHeader: '논문 A', paperBHeader: '논문 B',
       routeHeader: '경로 (A에서 B로 이어지는 중간 논문)',
@@ -4663,7 +4717,9 @@ const PROMPT_I18N = {
         '- 각 쌍의 연결이 허구적인지 명시적으로 판단하세요 — 예를 들어 공유 어휘, 널리 인용되는 범용 방법론 논문, 우연한 동시 인용일 뿐 실질적인 내용 공유가 아닐 수 있습니다. 허구적으로 보이는 쌍이 있다면 그렇다고 분명히 말하고, 근거 없는 연결을 지어내지 마세요.',
         '- 논문은 [n] 번호와 제목으로 지칭하세요.',
         '- 논문이 실제로 한 일을 확신할 수 없다면, 지어내지 말고 그렇다고 밝히세요.',
-        '- 분량: 약 550~850 단어. 목록이 아닌 산문으로 작성하세요.'
+        '- 분량: 약 550~850 단어. 목록이 아닌 산문으로 작성하세요.',
+        '- 마지막으로, 이 그래프의 중심에 있어야 하지만 존재하지 않는 논문을 한 편 쓰세요. 제목, 한 문단 초록, 위 [n] 중 인용할 논문 목록과 각각이 왜 필요한지 한 줄씩, 어느 연구 흐름도 혼자서는 답하지 못하는 질문 하나, 그리고 지금 그 논문을 쓸 수 없게 막는 것(데이터·방법·장비 중 무엇이 빠졌는지)을 적으세요.',
+        '- 앞에서 이 연결이 허구라고 판단했다면 그 논문은 쓰지 마세요. 대신 무엇이 사실이어야 쓸 수 있게 되는지 적으세요.'
       ],
       paperCHeader: '논문 C',
       routeABHeader: '경로 A-B (중간 논문, {n}단계)',
