@@ -1124,8 +1124,7 @@ const I18N = {
     bridgeSearchPlaceholderC: 'Search for a third paper',
     removePaperCBtnTitle: 'Remove the third paper and return to a two-paper bridge',
     findingThirdBridge: 'Growing…',
-    bridgeReadoutTri: 'Tree over 3 papers: {d1} + {d2} step(s) (2 of the 3 pairwise routes kept) · {mode} · {requests} request(s) total',
-    bridgeTreeApprox: 'This tree is a minimum-spanning-tree approximation over the three pairwise routes, not the optimal Steiner tree — the result can depend on the order the papers were added.',
+    bridgeReadoutTri: '3 papers, all 3 pairs: {dAB} · {dAC} · {dBC} step(s) · {mode} · {requests} request(s) total',
     pdfPickTitle: 'Drop a PDF here, or click to choose one, to identify the paper and search for it',
     pdfDropOverlay: 'Drop the PDF to identify the paper',
     pdfScanning: 'Scanning {name}…', pdfLookup: 'Looking up the paper on OpenAlex…',
@@ -1232,8 +1231,7 @@ const I18N = {
     bridgeSearchPlaceholderC: '세 번째 논문 검색',
     removePaperCBtnTitle: '세 번째 논문을 제거하고 두 논문 연결로 되돌립니다',
     findingThirdBridge: '확장하는 중…',
-    bridgeReadoutTri: '3개 논문 트리: {d1} + {d2}단계 (3개의 짝지은 경로 중 2개 사용) · {mode} · 요청 {requests}회',
-    bridgeTreeApprox: '이 트리는 세 쌍의 경로에 대한 최소 신장 트리 근사치이며, 최적의 슈타이너 트리가 아닙니다 — 논문을 추가한 순서에 따라 결과가 달라질 수 있습니다.',
+    bridgeReadoutTri: '논문 3편, 세 쌍 모두: {dAB} · {dAC} · {dBC}단계 · {mode} · 요청 {requests}회',
     pdfPickTitle: 'PDF를 여기에 드롭하거나 클릭하여 선택하면 논문을 식별해 검색합니다',
     pdfDropOverlay: 'PDF를 놓으면 논문을 식별합니다',
     pdfScanning: '{name} 스캔 중…', pdfLookup: 'OpenAlex에서 논문을 찾는 중…',
@@ -3264,8 +3262,8 @@ const CLUSTER_LETTERS = ['A', 'B', 'C'];
 // stays readable) into one, tagging cluster membership (a letter, or 'shared' when a node other
 // than a cluster's own seed appears in 2+ clusters) and route membership (_onRoute).
 // `clusters` is [{seed, pool}, ...] in insertion order. `routes` is one path (array of ids) per
-// tree edge -- length 1 for two papers (the single A-B route), length 2 for three (the two edges
-// the MST-over-metric-closure approximation kept, see chooseBridgeTree).
+// pairwise route -- length 1 for two papers (the single A-B route), length 3 for three (A-B, A-C
+// and B-C, all of them: every pair was searched, so every pair is drawn).
 function buildBridgeGraph(clusters, routes, routePool){
   const cap = bridgeSideCap(clusters.length);
   const graphs = clusters.map(c => computeGraph(c.seed.id, c.pool, cap));
@@ -3316,19 +3314,6 @@ function buildBridgeGraph(clusters, routes, routePool){
     }
   });
   return { nodes: [...nodeMap.values()], edges: [...edgeMap.values()] };
-}
-
-// pure: MST-over-metric-closure approximation to the 3-terminal Steiner tree. Any 2 of a
-// triangle's 3 edges already connect all 3 vertices, so "drop the longest of the three pairwise
-// distances" IS the minimum spanning tree here -- no separate spanning-tree construction needed.
-// HONESTY, not to be simplified away: this is an approximation, not exact Steiner. The kept pair
-// depends on which two searches happened to run (i.e. on insertion order), and is not guaranteed
-// to be the shortest possible network connecting all three papers -- never present it to the user
-// as "the best possible connection".
-function chooseBridgeTree(dAB, dAC, dBC){
-  const edges = [{ pair: 'AB', d: dAB }, { pair: 'AC', d: dAC }, { pair: 'BC', d: dBC }];
-  edges.sort((x, y) => x.d - y.d);
-  return [edges[0].pair, edges[1].pair];
 }
 
 // pure: fractional (0..1) x/y target for a cluster letter, given how many paper-clusters are in
@@ -3549,11 +3534,19 @@ function applyBridgeSpacing(){
     .strength(() => 0.5 * (forceParams.pull / FORCE_DEFAULTS.pull));
   bridgeSim.force('collide').radius(d => d.r + forceParams.gap * spacing).iterations(3);
   bridgeSim.force('charge').strength(-160 * (forceParams.push / FORCE_DEFAULTS.push) * spacing).distanceMax(420);
+  // Spacing has to move the cluster ANCHORS too, not just the link forces. The anchors pin each
+  // cluster at a fixed fraction of the canvas, so on their own they held the whole layout at one
+  // width however far the links pushed -- which is why the slider looked dead in this view. Push
+  // the fractions out from the centre by the same multiplier, clamped so a cluster never leaves
+  // the canvas.
+  const spread = f => Math.max(0.06, Math.min(0.94, 0.5 + (f - 0.5) * spacing));
+  bridgeSim.force('x', d3.forceX(d => spread(bridgeClusterFrac(d._cluster, bridgeClusterCount).x) * graphW)
+    .strength(0.15));
   if (layoutMode === 'timeline') {
     tlScale = yearScaleFor(bridgeSim.nodes());
     bridgeSim.force('y', null);   // y is pinned directly in the tick handler (pinTimelineY), not a force
   } else {
-    bridgeSim.force('y', d3.forceY(d => bridgeClusterFrac(d._cluster, bridgeClusterCount).y * graphH)
+    bridgeSim.force('y', d3.forceY(d => spread(bridgeClusterFrac(d._cluster, bridgeClusterCount).y) * graphH)
       .strength(bridgeClusterCount >= 3 ? 0.12 : 0.05));
   }
   bridgeSim.alpha(0.6).restart();
@@ -4793,8 +4786,8 @@ function citeScopeWorks(scope){
   if (isBridgeView()) {
     const nodes = state.bridge.nodeById ? [...state.bridge.nodeById.values()] : [];
     if (scope === 'route') {
-      // at 3 papers this is the union of the 2 kept tree edges, not just the original A-B route --
-      // see renderBridgePreview, which keeps treeNodeIds in sync with what's actually highlighted.
+      // at 3 papers this is the union of all three pairwise routes, not just the original A-B one
+      // -- see renderBridgePreview, which keeps treeNodeIds in sync with what's actually drawn.
       const routeIds = state.bridge.treeNodeIds || new Set(state.bridge.route || []);
       return nodes.filter(n => routeIds.has(n.id));
     }
@@ -5083,7 +5076,7 @@ const MANUAL_I18N = {
       'Route edges have no arrowheads, since a route has no single direction the way a citation does.',
       'A direct citation between the two papers is called out, since both modes then agree.',
       'In this view: Timeline plots cluster against year, export gains a Route only scope, the story prompt asks relationship questions, and filters plus the citation overlay are hidden.',
-      'Once a route is found, press + Add a paper to grow the bridge to a third paper: GraphPapers searches from it to both existing papers, then keeps the two shortest of the three pairwise routes as an approximate tree — not the optimal Steiner tree, and the result can depend on the order papers were added. Press the ✕ beside the third search box to remove it and return to a two-paper bridge.'
+      'Once a route is found, press + Add a paper to grow the bridge to a third paper: GraphPapers searches from it to both existing papers, and draws all three pairwise routes, so no pair is shown as though it only meets through the third. Press the ✕ beside the third search box to remove it and return to a two-paper bridge.'
     ],
     s8h: 'Getting results out',
     s8p: [
@@ -5144,7 +5137,7 @@ const MANUAL_I18N = {
         'Search or press Surprise me to pick the second paper.',
         'Choose a bridge mode: Fewest steps or Strongest link.',
         'Press Find bridge to search for the route between the two papers.',
-        'Press + Add a paper, then search for a third paper, to grow the bridge — GraphPapers searches from it to both existing papers and keeps the two shortest of the three pairwise routes as an approximate tree, not the optimal Steiner tree.',
+        'Press + Add a paper, then search for a third paper, to grow the bridge — GraphPapers searches from it to both existing papers and draws all three pairwise routes.',
         'The route stays highlighted after the search — click a dimmed paper to add it and its neighbours. Route edges have no arrowheads, since a route has no single direction the way a citation does. Press Next to finish.'
       ],
       exportT: [
@@ -5223,7 +5216,7 @@ const MANUAL_I18N = {
       '경로 선에는 화살표가 없습니다. 경로에는 인용처럼 정해진 방향이 없기 때문입니다.',
       '두 논문이 서로 직접 인용 관계라면 그 사실을 알려주는 안내가 뜹니다 — 이 경우 두 방식 모두 같은 답을 줍니다.',
       '이 화면에서는: 연대순 배치는 X축이 클러스터, Y축이 연도가 되고, 내보내기에 경로만 범위가 추가되며, 이야기 프롬프트는 관계를 묻는 질문으로 바뀌고, 필터와 인용 연결선 오버레이는 숨겨집니다.',
-      '경로를 찾은 뒤 + 논문 추가를 누르면 세 번째 논문으로 연결을 확장할 수 있습니다: 그 논문에서 기존 두 논문까지 각각 경로를 찾은 뒤, 세 쌍의 경로 중 가장 짧은 두 개를 근사 트리로 남깁니다 — 최적의 슈타이너 트리가 아니며, 논문을 추가한 순서에 따라 결과가 달라질 수 있습니다. 세 번째 검색창 옆의 ✕를 누르면 제거하고 두 논문 연결로 되돌립니다.'
+      '경로를 찾은 뒤 + 논문 추가를 누르면 세 번째 논문으로 연결을 확장할 수 있습니다: 그 논문에서 기존 두 논문까지 각각 경로를 찾은 뒤, 세 쌍의 경로를 모두 그립니다. 어느 두 논문도 나머지 하나를 거쳐야만 닿는 것처럼 보이지 않습니다. 세 번째 검색창 옆의 ✕를 누르면 제거하고 두 논문 연결로 되돌립니다.'
     ],
     s8h: '결과 내보내기',
     s8p: [
@@ -5284,7 +5277,7 @@ const MANUAL_I18N = {
         '검색하거나 아무 논문이나를 눌러 두 번째 논문을 고르세요.',
         '최단 경로 또는 가장 강한 연결 중 하나를 고르세요.',
         '연결 찾기를 눌러 두 논문 사이의 경로를 찾으세요.',
-        '+ 논문 추가를 누른 뒤 세 번째 논문을 검색해 연결을 확장하세요 — GraphPapers는 그 논문에서 기존 두 논문까지 각각 경로를 찾은 뒤, 세 쌍의 경로 중 가장 짧은 두 개를 근사 트리로 남깁니다. 최적의 슈타이너 트리는 아닙니다.',
+        '+ 논문 추가를 누른 뒤 세 번째 논문을 검색해 연결을 확장하세요 — GraphPapers는 그 논문에서 기존 두 논문까지 각각 경로를 찾은 뒤, 세 쌍의 경로를 모두 그립니다.',
         '찾은 경로는 탐색이 끝난 뒤에도 계속 강조 표시되며, 흐려진 논문을 클릭하면 그 논문과 이웃이 강조에 추가됩니다. 경로 선에는 화살표가 없습니다 — 경로에는 인용처럼 정해진 방향이 없기 때문입니다. 다음을 눌러 마치세요.'
       ],
       exportT: [
@@ -5450,7 +5443,7 @@ function updateBridgeGrowUI(){
   removePaperCBtn.hidden = !hasThird;
 }
 
-// resolves which 2 of the 3 pairwise routes the current tree keeps (see chooseBridgeTree), and the
+// collects all three pairwise routes and the
 // pool to score their edges with. Before both of the third paper's searches (A-C and B-C) have
 // resolved, shows whichever legs ARE known so far (just A-B before growth starts; A-B + A-C mid-
 // growth) instead of freezing the display -- the final MST choice only happens once all three
@@ -5463,13 +5456,15 @@ function bridgeTreeRoutes(){
     const pool = [...(bridge.pool || []), ...(c.poolAC || []), ...(c.poolBC || [])];
     return { routes, pool, kept: null };
   }
-  const kept = chooseBridgeTree(bridge.distance, c.distAC, c.distBC);
-  const routeByPair = { AB: bridge.route, AC: c.routeAC, BC: c.routeBC };
-  const poolByPair = { AB: bridge.pool, AC: c.poolAC, BC: c.poolBC };
-  const routes = kept.map(p => routeByPair[p]).filter(Boolean);
+  // all three pairwise routes, not a spanning subset. Dropping one drew B and C as if they only
+  // met through A, which is not what the search found -- and with the three distances tied, which
+  // one got dropped came down to the order the papers were entered.
+  const routes = [bridge.route, c.routeAC, c.routeBC].filter(Boolean);
   const seen = new Set(); const pool = [];
-  kept.forEach(p => (poolByPair[p] || []).forEach(w => { if (!seen.has(w.id)) { seen.add(w.id); pool.push(w); } }));
-  return { routes, pool, kept };
+  [bridge.pool, c.poolAC, c.poolBC].forEach(pl => (pl || []).forEach(w => {
+    if (!seen.has(w.id)) { seen.add(w.id); pool.push(w); }
+  }));
+  return { routes, pool, kept: null };
 }
 
 // (re)draws the 2- or 3-cluster preview -- every paper's own graph, plus the current tree route(s).
@@ -5491,13 +5486,10 @@ function updateBridgeReadout(){
   if (state.bridge.distance == null) { bridgeReadoutEl.textContent = ''; return; }
   const c = state.bridge.c;
   if (c && c.w && c.distAC != null && c.distBC != null) {
-    const kept = chooseBridgeTree(state.bridge.distance, c.distAC, c.distBC);
-    const dByPair = { AB: state.bridge.distance, AC: c.distAC, BC: c.distBC };
     const totalRequests = state.bridge.requests + c.requestsAC + c.requestsBC;
-    let line = tf('bridgeReadoutTri', { d1: dByPair[kept[0]], d2: dByPair[kept[1]],
+    let line = tf('bridgeReadoutTri', { dAB: state.bridge.distance, dAC: c.distAC, dBC: c.distBC,
       mode: bridgeName(state.bridge.mode), requests: totalRequests });
     line += ' · ' + tf('bridgeShownPerSide', { shown: bridgeSideCap(3), total: GRAPH_CAP });
-    line += ' · ' + t('bridgeTreeApprox');
     bridgeReadoutEl.textContent = line;
     return;
   }
@@ -6555,17 +6547,20 @@ function selfTest(){
       titleCoverage(searchWords('gravitational wave'), 'Gravitational-wave memory') === 1);
     assert('titleCoverage: an empty query scores 0, not NaN',
       titleCoverage(searchWords('  '), 'Anything') === 0);
+    assert('bridgeTreeRoutes: three papers draw all three pairwise routes', (() => {
+      const save = state.bridge;
+      state.bridge = { route: ['a'], pool: [], distance: 1,
+        c: { w: { id: 'C' }, routeAC: ['b'], routeBC: ['c'], distAC: 1, distBC: 1,
+             poolAC: [], poolBC: [] } };
+      const n = bridgeTreeRoutes().routes.length;
+      state.bridge = save;
+      return n === 3;
+    })());
     assert('bridgeSideCap: 16 per cluster at two papers', bridgeSideCap(2) === 16);
     assert('bridgeSideCap: shrinks to 11 per cluster at three papers', bridgeSideCap(3) === 11);
     assert('bridgeSideCap: total rendered per side stays roughly constant (32 vs. 33)',
       bridgeSideCap(2) * 2 === 32 && bridgeSideCap(3) * 3 === 33);
 
-    assert('chooseBridgeTree: drops the single largest of the three pairwise distances',
-      chooseBridgeTree(2, 3, 5).sort().join(',') === 'AB,AC');
-    assert('chooseBridgeTree: keeps both routes touching the closest pair regardless of tie order',
-      chooseBridgeTree(5, 2, 3).sort().join(',') === 'AC,BC');
-    assert('chooseBridgeTree: never drops the shortest edge',
-      chooseBridgeTree(1, 4, 6).includes('AB'));
 
     assert('bridgeClusterFrac: two papers keep the original left/right split, y uniform',
       bridgeClusterFrac('A', 2).x === 0.22 && bridgeClusterFrac('B', 2).x === 0.78 &&
