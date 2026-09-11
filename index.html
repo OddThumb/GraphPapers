@@ -1258,6 +1258,10 @@ function applyLang(){
     });
   });
   updateLegendYears();
+  // the chooser's labels come from MANUAL_I18N through openTourChooser, not from data-i18n
+  // markup, so the walk above never reaches them -- and on the landing screen it IS the page
+  const chooser = document.getElementById('tourChooser');
+  if (chooser && !chooser.hidden) openTourChooser(chooser.classList.contains('landing'));
   if (lastDetailWork) renderDetail(lastDetailWork);
   if (state.seed) {
     renderRefsList();
