@@ -84,18 +84,18 @@ header{
 #dropdown div:hover{background:var(--paper-2)}
 .res-title{font-size:0.75rem}
 .res-meta{font-family:'Geist Mono',monospace; font-size:0.5625rem; color:var(--soft); letter-spacing:0.04em; margin-top:2px}
-#searchInputB{
+#searchInputB, #searchInputC{
   width:100%; padding:8px 12px; border:1px solid var(--accent); border-radius:4px;
   background:var(--paper); color:var(--ink); font:inherit;
 }
-#searchInputB:focus{outline:none; border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-tint)}
-#dropdownB{
+#searchInputB:focus, #searchInputC:focus{outline:none; border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-tint)}
+#dropdownB, #dropdownC{
   position:absolute; top:calc(100% + 4px); left:0; right:0; background:var(--paper);
   border:1px solid var(--rule); border-radius:6px; max-height:320px; overflow:auto; z-index:10;
 }
-#dropdownB div{padding:8px 12px; border-bottom:1px solid var(--rule); cursor:pointer}
-#dropdownB div:last-child{border-bottom:none}
-#dropdownB div:hover{background:var(--paper-2)}
+#dropdownB div, #dropdownC div{padding:8px 12px; border-bottom:1px solid var(--rule); cursor:pointer}
+#dropdownB div:last-child, #dropdownC div:last-child{border-bottom:none}
+#dropdownB div:hover, #dropdownC div:hover{background:var(--paper-2)}
 #bridgeToggleBtn{white-space:nowrap; font-size:0.75rem; padding:6px 10px}
 #bridgeToggleBtn.active{border-color:var(--accent); color:var(--accent)}
 #surpriseBtn{white-space:nowrap; font-size:0.75rem; padding:6px 10px}
@@ -1265,6 +1265,9 @@ function applyLang(){
   // markup, so the walk above never reaches them -- and on the landing screen it IS the page
   const chooser = document.getElementById('tourChooser');
   if (chooser && !chooser.hidden) openTourChooser(chooser.classList.contains('landing'));
+  // same shape of miss as the chooser above: the bridge readout is composed with tf() and written
+  // straight to the element, so the data-i18n walk never sees it
+  if (state.bridge) updateBridgeReadout();
   if (lastDetailWork) renderDetail(lastDetailWork);
   if (state.seed) {
     renderRefsList();
