@@ -144,6 +144,7 @@ header{
 #bridgeMode:disabled{color:var(--soft); cursor:default}
 #findBridgeBtn{font-size:0.75rem; padding:6px 10px}
 #findBridgeBtn:disabled{color:var(--soft); cursor:default}
+#addPaperBtn, #removePaperCBtn{font-size:0.75rem; padding:6px 10px}
 #bridgeReadout{white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
 main{flex:1; display:flex; overflow:hidden; min-height:0}
 /* the only flex child of `main` now -- #detailPanel moved into #content as an overlay (see its own
@@ -480,9 +481,10 @@ a{color:var(--link)}
 .status-line{font-family:'Geist Mono',monospace; font-size:0.6875rem; color:var(--soft); padding:16px}
 #graphView > .status-line{
   position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
-  /* left padding clears #graphTools, whose width is in rem -- keep this in rem too or the
-     text slides under the panel as soon as --ui-scale grows it */
-  text-align:center; padding:1.5rem 1.5rem 1.5rem 13.75rem; pointer-events:none;
+  /* the padding clears #graphTools on the left, but applying it only there pushed the text
+     off-centre; mirroring it keeps the line optically centred in the graph area while still
+     clearing the panel. In rem, or it drifts under the panel as --ui-scale grows. */
+  text-align:center; padding:1.5rem 13.75rem; pointer-events:none;
 }
 .error-box{font-size:0.75rem; color:var(--ink); padding:16px; border:1px solid var(--rule); border-radius:6px; margin:16px}
 #graphEmptyHint{
@@ -675,6 +677,9 @@ a{color:var(--link)}
      header's main .search-wrap does, instead of squeezing the mode select and Find bridge. */
   #bridgeBar{flex-wrap:wrap; gap:8px 12px; padding:8px 12px}
   #searchWrapB{order:0; flex:1 1 100%; max-width:none}
+  /* the third-paper box (only shown once "+ Add a paper" is pressed) gets the same full-row
+     treatment as #searchWrapB, instead of squeezing into whatever space Find bridge left */
+  #searchWrapC{order:1; flex:1 1 100%; max-width:none}
 }
 </style>
 <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%3E%3Cstyle%3E.p%7Bfill%3A%23ffffff%3Bstroke%3A%231a1a1a%7D.pf%7Bfill%3Anone%3Bstroke%3A%231a1a1a%7D.t%7Bstroke%3A%231a1a1a%7D%40media(prefers-color-scheme%3Adark)%7B.p%7Bfill%3A%2312131a%3Bstroke%3A%23f2f2f2%7D.pf%7Bstroke%3A%23f2f2f2%7D.t%7Bstroke%3A%23f2f2f2%7D%7D%3C%2Fstyle%3E%3Cg%20transform%3D%22translate(-1.82%2C-2.12)%22%3E%3Cline%20x1%3D%2250%22%20y1%3D%2250%22%20x2%3D%2228.5%22%20y2%3D%2233%22%20stroke%3D%22%2304a260%22%20stroke-width%3D%225.4%22%20stroke-linecap%3D%22round%22%2F%3E%3Cline%20x1%3D%2250%22%20y1%3D%2250%22%20x2%3D%2271%22%20y2%3D%2225%22%20stroke%3D%22%2304a260%22%20stroke-width%3D%223.6%22%20stroke-linecap%3D%22round%22%2F%3E%3Cline%20x1%3D%2250%22%20y1%3D%2250%22%20x2%3D%2277%22%20y2%3D%2255%22%20stroke%3D%22%2304a260%22%20stroke-width%3D%224.6%22%20stroke-linecap%3D%22round%22%2F%3E%3Cline%20x1%3D%2250%22%20y1%3D%2250%22%20x2%3D%2263%22%20y2%3D%2279%22%20stroke%3D%22%2304a260%22%20stroke-width%3D%223%22%20stroke-linecap%3D%22round%22%2F%3E%3Cline%20x1%3D%2250%22%20y1%3D%2250%22%20x2%3D%2227%22%20y2%3D%2271%22%20stroke%3D%22%2304a260%22%20stroke-width%3D%224.2%22%20stroke-linecap%3D%22round%22%2F%3E%3Cline%20x1%3D%2271%22%20y1%3D%2225%22%20x2%3D%2277%22%20y2%3D%2255%22%20stroke%3D%22%2304a260%22%20stroke-width%3D%222.6%22%20stroke-linecap%3D%22round%22%2F%3E%3Cline%20x1%3D%2227%22%20y1%3D%2271%22%20x2%3D%2263%22%20y2%3D%2279%22%20stroke%3D%22%2304a260%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%2F%3E%3Crect%20x%3D%2223.5%22%20y%3D%2227.5%22%20width%3D%2210%22%20height%3D%2212.5%22%20rx%3D%220.7%22%20class%3D%22p%22%20stroke-width%3D%222%22%2F%3E%3Crect%20x%3D%2266.5%22%20y%3D%2219%22%20width%3D%2211%22%20height%3D%2213.5%22%20rx%3D%220.7%22%20class%3D%22p%22%20stroke-width%3D%222%22%2F%3E%3Crect%20x%3D%2273%22%20y%3D%2249.5%22%20width%3D%229%22%20height%3D%2211%22%20rx%3D%220.7%22%20class%3D%22p%22%20stroke-width%3D%222%22%2F%3E%3Crect%20x%3D%2258%22%20y%3D%2273.5%22%20width%3D%2210%22%20height%3D%2212.5%22%20rx%3D%220.7%22%20class%3D%22p%22%20stroke-width%3D%222%22%2F%3E%3Crect%20x%3D%2221.5%22%20y%3D%2265%22%20width%3D%2211%22%20height%3D%2213.5%22%20rx%3D%220.7%22%20class%3D%22p%22%20stroke-width%3D%222%22%2F%3E%3Cpath%20d%3D%22M38.3%2C36.3%20H61.7%20V57.7%20L54.7%2C64.7%20H38.3%20Z%22%20class%3D%22p%22%20stroke-width%3D%222.6%22%20stroke-linejoin%3D%22round%22%2F%3E%3Cpath%20d%3D%22M61.7%2C57.7%20H54.7%20V64.7%22%20class%3D%22pf%22%20stroke-width%3D%222.6%22%20stroke-linejoin%3D%22round%22%20stroke-linecap%3D%22round%22%2F%3E%3Cg%20class%3D%22t%22%20stroke-width%3D%222.6%22%20stroke-linecap%3D%22round%22%3E%0A%3Cline%20x1%3D%2242.5%22%20y1%3D%2243.5%22%20x2%3D%2257.5%22%20y2%3D%2243.5%22%2F%3E%3Cline%20x1%3D%2242.5%22%20y1%3D%2250%22%20x2%3D%2257.5%22%20y2%3D%2250%22%2F%3E%0A%3Cline%20x1%3D%2242.5%22%20y1%3D%2256.5%22%20x2%3D%2252%22%20y2%3D%2256.5%22%2F%3E%3C%2Fg%3E%3C%2Fg%3E%3C%2Fsvg%3E">
@@ -682,7 +687,7 @@ a{color:var(--link)}
 </head>
 <body>
 <header>
-  <svg id="logoMark" viewBox="0 0 100 100" aria-hidden="true"><g transform="translate(-1.82,-2.12)"><line x1="50" y1="50" x2="28.5" y2="33" stroke="var(--accent)" stroke-width="5.4" stroke-linecap="round"/><line x1="50" y1="50" x2="71" y2="25" stroke="var(--accent)" stroke-width="3.6" stroke-linecap="round"/><line x1="50" y1="50" x2="77" y2="55" stroke="var(--accent)" stroke-width="4.6" stroke-linecap="round"/><line x1="50" y1="50" x2="63" y2="79" stroke="var(--accent)" stroke-width="3" stroke-linecap="round"/><line x1="50" y1="50" x2="27" y2="71" stroke="var(--accent)" stroke-width="4.2" stroke-linecap="round"/><line x1="71" y1="25" x2="77" y2="55" stroke="var(--accent)" stroke-width="2.6" stroke-linecap="round"/><line x1="27" y1="71" x2="63" y2="79" stroke="var(--accent)" stroke-width="2" stroke-linecap="round"/><rect x="23.5" y="27.5" width="10" height="12.5" rx="0.7" fill="var(--paper)" stroke="var(--ink)" stroke-width="2"/><rect x="66.5" y="19" width="11" height="13.5" rx="0.7" fill="var(--paper)" stroke="var(--ink)" stroke-width="2"/><rect x="73" y="49.5" width="9" height="11" rx="0.7" fill="var(--paper)" stroke="var(--ink)" stroke-width="2"/><rect x="58" y="73.5" width="10" height="12.5" rx="0.7" fill="var(--paper)" stroke="var(--ink)" stroke-width="2"/><rect x="21.5" y="65" width="11" height="13.5" rx="0.7" fill="var(--paper)" stroke="var(--ink)" stroke-width="2"/><path d="M38.3,36.3 H61.7 V57.7 L54.7,64.7 H38.3 Z" fill="var(--paper)" stroke="var(--ink)" stroke-width="2.6" stroke-linejoin="round"/><path d="M61.7,57.7 H54.7 V64.7" fill="none" stroke="var(--ink)" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"/><g stroke="var(--ink)" stroke-width="2.6" stroke-linecap="round"><line x1="42.5" y1="43.5" x2="57.5" y2="43.5"/><line x1="42.5" y1="50" x2="57.5" y2="50"/><line x1="42.5" y1="56.5" x2="52" y2="56.5"/></g></g></svg><h1 id="titleBtn" data-i18n-attr="title:resetTitle" title="Start over">GraphPapers</h1><span id="version">v1.1</span>
+  <svg id="logoMark" viewBox="0 0 100 100" aria-hidden="true"><g transform="translate(-1.82,-2.12)"><line x1="50" y1="50" x2="28.5" y2="33" stroke="var(--accent)" stroke-width="5.4" stroke-linecap="round"/><line x1="50" y1="50" x2="71" y2="25" stroke="var(--accent)" stroke-width="3.6" stroke-linecap="round"/><line x1="50" y1="50" x2="77" y2="55" stroke="var(--accent)" stroke-width="4.6" stroke-linecap="round"/><line x1="50" y1="50" x2="63" y2="79" stroke="var(--accent)" stroke-width="3" stroke-linecap="round"/><line x1="50" y1="50" x2="27" y2="71" stroke="var(--accent)" stroke-width="4.2" stroke-linecap="round"/><line x1="71" y1="25" x2="77" y2="55" stroke="var(--accent)" stroke-width="2.6" stroke-linecap="round"/><line x1="27" y1="71" x2="63" y2="79" stroke="var(--accent)" stroke-width="2" stroke-linecap="round"/><rect x="23.5" y="27.5" width="10" height="12.5" rx="0.7" fill="var(--paper)" stroke="var(--ink)" stroke-width="2"/><rect x="66.5" y="19" width="11" height="13.5" rx="0.7" fill="var(--paper)" stroke="var(--ink)" stroke-width="2"/><rect x="73" y="49.5" width="9" height="11" rx="0.7" fill="var(--paper)" stroke="var(--ink)" stroke-width="2"/><rect x="58" y="73.5" width="10" height="12.5" rx="0.7" fill="var(--paper)" stroke="var(--ink)" stroke-width="2"/><rect x="21.5" y="65" width="11" height="13.5" rx="0.7" fill="var(--paper)" stroke="var(--ink)" stroke-width="2"/><path d="M38.3,36.3 H61.7 V57.7 L54.7,64.7 H38.3 Z" fill="var(--paper)" stroke="var(--ink)" stroke-width="2.6" stroke-linejoin="round"/><path d="M61.7,57.7 H54.7 V64.7" fill="none" stroke="var(--ink)" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"/><g stroke="var(--ink)" stroke-width="2.6" stroke-linecap="round"><line x1="42.5" y1="43.5" x2="57.5" y2="43.5"/><line x1="42.5" y1="50" x2="57.5" y2="50"/><line x1="42.5" y1="56.5" x2="52" y2="56.5"/></g></g></svg><h1 id="titleBtn" data-i18n-attr="title:resetTitle" title="Start over">GraphPapers</h1><span id="version">v1.2</span>
   <div class="search-wrap">
     <input id="searchInput" type="text" data-i18n-attr="placeholder:searchPlaceholder" placeholder="Title, DOI, arXiv id — or drop a PDF">
     <div id="dropdown" hidden></div>
@@ -727,6 +732,12 @@ a{color:var(--link)}
     </select>
   </label>
   <button class="btn" id="findBridgeBtn" data-i18n="findBridgeBtn" disabled>Find bridge</button>
+  <button class="btn" id="addPaperBtn" data-i18n="addPaperBtn" data-i18n-attr="title:addPaperBtnTitle" title="Grow this bridge to a third paper" hidden>+ Add a paper</button>
+  <div class="search-wrap" id="searchWrapC" hidden>
+    <input id="searchInputC" type="text" data-i18n-attr="placeholder:bridgeSearchPlaceholderC" placeholder="Search for a third paper">
+    <div id="dropdownC" hidden></div>
+  </div>
+  <button class="btn" id="removePaperCBtn" data-i18n-attr="title:removePaperCBtnTitle,aria-label:removePaperCBtnTitle" title="Remove the third paper" aria-label="Remove the third paper" hidden>✕</button>
   <span class="mono" id="bridgeReadout"></span>
 </div>
 <div id="netBar" hidden data-i18n="offlineBanner">Offline — GraphPapers needs an internet connection to fetch papers from OpenAlex.</div>
@@ -966,7 +977,7 @@ a{color:var(--link)}
 </dialog>
 
 <script>
-const APP_VERSION = 'v1.1';
+const APP_VERSION = 'v1.2';
 const API = 'https://api.openalex.org';
 const MAILTO = 'astrphscst@gmail.com';
 const bare = id => (id || '').replace(/^https?:\/\/openalex\.org\//, '');
@@ -1064,11 +1075,18 @@ const I18N = {
     bridgeStepLabel: 'step {i} of {n}',
     bridgeSearchStep: 'Searching, step {n}…',
     weakLink: 'Weak link -- no shared citers or references found.',
+    addPaperBtn: '+ Add a paper', addPaperBtnTitle: 'Grow this bridge to a third paper by finding routes from it to both existing papers',
+    bridgeSearchPlaceholderC: 'Search for a third paper',
+    removePaperCBtnTitle: 'Remove the third paper and return to a two-paper bridge',
+    findingThirdBridge: 'Growing…',
+    bridgeReadoutTri: 'Tree over 3 papers: {d1} + {d2} step(s) (2 of the 3 pairwise routes kept) · {mode} · {requests} request(s) total',
+    bridgeTreeApprox: 'This tree is a minimum-spanning-tree approximation over the three pairwise routes, not the optimal Steiner tree — the result can depend on the order the papers were added.',
     pdfPickTitle: 'Drop a PDF here, or click to choose one, to identify the paper and search for it',
     pdfDropOverlay: 'Drop the PDF to identify the paper',
     pdfScanning: 'Scanning {name}…', pdfLookup: 'Looking up the paper on OpenAlex…',
     pdfNotPdf: 'That is not a PDF. Drop or choose a PDF file instead.',
     arxivNotFound: 'OpenAlex has no record under that arXiv id. If the paper was later published in a journal, search its title or the published DOI instead.',
+    pdfTitleFallback: 'No identifier in this PDF, so its title was put in the search box \u2014 pick the right paper from the list, as the first hit is not always the one.',
     pdfNoId: 'No DOI in this PDF. arXiv papers print their id down the left margin of page 1 \u2014 paste it here, or type the title.',
     pdfNotFound: 'Found an identifier in the PDF, but OpenAlex has no record of it. Type the title instead.'
   },
@@ -1162,11 +1180,18 @@ const I18N = {
     bridgeStepLabel: '{n}단계 중 {i}단계',
     bridgeSearchStep: '{n}단계 탐색 중…',
     weakLink: '약한 연결 -- 공유 인용자나 참고문헌이 없습니다.',
+    addPaperBtn: '+ 논문 추가', addPaperBtnTitle: '이 논문에서 기존 두 논문까지의 경로를 찾아 세 번째 논문으로 연결을 확장합니다',
+    bridgeSearchPlaceholderC: '세 번째 논문 검색',
+    removePaperCBtnTitle: '세 번째 논문을 제거하고 두 논문 연결로 되돌립니다',
+    findingThirdBridge: '확장하는 중…',
+    bridgeReadoutTri: '3개 논문 트리: {d1} + {d2}단계 (3개의 짝지은 경로 중 2개 사용) · {mode} · 요청 {requests}회',
+    bridgeTreeApprox: '이 트리는 세 쌍의 경로에 대한 최소 신장 트리 근사치이며, 최적의 슈타이너 트리가 아닙니다 — 논문을 추가한 순서에 따라 결과가 달라질 수 있습니다.',
     pdfPickTitle: 'PDF를 여기에 드롭하거나 클릭하여 선택하면 논문을 식별해 검색합니다',
     pdfDropOverlay: 'PDF를 놓으면 논문을 식별합니다',
     pdfScanning: '{name} 스캔 중…', pdfLookup: 'OpenAlex에서 논문을 찾는 중…',
     pdfNotPdf: 'PDF 파일이 아닙니다. PDF 파일을 드롭하거나 선택하세요.',
     arxivNotFound: '그 arXiv 번호로 등록된 논문이 OpenAlex에 없습니다. 이후 학술지에 실렸다면 제목이나 출판 DOI로 검색해 보세요.',
+    pdfTitleFallback: 'PDF에 식별자가 없어 제목을 검색창에 넣었습니다. 첫 결과가 항상 맞는 논문은 아니니 목록에서 골라주세요.',
     pdfNoId: '이 PDF에 DOI가 없습니다. arXiv 논문이면 1쪽 왼쪽 여백에 적힌 arXiv 번호를 여기에 붙여넣거나, 제목을 입력하세요.',
     pdfNotFound: 'PDF에서 식별자를 찾았지만 OpenAlex에 해당 기록이 없습니다. 제목을 직접 입력하세요.'
   }
@@ -3079,31 +3104,46 @@ function resolveBridgeSearch(route){
     .end().catch(() => {}).then(stopBridgeRings);
 }
 
-// pure: merges both papers' own similarity graphs (capped smaller per side so two clusters + a
-// route stay readable, instead of two full 40-node graphs side by side) into one, tagging cluster
-// membership ('A'/'B') and route membership (_onRoute).
-// Papers drawn per side in the bridge view. Two full 40-node graphs side by side cannot be
-// read, so each side is cut to its most-related few -- and the readout says so, because a
-// graph that silently loses 24 of its 40 papers looks broken rather than filtered.
+// Papers drawn per cluster in the bridge view. A full 40-node graph per paper cannot be read side
+// by side, so each cluster is cut to its most-related few -- and the readout says so, because a
+// graph that silently loses most of its 40 papers looks broken rather than filtered. The cap
+// shrinks as more papers join so the TOTAL rendered stays roughly constant: 16*2=32 at two papers,
+// 11*3=33 at three -- see bridgeSideCap(). The readout must use this function's return value, not
+// either constant directly, so it always reports the cap actually in force.
 const BRIDGE_SIDE_CAP = 16;
+const BRIDGE_SIDE_CAP_3 = 11;
+function bridgeSideCap(clusterCount){ return clusterCount >= 3 ? BRIDGE_SIDE_CAP_3 : BRIDGE_SIDE_CAP; }
 
-function buildBridgeGraph(seedA, poolA, seedB, poolB, route, routePool){
-  const gA = computeGraph(seedA.id, poolA, BRIDGE_SIDE_CAP);
-  const gB = computeGraph(seedB.id, poolB, BRIDGE_SIDE_CAP);
+// cluster letters in insertion order -- 'A'/'B' for a two-paper bridge, 'A'/'B'/'C' for three.
+const CLUSTER_LETTERS = ['A', 'B', 'C'];
+
+// pure: merges 2 or 3 papers' own similarity graphs (each capped by bridgeSideCap so the view
+// stays readable) into one, tagging cluster membership (a letter, or 'shared' when a node other
+// than a cluster's own seed appears in 2+ clusters) and route membership (_onRoute).
+// `clusters` is [{seed, pool}, ...] in insertion order. `routes` is one path (array of ids) per
+// tree edge -- length 1 for two papers (the single A-B route), length 2 for three (the two edges
+// the MST-over-metric-closure approximation kept, see chooseBridgeTree).
+function buildBridgeGraph(clusters, routes, routePool){
+  const cap = bridgeSideCap(clusters.length);
+  const graphs = clusters.map(c => computeGraph(c.seed.id, c.pool, cap));
+  const idSets = graphs.map(g => new Set(g.nodes.map(n => n.id)));
   const nodeMap = new Map();
-  // a node present in BOTH subgraphs (other than the two seeds themselves) is a shared neighbour
-  // of A and B -- it belongs at the w*0.5 midpoint, not dragged into either side's cluster.
-  const idsA = new Set(gA.nodes.map(n => n.id)), idsB = new Set(gB.nodes.map(n => n.id));
-  gA.nodes.forEach(n => nodeMap.set(n.id, Object.assign({}, n,
-    { _cluster: (n.id !== seedA.id && idsB.has(n.id)) ? 'shared' : 'A' })));
-  gB.nodes.forEach(n => { if (!nodeMap.has(n.id)) nodeMap.set(n.id, Object.assign({}, n,
-    { _cluster: (n.id !== seedB.id && idsA.has(n.id)) ? 'shared' : 'B' })); });
-  // seedB (bId) is unconditionally 'B' even if it's one of A's own top-16 neighbours, catching
-  // it whether the line above tagged it 'A' (inserted via the gA pass) or 'shared' -- aId is
-  // already effectively 'A' the same way, by insertion order, so it needs no equivalent force.
-  if (nodeMap.has(seedB.id)) nodeMap.get(seedB.id)._cluster = 'B';
+  graphs.forEach((g, i) => {
+    g.nodes.forEach(n => {
+      if (nodeMap.has(n.id)) return;   // first cluster to see an id keeps its record; only the tag can change below
+      const inOtherCluster = idSets.some((s, j) => j !== i && s.has(n.id));
+      nodeMap.set(n.id, Object.assign({}, n, { _cluster: inOtherCluster ? 'shared' : CLUSTER_LETTERS[i] }));
+    });
+  });
+  // each cluster's own seed is unconditionally its own letter, even if it also sits in another
+  // cluster's top-N neighbours (and so got tagged 'shared' or another letter by the pass above) --
+  // generalizes the old two-paper rule that forced seedB to 'B' regardless of what gA's pass did.
+  clusters.forEach((c, i) => { if (nodeMap.has(c.seed.id)) nodeMap.get(c.seed.id)._cluster = CLUSTER_LETTERS[i]; });
+
   const routeWorks = new Map((routePool || []).map(w => [w.id, w]));
-  (route || []).forEach(id => {
+  const allRouteIds = new Set();
+  (routes || []).forEach(route => (route || []).forEach(id => allRouteIds.add(id)));
+  allRouteIds.forEach(id => {
     if (!nodeMap.has(id)) {
       // OpenAlex's filter=openalex_id:A|B|C silently drops ids it doesn't know (see
       // fetchWorksByIds), so a route hop can point at a work we never got data for. The
@@ -3114,38 +3154,74 @@ function buildBridgeGraph(seedA, poolA, seedB, poolB, route, routePool){
       nodeMap.set(id, Object.assign({}, node, { _cluster: 'route', _unresolved: !w }));
     }
   });
-  const routeSet = new Set(route || []);
-  for (const n of nodeMap.values()) if (routeSet.has(n.id)) n._onRoute = true;
+  for (const n of nodeMap.values()) if (allRouteIds.has(n.id)) n._onRoute = true;
 
   const key = (x, y) => x < y ? x + '|' + y : y + '|' + x;
   const edgeMap = new Map();
-  [...gA.edges, ...gB.edges].forEach(e => {
+  graphs.forEach(g => g.edges.forEach(e => {
     const s = eid(e.source), tgt = eid(e.target);
     if (!nodeMap.has(s) || !nodeMap.has(tgt)) return;
     edgeMap.set(key(s, tgt), Object.assign({}, e, { source: s, target: tgt }));
-  });
+  }));
   const sim = routePool && routePool.length ? simScorer(routePool) : null;
-  for (let i = 0; i < (route || []).length - 1; i++) {
-    const s = route[i], tgt = route[i + 1], k = key(s, tgt);
-    const existing = edgeMap.get(k);
-    if (existing) { existing._isRoute = true; continue; }
-    edgeMap.set(k, { source: s, target: tgt, sim: sim ? Math.max(sim(s, tgt), 0.05) : 0.3, dir: null, _isRoute: true });
-  }
+  (routes || []).forEach(route => {
+    for (let i = 0; i < (route || []).length - 1; i++) {
+      const s = route[i], tgt = route[i + 1], k = key(s, tgt);
+      const existing = edgeMap.get(k);
+      if (existing) { existing._isRoute = true; continue; }
+      edgeMap.set(k, { source: s, target: tgt, sim: sim ? Math.max(sim(s, tgt), 0.05) : 0.3, dir: null, _isRoute: true });
+    }
+  });
   return { nodes: [...nodeMap.values()], edges: [...edgeMap.values()] };
 }
 
-// renders the merged bridge graph: two force clusters (forceX pulling A left / B right) with the
-// route (if any) sitting between them. The route is a PERSISTENT highlight layer: it is the default
-// and never clears on hover; clicking a dimmed node ADDS it (and its neighbours) to the highlight
-// without removing the route; clicking empty canvas clears only that added selection.
-function renderBridgeGraph(nodes, edges, aId, bId, route){
+// pure: MST-over-metric-closure approximation to the 3-terminal Steiner tree. Any 2 of a
+// triangle's 3 edges already connect all 3 vertices, so "drop the longest of the three pairwise
+// distances" IS the minimum spanning tree here -- no separate spanning-tree construction needed.
+// HONESTY, not to be simplified away: this is an approximation, not exact Steiner. The kept pair
+// depends on which two searches happened to run (i.e. on insertion order), and is not guaranteed
+// to be the shortest possible network connecting all three papers -- never present it to the user
+// as "the best possible connection".
+function chooseBridgeTree(dAB, dAC, dBC){
+  const edges = [{ pair: 'AB', d: dAB }, { pair: 'AC', d: dAC }, { pair: 'BC', d: dBC }];
+  edges.sort((x, y) => x.d - y.d);
+  return [edges[0].pair, edges[1].pair];
+}
+
+// pure: fractional (0..1) x/y target for a cluster letter, given how many paper-clusters are in
+// play. Two papers keep the original left/right split (y uniform, so it was really a pure
+// left/right layout); three arrange a triangle so the third cluster doesn't just crowd one side.
+// 'shared' and 'route' nodes always sit at the centroid.
+function bridgeClusterFrac(clusterLetter, clusterCount){
+  if (clusterCount >= 3) {
+    if (clusterLetter === 'A') return { x: 0.22, y: 0.25 };
+    if (clusterLetter === 'B') return { x: 0.78, y: 0.25 };
+    if (clusterLetter === 'C') return { x: 0.5, y: 0.85 };
+    return { x: 0.5, y: 0.5 };   // shared / route
+  }
+  if (clusterLetter === 'A') return { x: 0.22, y: 0.5 };
+  if (clusterLetter === 'B') return { x: 0.78, y: 0.5 };
+  return { x: 0.5, y: 0.5 };   // shared / route
+}
+
+// renders the merged bridge graph: 2 or 3 force clusters (positioned by bridgeClusterFrac) with
+// the tree route(s), if any, sitting between them. The route is a PERSISTENT highlight layer: it
+// is the default and never clears on hover; clicking a dimmed node ADDS it (and its neighbours) to
+// the highlight without removing the route; clicking empty canvas clears only that added selection.
+// `seedIds` is [aId, bId] or [aId, bId, cId]; `routes` is one path per tree edge (see
+// buildBridgeGraph). bridgeClusterCount is set here for applyBridgeSpacing to read.
+let bridgeClusterCount = 2;
+function renderBridgeGraph(nodes, edges, seedIds, routes){
   const container = document.getElementById('graphView');
   container.innerHTML = '';
   const rect = container.getBoundingClientRect();
   const w = rect.width || 800, h = rect.height || 600;
   graphW = w; graphH = h;
   bridgeAddedIds = new Set();
-  const routeIds = new Set(route || []);
+  bridgeClusterCount = seedIds.length;
+  const routeIds = new Set();
+  (routes || []).forEach(r => (r || []).forEach(id => routeIds.add(id)));
+  const isSeed = id => seedIds.includes(id);
 
   // carry x/y/vx/vy forward from the previous render's live nodes for any id still present, so a
   // renderBridgePreview() call (route found, panel toggled, etc.) doesn't reshuffle the whole
@@ -3165,7 +3241,7 @@ function renderBridgeGraph(nodes, edges, aId, bId, route){
     const frac = cHi === cLo ? 0.5 : (Math.sqrt(n.cited_by_count || 0) - cLo) / (cHi - cLo);
     return 6 + frac * 20;
   };
-  nodes.forEach(n => { n.r = Math.max(rFor(n), (n.id === aId || n.id === bId) ? 16 : 0, n._unresolved ? 10 : 0); });
+  nodes.forEach(n => { n.r = Math.max(rFor(n), isSeed(n.id) ? 16 : 0, n._unresolved ? 10 : 0); });
 
   const svg = d3.select(container).append('svg');
   const g = svg.append('g');
@@ -3203,20 +3279,20 @@ function renderBridgeGraph(nodes, edges, aId, bId, route){
       .on('drag', (e, d) => { d.fx = e.x; d.fy = e.y; })
       .on('end', (e, d) => { if (!e.active) bridgeSim.alphaTarget(0); d.fx = null; d.fy = null; }));
 
-  // both bridge endpoints get the seed treatment: accent ring + halo, label always shown
-  node.filter(d => d.id === aId || d.id === bId).append('circle')
+  // every bridge endpoint (2 or 3) gets the seed treatment: accent ring + halo, label always shown
+  node.filter(d => isSeed(d.id)).append('circle')
     .attr('class', 'seed-halo').attr('r', d => d.r + 12)
     .attr('fill', 'none').attr('stroke', cssVar('--accent'))
     .attr('stroke-width', 1.5).attr('stroke-opacity', 0.35);
 
   node.append('circle').attr('class', 'node-dot')
     .attr('r', d => d.r)
-    .attr('fill', d => (d.id === aId || d.id === bId) ? cssVar('--accent')
+    .attr('fill', d => isSeed(d.id) ? cssVar('--accent')
       : d._onRoute ? cssVar('--accent-strong') : cssVar('--soft'))
-    .attr('stroke', d => (d.id === aId || d.id === bId) ? cssVar('--accent') : 'none')
-    .attr('stroke-width', d => (d.id === aId || d.id === bId) ? 3 : 0);
+    .attr('stroke', d => isSeed(d.id) ? cssVar('--accent') : 'none')
+    .attr('stroke-width', d => isSeed(d.id) ? 3 : 0);
 
-  const showLabel = d => d.id === aId || d.id === bId || d._onRoute || isHighlighted(d.id);
+  const showLabel = d => isSeed(d.id) || d._onRoute || isHighlighted(d.id);
   const label = node.append('text')
     .attr('class', 'node-label')
     .attr('dy', d => d.r + 10)
@@ -3247,8 +3323,10 @@ function renderBridgeGraph(nodes, edges, aId, bId, route){
   svg.on('click', () => { bridgeAddedIds = new Set(); applyDim(); });
 
   node.on('mouseenter', (e, d) => {
-    const idx = route ? route.indexOf(d.id) : -1;
-    showHoverCard(d, e, null, idx >= 0 ? tf('bridgeStepLabel', { i: idx + 1, n: route.length }) : null);
+    // a node can sit on more than one tree edge (a shared terminal at 3 papers) -- label it by
+    // whichever route array finds it first, rather than trying to name both at once.
+    const hit = (routes || []).map(r => ({ r, i: (r || []).indexOf(d.id) })).find(x => x.i >= 0);
+    showHoverCard(d, e, null, hit ? tf('bridgeStepLabel', { i: hit.i + 1, n: hit.r.length }) : null);
   });
   node.on('mousemove', e => { if (!hoverCard.hidden) positionHoverCard(e); });
   node.on('mouseleave', () => { hoverCard.hidden = true; });
@@ -3260,8 +3338,9 @@ function renderBridgeGraph(nodes, edges, aId, bId, route){
     .force('link', d3.forceLink(edges).id(d => d.id).distance(60).strength(0.5))
     .force('charge', d3.forceManyBody().strength(-160).distanceMax(420))
     .force('collide', d3.forceCollide().radius(d => d.r + 8).strength(1).iterations(3))
-    .force('x', d3.forceX(d => d._cluster === 'A' ? w * 0.22 : d._cluster === 'B' ? w * 0.78 : w * 0.5).strength(0.15))
-    .force('y', d3.forceY(h / 2).strength(0.05))
+    .force('x', d3.forceX(d => bridgeClusterFrac(d._cluster, bridgeClusterCount).x * w).strength(0.15))
+    .force('y', d3.forceY(d => bridgeClusterFrac(d._cluster, bridgeClusterCount).y * h)
+      .strength(bridgeClusterCount >= 3 ? 0.12 : 0.05))
     .on('tick', () => {
       link.each(function(d){
         this.setAttribute('x1', d.source.x); this.setAttribute('y1', d.source.y);
@@ -3318,7 +3397,7 @@ function applySpacing(){
 // renderBridgeGraph seeds it with: link distance 60/strength .5, charge -160, collide r+8) by the
 // same spacing/forceParams sliders, as ratios over FORCE_DEFAULTS -- not the main graph's absolute
 // numbers, which are tuned for a different edge set and mean something else. forceX (cluster
-// membership, A left / B right) is never touched here -- that's what item 2's Timeline needs kept.
+// membership) is never touched here -- that's what item 2's Timeline needs kept.
 function applyBridgeSpacing(){
   if (!bridgeSim) return;
   bridgeSim.force('link')
@@ -3330,7 +3409,8 @@ function applyBridgeSpacing(){
     tlScale = yearScaleFor(bridgeSim.nodes());
     bridgeSim.force('y', null);   // y is pinned directly in the tick handler (pinTimelineY), not a force
   } else {
-    bridgeSim.force('y', d3.forceY(graphH / 2).strength(0.05));
+    bridgeSim.force('y', d3.forceY(d => bridgeClusterFrac(d._cluster, bridgeClusterCount).y * graphH)
+      .strength(bridgeClusterCount >= 3 ? 0.12 : 0.05));
   }
   bridgeSim.alpha(0.6).restart();
 }
@@ -3483,6 +3563,7 @@ function resetApp(){
   bridgeToggleBtn.classList.remove('active');
   searchInputB.value = '';
   dropdownB.hidden = true;
+  searchInputC.value = ''; dropdownC.hidden = true; addPaperBoxOpen = false; updateBridgeGrowUI();
   document.getElementById('bridgeMode').disabled = true;
   const resetFindBtn = document.getElementById('findBridgeBtn');
   resetFindBtn.disabled = true; resetFindBtn.textContent = t('findBridgeBtn');
@@ -3615,6 +3696,9 @@ async function loadAndBuildGraph(seedId, opts){
       const seedFindBtn = document.getElementById('findBridgeBtn');
       seedFindBtn.disabled = true; seedFindBtn.textContent = t('findBridgeBtn');
       state.bridge.route = null; state.bridge.distance = null; state.bridge.noRoute = false; state.bridge.samePaper = false;
+      // paper A changing invalidates any third paper grown onto the old A-B route too
+      state.bridge.c = null; addPaperBoxOpen = false; searchInputC.value = ''; dropdownC.hidden = true;
+      updateBridgeGrowUI();
       if (state.bridge.b.id === seed.id) { state.bridge.samePaper = true; updateBridgeReadout(); }
       else {
         updateBridgeReadout();
@@ -3653,22 +3737,40 @@ async function loadAndBuildGraph(seedId, opts){
 // then hands the pure search the fully-known pool it needs. Returns:
 //   { samePaper: true } | { noRoute: true, a, b, requests } |
 //   { a, b, route, distance, shorterRejected, requests, mode, pool }
-async function findBridge(aId, bId, mode, onProgress){
+// `seedPool`/`seedFetchedIds`, when given, warm-start the search from works and BFS-expandable ids
+// a PRIOR findBridge call already fetched (see growBridgeToThird): aId/bId's own fetchSeed/
+// fetchCiters round is skipped for whichever side is already in seedFetchedIds, and any interior
+// node from the earlier search's pool is reused as-is instead of being re-fetched when the BFS
+// reaches it. This is the whole point of growing one paper at a time rather than searching a list
+// of papers up front -- the third paper's search can resolve with few or no new requests. Omitted
+// (both default to empty), a call behaves exactly as before -- a fresh pool, same as a 2-paper run.
+async function findBridge(aId, bId, mode, onProgress, seedPool, seedFetchedIds){
   const progress = onProgress || (() => {});
   let requests = 0;
-  const byId = new Map(); const pool = []; const fetchedIds = new Set();
+  const byId = new Map(); const pool = []; const fetchedIds = new Set(seedFetchedIds || []);
   const addPool = works => { for (const w of works) if (!byId.has(w.id)) { byId.set(w.id, w); pool.push(w); } };
+  addPool(seedPool || []);
 
-  const [a, b] = await Promise.all([fetchSeed(aId), fetchSeed(bId)]);
-  requests += 2;
+  let a = byId.get(aId), b = byId.get(bId);
+  const seedFetches = [];
+  if (!a) seedFetches.push(fetchSeed(aId).then(w => { a = w; }));
+  if (!b) seedFetches.push(fetchSeed(bId).then(w => { b = w; }));
+  if (seedFetches.length) { await Promise.all(seedFetches); requests += seedFetches.length; }
   if (a.id === b.id) {
     progress({ depth: 0, frontierSize: 0, candidateCount: 1, phase: 'done', poolSize: pool.length });
-    return { samePaper: true, a, b, requests };
+    return { samePaper: true, a, b, requests, pool, fetchedIds };
   }
+  // whichever side was already fully known (its own record AND its citers, from a prior search)
+  // needs no re-fetch here -- that is the request saving pool reuse buys. Checked BEFORE adding
+  // aId/bId themselves to fetchedIds just below, since that would otherwise always read true.
+  const aKnown = fetchedIds.has(a.id), bKnown = fetchedIds.has(b.id);
   addPool([a, b]); fetchedIds.add(a.id); fetchedIds.add(b.id);
 
-  const [citersA, citersB] = await Promise.all([fetchCiters(a.id), fetchCiters(b.id)]);
-  requests += 2;
+  const citerFetches = [];
+  let citersA = [], citersB = [];
+  if (!aKnown) citerFetches.push(fetchCiters(a.id).then(r => { citersA = r; }));
+  if (!bKnown) citerFetches.push(fetchCiters(b.id).then(r => { citersB = r; }));
+  if (citerFetches.length) { await Promise.all(citerFetches); requests += citerFetches.length; }
   addPool(citersA); addPool(citersB);
   citersA.forEach(w => fetchedIds.add(w.id)); citersB.forEach(w => fetchedIds.add(w.id));
   progress({ depth: 0, frontierSize: citersA.length + citersB.length, candidateCount: 0, phase: 'expanding', poolSize: pool.length });
@@ -3707,7 +3809,7 @@ async function findBridge(aId, bId, mode, onProgress){
 
   if (!result.firstDistance) {
     progress({ depth: 0, frontierSize: 0, candidateCount: 0, phase: 'done', poolSize: pool.length });
-    return { noRoute: true, a, b, requests };
+    return { noRoute: true, a, b, requests, pool, fetchedIds };
   }
 
   if (mode === 'strongest') {
@@ -3729,7 +3831,7 @@ async function findBridge(aId, bId, mode, onProgress){
   if (missingChosen.length) { addPool(await fetchRefs(missingChosen)); requests += chunk(missingChosen, 50).slice(0, 2).length; }
   progress({ depth: chosen.distance, frontierSize: 0, candidateCount: 1, phase: 'done', poolSize: pool.length });
   return { a, b, route: chosen.route, distance: chosen.distance, shorterRejected: chosen.shorterRejected,
-           requests, mode, pool };
+           requests, mode, pool, fetchedIds };
 }
 
 // ---- quantum jump ----
@@ -4514,7 +4616,9 @@ function citeScopeWorks(scope){
   if (isBridgeView()) {
     const nodes = state.bridge.nodeById ? [...state.bridge.nodeById.values()] : [];
     if (scope === 'route') {
-      const routeIds = new Set(state.bridge.route || []);
+      // at 3 papers this is the union of the 2 kept tree edges, not just the original A-B route --
+      // see renderBridgePreview, which keeps treeNodeIds in sync with what's actually highlighted.
+      const routeIds = state.bridge.treeNodeIds || new Set(state.bridge.route || []);
       return nodes.filter(n => routeIds.has(n.id));
     }
     return nodes; // 'all' here means "everything on screen" -- the ~35 bridge nodes, see syncCiteScopeOptions
@@ -4801,7 +4905,8 @@ const MANUAL_I18N = {
       'The route stays highlighted after the search; click a dimmed paper to add it and its neighbours.',
       'Route edges have no arrowheads, since a route has no single direction the way a citation does.',
       'A direct citation between the two papers is called out, since both modes then agree.',
-      'In this view: Timeline plots cluster against year, export gains a Route only scope, the story prompt asks relationship questions, and filters plus the citation overlay are hidden.'
+      'In this view: Timeline plots cluster against year, export gains a Route only scope, the story prompt asks relationship questions, and filters plus the citation overlay are hidden.',
+      'Once a route is found, press + Add a paper to grow the bridge to a third paper: GraphPapers searches from it to both existing papers, then keeps the two shortest of the three pairwise routes as an approximate tree — not the optimal Steiner tree, and the result can depend on the order papers were added. Press the ✕ beside the third search box to remove it and return to a two-paper bridge.'
     ],
     s8h: 'Getting results out',
     s8p: [
@@ -4862,6 +4967,7 @@ const MANUAL_I18N = {
         'Search or press Surprise me to pick the second paper.',
         'Choose a bridge mode: Fewest steps or Strongest link.',
         'Press Find bridge to search for the route between the two papers.',
+        'Press + Add a paper, then search for a third paper, to grow the bridge — GraphPapers searches from it to both existing papers and keeps the two shortest of the three pairwise routes as an approximate tree, not the optimal Steiner tree.',
         'The route stays highlighted after the search — click a dimmed paper to add it and its neighbours. Route edges have no arrowheads, since a route has no single direction the way a citation does. Press Next to finish.'
       ],
       exportT: [
@@ -4939,7 +5045,8 @@ const MANUAL_I18N = {
       '찾은 경로는 탐색이 끝난 뒤에도 계속 강조 표시되며, 흐려진 논문을 클릭하면 그 논문과 이웃이 강조에 추가됩니다.',
       '경로 선에는 화살표가 없습니다. 경로에는 인용처럼 정해진 방향이 없기 때문입니다.',
       '두 논문이 서로 직접 인용 관계라면 그 사실을 알려주는 안내가 뜹니다 — 이 경우 두 방식 모두 같은 답을 줍니다.',
-      '이 화면에서는: 연대순 배치는 X축이 클러스터, Y축이 연도가 되고, 내보내기에 경로만 범위가 추가되며, 이야기 프롬프트는 관계를 묻는 질문으로 바뀌고, 필터와 인용 연결선 오버레이는 숨겨집니다.'
+      '이 화면에서는: 연대순 배치는 X축이 클러스터, Y축이 연도가 되고, 내보내기에 경로만 범위가 추가되며, 이야기 프롬프트는 관계를 묻는 질문으로 바뀌고, 필터와 인용 연결선 오버레이는 숨겨집니다.',
+      '경로를 찾은 뒤 + 논문 추가를 누르면 세 번째 논문으로 연결을 확장할 수 있습니다: 그 논문에서 기존 두 논문까지 각각 경로를 찾은 뒤, 세 쌍의 경로 중 가장 짧은 두 개를 근사 트리로 남깁니다 — 최적의 슈타이너 트리가 아니며, 논문을 추가한 순서에 따라 결과가 달라질 수 있습니다. 세 번째 검색창 옆의 ✕를 누르면 제거하고 두 논문 연결로 되돌립니다.'
     ],
     s8h: '결과 내보내기',
     s8p: [
@@ -5000,6 +5107,7 @@ const MANUAL_I18N = {
         '검색하거나 아무 논문이나를 눌러 두 번째 논문을 고르세요.',
         '최단 경로 또는 가장 강한 연결 중 하나를 고르세요.',
         '연결 찾기를 눌러 두 논문 사이의 경로를 찾으세요.',
+        '+ 논문 추가를 누른 뒤 세 번째 논문을 검색해 연결을 확장하세요 — GraphPapers는 그 논문에서 기존 두 논문까지 각각 경로를 찾은 뒤, 세 쌍의 경로 중 가장 짧은 두 개를 근사 트리로 남깁니다. 최적의 슈타이너 트리는 아닙니다.',
         '찾은 경로는 탐색이 끝난 뒤에도 계속 강조 표시되며, 흐려진 논문을 클릭하면 그 논문과 이웃이 강조에 추가됩니다. 경로 선에는 화살표가 없습니다 — 경로에는 인용처럼 정해진 방향이 없기 때문입니다. 다음을 눌러 마치세요.'
       ],
       exportT: [
@@ -5133,26 +5241,69 @@ const searchInput = document.getElementById('searchInput');
 const dropdown = document.getElementById('dropdown');
 wireSearchBox(searchInput, dropdown, w => loadAndBuildGraph(w.id));
 document.addEventListener('click', e => {
-  if (!e.target.closest('.search-wrap')) { dropdown.hidden = true; dropdownB.hidden = true; }
+  if (!e.target.closest('.search-wrap')) { dropdown.hidden = true; dropdownB.hidden = true; dropdownC.hidden = true; }
 });
 
 // ---- bridge search UI ----
 const bridgeToggleBtn = document.getElementById('bridgeToggleBtn');
 const searchInputB = document.getElementById('searchInputB');
 const dropdownB = document.getElementById('dropdownB');
+const searchInputC = document.getElementById('searchInputC');
+const dropdownC = document.getElementById('dropdownC');
+const searchWrapC = document.getElementById('searchWrapC');
+const addPaperBtn = document.getElementById('addPaperBtn');
+const removePaperCBtn = document.getElementById('removePaperCBtn');
 const bridgeBar = document.getElementById('bridgeBar');
 const bridgeReadoutEl = document.getElementById('bridgeReadout');
 let bridgeSearchToken = 0;   // bumped to cancel an in-flight search (toggle-off, new search, app reset)
+// true once "+ Add a paper" has been pressed (before or after paper C is actually chosen) -- kept
+// separate from state.bridge.c so the search box can stay open while the user is still choosing.
+let addPaperBoxOpen = false;
 
 function bridgeName(mode){ return mode === 'fewest' ? t('bridgeFewest') : t('bridgeStrongest'); }
 
-// (re)draws the two-cluster preview -- both papers' own graphs, plus the route if one has been found.
+// shows/hides the "+ Add a paper" affordance, the third search box, and the remove-third-paper
+// button, purely from current state -- called after every change to state.bridge or addPaperBoxOpen.
+function updateBridgeGrowUI(){
+  const hasRoute = !!(state.bridge && state.bridge.route && !state.bridge.noRoute && !state.bridge.samePaper);
+  const hasThird = !!(state.bridge && state.bridge.c && state.bridge.c.w);
+  addPaperBtn.hidden = !hasRoute || hasThird || addPaperBoxOpen;
+  searchWrapC.hidden = !(addPaperBoxOpen || hasThird);
+  removePaperCBtn.hidden = !hasThird;
+}
+
+// resolves which 2 of the 3 pairwise routes the current tree keeps (see chooseBridgeTree), and the
+// pool to score their edges with. Before both of the third paper's searches (A-C and B-C) have
+// resolved, shows whichever legs ARE known so far (just A-B before growth starts; A-B + A-C mid-
+// growth) instead of freezing the display -- the final MST choice only happens once all three
+// pairwise distances are in.
+function bridgeTreeRoutes(){
+  const bridge = state.bridge, c = bridge && bridge.c;
+  if (!c || !c.w) return { routes: [bridge.route].filter(Boolean), pool: bridge.pool || [], kept: null };
+  if (c.distAC == null || c.distBC == null) {
+    const routes = [bridge.route, c.routeAC, c.routeBC].filter(Boolean);
+    const pool = [...(bridge.pool || []), ...(c.poolAC || []), ...(c.poolBC || [])];
+    return { routes, pool, kept: null };
+  }
+  const kept = chooseBridgeTree(bridge.distance, c.distAC, c.distBC);
+  const routeByPair = { AB: bridge.route, AC: c.routeAC, BC: c.routeBC };
+  const poolByPair = { AB: bridge.pool, AC: c.poolAC, BC: c.poolBC };
+  const routes = kept.map(p => routeByPair[p]).filter(Boolean);
+  const seen = new Set(); const pool = [];
+  kept.forEach(p => (poolByPair[p] || []).forEach(w => { if (!seen.has(w.id)) { seen.add(w.id); pool.push(w); } }));
+  return { routes, pool, kept };
+}
+
+// (re)draws the 2- or 3-cluster preview -- every paper's own graph, plus the current tree route(s).
 function renderBridgePreview(){
   if (!state.seed || !state.bridge || !state.bridge.b) return;
-  const routePool = (state.bridge.pool || []).length ? state.bridge.pool : null;
-  const { nodes, edges } = buildBridgeGraph(state.seed, state.pool, state.bridge.b, state.bridge.bPool,
-    state.bridge.route, routePool);
-  state.bridge.nodeById = renderBridgeGraph(nodes, edges, state.seed.id, state.bridge.b.id, state.bridge.route);
+  const clusters = [{ seed: state.seed, pool: state.pool }, { seed: state.bridge.b, pool: state.bridge.bPool }];
+  if (state.bridge.c && state.bridge.c.w) clusters.push({ seed: state.bridge.c.w, pool: state.bridge.c.pool });
+  const { routes, pool: treePool } = bridgeTreeRoutes();
+  const routePool = treePool.length ? treePool : null;
+  const { nodes, edges } = buildBridgeGraph(clusters, routes, routePool);
+  state.bridge.nodeById = renderBridgeGraph(nodes, edges, clusters.map(cl => cl.seed.id), routes);
+  state.bridge.treeNodeIds = new Set(routes.flat());
 }
 
 function updateBridgeReadout(){
@@ -5160,10 +5311,22 @@ function updateBridgeReadout(){
   if (state.bridge.samePaper) { bridgeReadoutEl.textContent = t('bridgeSamePaper'); return; }
   if (state.bridge.noRoute) { bridgeReadoutEl.textContent = tf('bridgeNoRoute', { n: 5 }); return; }
   if (state.bridge.distance == null) { bridgeReadoutEl.textContent = ''; return; }
+  const c = state.bridge.c;
+  if (c && c.w && c.distAC != null && c.distBC != null) {
+    const kept = chooseBridgeTree(state.bridge.distance, c.distAC, c.distBC);
+    const dByPair = { AB: state.bridge.distance, AC: c.distAC, BC: c.distBC };
+    const totalRequests = state.bridge.requests + c.requestsAC + c.requestsBC;
+    let line = tf('bridgeReadoutTri', { d1: dByPair[kept[0]], d2: dByPair[kept[1]],
+      mode: bridgeName(state.bridge.mode), requests: totalRequests });
+    line += ' · ' + tf('bridgeShownPerSide', { shown: bridgeSideCap(3), total: GRAPH_CAP });
+    line += ' · ' + t('bridgeTreeApprox');
+    bridgeReadoutEl.textContent = line;
+    return;
+  }
   let line = tf('bridgeReadout', { distance: state.bridge.distance, mode: bridgeName(state.bridge.mode), requests: state.bridge.requests });
-  // say what the two clusters actually show: each side is the top BRIDGE_SIDE_CAP of its own
-  // ~40-paper graph, so nothing was lost -- it was narrowed, and the user can see by how much
-  line += ' · ' + tf('bridgeShownPerSide', { shown: BRIDGE_SIDE_CAP, total: GRAPH_CAP });
+  // say what each cluster actually shows: it's the top bridgeSideCap() of its own ~40-paper graph,
+  // so nothing was lost -- it was narrowed, and the user can see by how much and at what cap.
+  line += ' · ' + tf('bridgeShownPerSide', { shown: bridgeSideCap(2), total: GRAPH_CAP });
   // distance 1 means bridgeSearch's early nA0.has(bId) return fired -- no intermediate paper, so
   // 'Strongest link' and 'Fewest steps' can't differ here. Say so; don't block or change the result.
   if (state.bridge.distance === 1) line += ' · ' + t('bridgeDirect');
@@ -5178,6 +5341,8 @@ async function chooseBridgeB(w){
   state.bridge = { b: w, bPool: [], route: null, distance: null, requests: 0,
     mode: document.getElementById('bridgeMode').value };
   bridgeReadoutEl.textContent = '';
+  addPaperBoxOpen = false; searchInputC.value = ''; dropdownC.hidden = true;
+  updateBridgeGrowUI();
   // the bridge bar itself is already open (the toggle button shows it) -- B being set enables the
   // mode select right away, but Find bridge stays disabled until paper B's own preview has
   // actually rendered below (state.bridge.nodeById populated). Enabling it earlier let a search
@@ -5203,6 +5368,97 @@ async function chooseBridgeB(w){
   }
 }
 wireSearchBox(searchInputB, dropdownB, chooseBridgeB);
+
+// picks `w` as the third paper: fetches its own cluster pool (same shape as chooseBridgeB), then
+// grows the tree by searching FROM it to the two already-placed papers (growBridgeToThird) --
+// never by re-running a 3-way search from scratch.
+async function chooseBridgeC(w){
+  if (!state.seed || !state.bridge || !state.bridge.route) return;
+  if (w.id === state.seed.id || w.id === state.bridge.b.id) { setError(t('bridgeSamePaper')); return; }
+  state.bridge.c = { w, pool: [], routeAC: null, distAC: null, requestsAC: 0,
+    routeBC: null, distBC: null, requestsBC: 0 };
+  updateBridgeGrowUI();
+  try {
+    const [refs, citers] = await Promise.all([fetchRefs(w.referenced_works || []), fetchCiters(w.id)]);
+    const seen = new Set(); const pool = [];
+    for (const x of [w, ...refs, ...citers]) if (!seen.has(x.id)) { seen.add(x.id); pool.push(x); }
+    state.bridge.c.pool = pool;
+    await growBridgeToThird();
+  } catch (err) {
+    state.bridge.c = null;
+    updateBridgeGrowUI();
+    setError(netMessage(err));
+  }
+}
+wireSearchBox(searchInputC, dropdownC, chooseBridgeC);
+
+// grows the current 2-paper bridge to 3: searches A->C then B->C (never a fresh 3-way search),
+// each one seeded with every work already fetched for the earlier steps -- paper A's and B's own
+// cluster pools, the A-B route's pool, and (for the B->C leg) the A->C leg's pool too -- so the
+// later legs start warm. See findBridge's seedPool/seedFetchedIds and the module comment above it.
+async function growBridgeToThird(){
+  const bridge = state.bridge, c = bridge.c;
+  const mode = bridge.mode;
+  const myToken = ++bridgeSearchToken;
+  removePaperCBtn.disabled = true;
+  bridgeReadoutEl.textContent = t('findingThirdBridge');
+  try {
+    const seedPool1 = [...state.pool, ...bridge.bPool, ...(bridge.pool || [])];
+    startBridgeRings(bridgeZoomG, state.seed.id, c.w.id);
+    const r1 = await findBridge(state.seed.id, c.w.id, mode, onBridgeSearchProgress, seedPool1, bridge.fetchedIds);
+    if (myToken !== bridgeSearchToken) return;
+    if (r1.noRoute || r1.samePaper) {
+      stopBridgeRings(); bridge.c = null; removePaperCBtn.disabled = false;
+      updateBridgeGrowUI(); updateBridgeReadout(); return;
+    }
+    c.routeAC = r1.route; c.distAC = r1.distance; c.requestsAC = r1.requests; c.poolAC = r1.pool;
+    renderBridgePreview();
+    await resolveBridgeSearch(r1.route);
+
+    // everything fetched so far (A-B leg + A-C leg) seeds the B-C leg -- both its endpoints are
+    // now fully known, so this leg is the one that shows the reuse payoff most clearly.
+    const combinedFetchedIds = new Set([...(bridge.fetchedIds || []), ...r1.fetchedIds]);
+    const seedPool2 = [...seedPool1, ...c.pool, ...r1.pool];
+    startBridgeRings(bridgeZoomG, bridge.b.id, c.w.id);
+    const r2 = await findBridge(bridge.b.id, c.w.id, mode, onBridgeSearchProgress, seedPool2, combinedFetchedIds);
+    if (myToken !== bridgeSearchToken) return;
+    if (r2.noRoute || r2.samePaper) {
+      stopBridgeRings(); bridge.c = null; removePaperCBtn.disabled = false;
+      updateBridgeGrowUI(); updateBridgeReadout(); return;
+    }
+    c.routeBC = r2.route; c.distBC = r2.distance; c.requestsBC = r2.requests; c.poolBC = r2.pool;
+    bridge.fetchedIds = new Set([...combinedFetchedIds, ...r2.fetchedIds]);
+    renderBridgePreview();
+    await resolveBridgeSearch(r2.route);
+    removePaperCBtn.disabled = false;
+    updateBridgeGrowUI();
+    updateBridgeReadout();
+  } catch (err) {
+    if (myToken !== bridgeSearchToken) return;
+    stopBridgeRings();
+    bridge.c = null;
+    removePaperCBtn.disabled = false;
+    updateBridgeGrowUI();
+    setError(netMessage(err));
+  }
+}
+
+addPaperBtn.addEventListener('click', () => {
+  addPaperBoxOpen = true;
+  updateBridgeGrowUI();
+  searchInputC.focus();
+});
+removePaperCBtn.addEventListener('click', () => {
+  if (!state.bridge) return;
+  bridgeSearchToken++;   // cancel any in-flight growth search
+  stopBridgeRings();
+  state.bridge.c = null;
+  searchInputC.value = ''; dropdownC.hidden = true;
+  addPaperBoxOpen = false;
+  updateBridgeGrowUI();
+  renderBridgePreview();
+  updateBridgeReadout();
+});
 
 // ---- PDF drop / pick: identify an already-published paper from its own bytes ----
 // Convenience only, not a checking tool -- if identification fails the user just types the
@@ -5265,6 +5521,29 @@ async function applyIdentifiedWork(w){
   }
 }
 
+// pure: a title out of a PDF's metadata -- the Info dictionary's /Title, else XMP dc:title.
+// Deliberately a LAST resort, and deliberately not resolved automatically: measured on real
+// files, this metadata is absent more often than not (6 of 8 sampled PDFs had none) and is
+// sometimes another paper's title outright (two APS PDFs carried one). Even when correct it
+// may not be OpenAlex's top hit -- "Time series analysis in a frequency subband" ranks second
+// behind an unrelated paper. So the title is put in the search box for the user to choose
+// from, never searched on their behalf.
+function findTitleInText(text){
+  const clean = raw => {
+    const t = raw.replace(/\\[\r\n]+/g, '').replace(/\\([()\\])/g, '$1').replace(/\\\d{3}/g, ' ')
+                 .replace(/\s+/g, ' ').trim()
+                 // publishers append the venue after a dash ("... - Instrumentation and Measurement,
+                 // IEEE Transactions on"); search the title, not the journal
+                 .replace(/\s*[-\u2013\u2014]\s*[^-]*\b(IEEE|Transactions|Journal|Proceedings|Letters|Review|Magazine|Elsevier|Springer|Wiley)\b[\s\S]*$/i, '');
+    return t.length >= 8 && /[A-Za-z]{4}/.test(t) ? t : null;
+  };
+  const info = text.match(/\/Title\s*\(((?:[^()\\]|\\[\s\S]){4,300})\)/);
+  if (info) { const c = clean(info[1]); if (c) return c; }
+  const xmp = text.match(/<dc:title>[\s\S]{0,400}?<rdf:li[^>]*>([\s\S]{4,300}?)<\/rdf:li>/);
+  if (xmp) { const c = clean(xmp[1]); if (c) return c; }
+  return null;
+}
+
 async function identifyAndSearchPdf(file){
   if (file.type !== 'application/pdf' && !/\.pdf$/i.test(file.name)) {
     setError(t('pdfNotPdf'));
@@ -5277,7 +5556,26 @@ async function identifyAndSearchPdf(file){
     const text = new TextDecoder('latin1').decode(buf);
     const doi = findDoiInText(text);
     const arxivId = doi ? null : findArxivId(text);
-    if (!doi && !arxivId) { setStatus(''); setError(t('pdfNoId')); searchInput.focus(); return; }
+    // the Info dictionary is written in the trailer, at the END of the file -- the head slice
+    // that finds the DOI never contains it
+    const tailFrom = Math.max(PDF_SCAN_BYTES, file.size - PDF_SCAN_BYTES);
+    const tail = file.size > PDF_SCAN_BYTES
+      ? new TextDecoder('latin1').decode(await file.slice(tailFrom).arrayBuffer()) : '';
+    if (!doi && !arxivId) {
+      setStatus('');
+      // no identifier at all -- old scans predate DOIs being embedded. Offer the metadata title
+      // as a query the user can check, rather than a result they have to trust.
+      const title = findTitleInText(text) || findTitleInText(tail);
+      if (title) {
+        const box = bridgeTargetActive() ? searchInputB : searchInput;
+        box.value = title;
+        box.focus();
+        box.dispatchEvent(new Event('input', { bubbles: true }));
+        setError(t('pdfTitleFallback'));
+        return;
+      }
+      setError(t('pdfNoId')); searchInput.focus(); return;
+    }
     setStatus(t('pdfLookup'));
     // arXiv preprints that have a DataCite doi carry it as 10.48550/arXiv.<id> -- resolving
     // through the same filter=doi: lookup reuses the whole DOI path instead of a second mechanism.
@@ -5327,6 +5625,8 @@ bridgeToggleBtn.addEventListener('click', () => {
     stopBridgeRings();
     state.bridge = null;
     searchInputB.value = '';
+    searchInputC.value = ''; dropdownC.hidden = true; addPaperBoxOpen = false;
+    updateBridgeGrowUI();
     document.getElementById('bridgeMode').disabled = true;
     const btn = document.getElementById('findBridgeBtn');
     btn.disabled = true; btn.textContent = t('findBridgeBtn');
@@ -5341,6 +5641,9 @@ document.getElementById('findBridgeBtn').addEventListener('click', async () => {
   const mode = document.getElementById('bridgeMode').value;
   state.bridge.mode = mode;
   state.bridge.route = null; state.bridge.noRoute = false; state.bridge.samePaper = false;
+  // a fresh A-B search invalidates any third paper already grown onto the old route
+  state.bridge.c = null; addPaperBoxOpen = false; searchInputC.value = ''; dropdownC.hidden = true;
+  updateBridgeGrowUI();
   renderBridgePreview();
   const btn = document.getElementById('findBridgeBtn');
   btn.disabled = true; btn.textContent = t('findingBridge');
@@ -5354,13 +5657,14 @@ document.getElementById('findBridgeBtn').addEventListener('click', async () => {
     if (result.noRoute) { stopBridgeRings(); state.bridge.noRoute = true; updateBridgeReadout(); return; }
     state.bridge.route = result.route; state.bridge.distance = result.distance;
     state.bridge.requests = result.requests; state.bridge.shorterRejected = result.shorterRejected;
-    state.bridge.pool = result.pool;
+    state.bridge.pool = result.pool; state.bridge.fetchedIds = result.fetchedIds;
     // render the REAL route/layout FIRST (route nodes now exist, and (per renderBridgeGraph's
     // position carry-forward) the surrounding layout doesn't jump), THEN morph the surviving
     // strand onto those live positions -- so the morph target and the final layout are the same
     // thing, not two different guesses that visibly bounce between each other.
     renderBridgePreview();
     await resolveBridgeSearch(result.route);   // morphs the last strand onto the real route, then clears
+    updateBridgeGrowUI();
     updateBridgeReadout();
   } catch (err) {
     if (myToken !== bridgeSearchToken) return;
@@ -5465,6 +5769,8 @@ const TOUR_TRACKS = {
     { sel: ['#searchInputB', '#surpriseBtn', '#dropdownB'], check: () => !!(state.bridge && state.bridge.b) },
     { sel: '#bridgeMode', makeCheck: tourValueWatch('#bridgeMode') },
     { sel: '#findBridgeBtn', check: () => !!(state.bridge && (state.bridge.route || state.bridge.noRoute || state.bridge.samePaper)) },
+    { sel: '#addPaperBtn', check: () => !!(state.bridge && state.bridge.c && state.bridge.c.w &&
+        state.bridge.c.distAC != null && state.bridge.c.distBC != null) },
     { sel: '#graphView', manual: true }
   ],
   exportT: [
@@ -5987,6 +6293,52 @@ function selfTest(){
     const fewest = chooseBridgeRoute(bridgeCandidates, hubPool, 'fewest');
     assert('chooseBridgeRoute: fewest steps takes the 3-step hub route without scoring',
       fewest.distance === 3 && fewest.route.join(',') === 'brA,brH1,brH2,brB');
+
+    // ---- 3-paper bridge growth: cap scaling, MST-over-metric-closure, cluster layout ----
+    assert('bridgeSideCap: 16 per cluster at two papers', bridgeSideCap(2) === 16);
+    assert('bridgeSideCap: shrinks to 11 per cluster at three papers', bridgeSideCap(3) === 11);
+    assert('bridgeSideCap: total rendered per side stays roughly constant (32 vs. 33)',
+      bridgeSideCap(2) * 2 === 32 && bridgeSideCap(3) * 3 === 33);
+
+    assert('chooseBridgeTree: drops the single largest of the three pairwise distances',
+      chooseBridgeTree(2, 3, 5).sort().join(',') === 'AB,AC');
+    assert('chooseBridgeTree: keeps both routes touching the closest pair regardless of tie order',
+      chooseBridgeTree(5, 2, 3).sort().join(',') === 'AC,BC');
+    assert('chooseBridgeTree: never drops the shortest edge',
+      chooseBridgeTree(1, 4, 6).includes('AB'));
+
+    assert('bridgeClusterFrac: two papers keep the original left/right split, y uniform',
+      bridgeClusterFrac('A', 2).x === 0.22 && bridgeClusterFrac('B', 2).x === 0.78 &&
+      bridgeClusterFrac('A', 2).y === bridgeClusterFrac('B', 2).y);
+    assert('bridgeClusterFrac: three papers spread into a triangle (three distinct y values)',
+      new Set([bridgeClusterFrac('A', 3).y, bridgeClusterFrac('B', 3).y, bridgeClusterFrac('C', 3).y]).size === 2 &&
+      bridgeClusterFrac('A', 3).y !== bridgeClusterFrac('C', 3).y);
+    assert('bridgeClusterFrac: shared/route sits at the centroid at any cluster count',
+      bridgeClusterFrac('shared', 3).x === 0.5 && bridgeClusterFrac('route', 2).x === 0.5);
+
+    // buildBridgeGraph with 3 clusters: a node that is a top-neighbour of two clusters (but not a
+    // seed) must be tagged 'shared'; each cluster's own seed keeps its own letter even if it also
+    // shows up in another cluster's top-N; the two kept tree edges' hops are flagged _onRoute.
+    const triA = { id: 'triA', referenced_works: ['x1', 'x2'] };
+    const triB = { id: 'triB', referenced_works: ['x1', 'x3'] };
+    const triC = { id: 'triC', referenced_works: ['x2', 'x3'] };
+    const triShared = { id: 'triShared', referenced_works: ['x1', 'x2', 'x3'] };
+    const triPoolA = [triA, triB, triC, triShared];
+    const { nodes: triNodes, edges: triEdges } = buildBridgeGraph(
+      [{ seed: triA, pool: triPoolA }, { seed: triB, pool: triPoolA }, { seed: triC, pool: triPoolA }],
+      [['triA', 'triShared', 'triB'], ['triA', 'triC']], triPoolA);
+    const triById = new Map(triNodes.map(n => [n.id, n]));
+    assert('buildBridgeGraph (3 clusters): each seed keeps its own cluster letter',
+      triById.get('triA')._cluster === 'A' && triById.get('triB')._cluster === 'B' && triById.get('triC')._cluster === 'C');
+    assert('buildBridgeGraph (3 clusters): a node related to 2+ clusters (not a seed) is "shared"',
+      triById.get('triShared')._cluster === 'shared');
+    assert('buildBridgeGraph (3 clusters): route hops from BOTH kept edges are flagged _onRoute',
+      triById.get('triShared')._onRoute && triById.get('triC')._onRoute);
+    assert('buildBridgeGraph (3 clusters): an edge from either kept route is flagged _isRoute',
+      triEdges.some(e => e._isRoute && ((eid(e.source) === 'triA' && eid(e.target) === 'triShared') ||
+                                         (eid(e.source) === 'triShared' && eid(e.target) === 'triA'))) &&
+      triEdges.some(e => e._isRoute && ((eid(e.source) === 'triA' && eid(e.target) === 'triC') ||
+                                         (eid(e.source) === 'triC' && eid(e.target) === 'triA'))));
 
     // nextBridgeStrand: the pure fold behind the bridge-search field-line animation. Fed a
     // realistic onProgress sequence (wide at first, narrowing as candidates are found, widening

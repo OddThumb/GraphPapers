@@ -133,6 +133,8 @@ The route stays highlighted and everything else stays dimmed; that is the restin
 
 If the second paper is one the first already cites, the app says so — there is no intermediate paper to find, and both modes return the same answer.
 
+Once a route is found, **+ Add a paper** appears: search for a third paper and the app searches from it to both papers already on screen, then keeps the two shortest of the three pairwise routes as the tree connecting all three — an approximation (a minimum spanning tree over the pairwise distances, not the optimal Steiner tree) whose result can depend on the order the papers were added, never the guaranteed best connection; each cluster shrinks from 16 papers to about 11 so the three-cluster view stays as readable as the two-paper one, and the third search reuses everything already fetched for the first two so it typically costs few or no extra requests. Press the **✕** beside the third search box to drop it and return to a two-paper bridge.
+
 While it searches, a bundle of field lines runs between the two papers, blooming outward and then narrowing as the candidate routes narrow. It is driven by the search itself rather than a timer, so what you see is how much is still undecided.
 
 The left-hand control panel adapts: Layout, Spacing, Advanced and Reshuffle stay and act on the bridge graph, while the filters and the citation overlay are hidden — a filter that hid a paper on the route would remove the only thing this view exists to show.
