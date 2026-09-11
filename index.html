@@ -2275,6 +2275,18 @@ function offerPrevJumpOpts(mayRestore){
   box.appendChild(btn);
 }
 
+// pure: the number on a trail badge -- how much evidence THIS route found, since each route
+// leaves a different shape. Reading only coCite/sharedRefs printed 0 on every ideas and chain
+// jump, flatly contradicting the hover card beside it ("4 shared keywords" next to a 0).
+function trailBadgeCount(ev){
+  if (!ev) return 0;
+  if (ev.coCite) return ev.coCite.count;
+  if (ev.sharedRefs) return ev.sharedRefs.count;
+  if (ev.ideas) return (ev.ideas.keywords || []).length;
+  if (ev.chain) return ev.chain.count || 0;
+  return 0;
+}
+
 function fallbackCopy(text){
   const ta = document.createElement('textarea');
   ta.value = text; ta.style.position = 'fixed'; ta.style.left = '-9999px';
@@ -2856,10 +2868,7 @@ function renderGraph(nodes, edges, seedId){
       .attr('fill', cssVar('--accent'));
     return grp;
   });
-  trailBadgeSel.select('text').text(t => {
-    const ev = t.evidence;
-    return ev ? (ev.coCite ? ev.coCite.count : (ev.sharedRefs ? ev.sharedRefs.count : 0)) : 0;
-  });
+  trailBadgeSel.select('text').text(t => trailBadgeCount(t.evidence));
   trailBadgeSel.each(function(){
     const textEl = this.querySelector('text');
     const bw = textEl.getBBox().width, w = Math.max(20, bw + 10), h = 16;
@@ -6495,6 +6504,18 @@ function selfTest(){
       fewest.distance === 3 && fewest.route.join(',') === 'brA,brH1,brH2,brB');
 
     // ---- 3-paper bridge growth: cap scaling, MST-over-metric-closure, cluster layout ----
+    assert('trailBadgeCount: ideas route counts its shared keywords',
+      trailBadgeCount({ route: 'ideas', ideas: { keywords: ['a','b','c','d'] } }) === 4);
+    assert('trailBadgeCount: chain route counts papers citing both',
+      trailBadgeCount({ route: 'chain', chain: { viaId: 'W1', count: 7 } }) === 7);
+    assert('trailBadgeCount: a chain with no via is honestly 0',
+      trailBadgeCount({ route: 'chain', chain: null }) === 0);
+    assert('trailBadgeCount: cocite prefers co-citers over shared refs',
+      trailBadgeCount({ route: 'cocite', coCite: { count: 3 }, sharedRefs: { count: 9 } }) === 3);
+    assert('trailBadgeCount: coupling counts the rare shared references',
+      trailBadgeCount({ route: 'coupling', sharedRefs: { count: 2 } }) === 2);
+    assert('trailBadgeCount: no evidence at all is 0, not NaN',
+      trailBadgeCount(null) === 0 && trailBadgeCount({ route: 'ideas' }) === 0);
     assert('titleCoverage: every query word present scores 1',
       titleCoverage(searchWords('icecube neutrinos'), 'A Search for IceCube Neutrinos from 33 Events') === 1);
     assert('titleCoverage: half the query words present scores 0.5',
