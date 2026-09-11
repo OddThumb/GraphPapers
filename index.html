@@ -1036,7 +1036,7 @@ const I18N = {
     offlineBanner: 'Offline — GraphPapers needs an internet connection to fetch papers from OpenAlex.',
     tabGraph: 'Similarity graph', tabRefs: 'Prior works', tabCiters: 'Derivative works',
     storyBtn: 'Story prompt', exportCitations: 'Export citations',
-    ghostNodeTitle: 'The paper that is not there — open the story prompt to have a model write it',
+    ghostNodeTitle: 'The idea missing from this graph — open the story prompt to have a model name it',
     graphEmpty: 'Search for a paper above to build a graph, or press Surprise me.',
     graphEmptyHint: 'New here? Find the ? Manual button next to the legend icon, or take the guided tour.',
     graphControls: 'Graph controls', collapsePanel: 'Collapse panel', expandPanel: 'Expand panel',
@@ -1144,7 +1144,7 @@ const I18N = {
     offlineBanner: '오프라인 상태입니다 — GraphPapers는 OpenAlex에서 논문을 가져오려면 인터넷 연결이 필요합니다.',
     tabGraph: '유사도 그래프', tabRefs: '선행 논문', tabCiters: '후행 논문',
     storyBtn: '이야기 프롬프트', exportCitations: '인용 내보내기',
-    ghostNodeTitle: '존재하지 않는 논문 — 이야기 프롬프트를 열면 모델이 써 줍니다',
+    ghostNodeTitle: '이 그래프에 빠져 있는 아이디어 — 이야기 프롬프트를 열면 모델이 짚어 줍니다',
     graphEmpty: '위에서 논문을 검색하거나, 아무 논문이나 버튼을 눌러 보세요.',
     graphEmptyHint: '처음이신가요? 범례 아이콘 옆의 ? 설명서 버튼을 확인하거나, 가이드 투어를 시작해보세요.',
     graphControls: '그래프 설정', collapsePanel: '패널 접기', expandPanel: '패널 펼치기',
@@ -4615,8 +4615,8 @@ const PROMPT_I18N = {
         '- Refer to papers by their [n] index and title.',
         '- If you are not confident about what a paper actually did, say so instead of inventing it.',
         '- Length: roughly 400-700 words. Prose, not a bullet list.',
-        '- Finally, write the paper that should sit at the centre of this graph and does not exist. Give it: a title; a one-paragraph abstract; the list of [n] papers above it would cite, each with one line saying why that one is needed; the single question it answers that neither research line answers alone; and what is missing today that stops it being written — data, method, or instrument.',
-        '- If you judged the connection spurious above, leave that paper unwritten. Say instead what would have to be true for it to become writable.'
+        '- Finally, name the idea missing from this graph — the paper nobody has written. Give a working title; which of the [n] papers above it would build on, each with one line saying why that one is needed; the single question it answers that neither research line answers alone; and what is missing today that stops anyone answering it — data, method, or instrument. Do not write its results: this is an idea to be judged, not a finding to report.',
+        '- If you judged the connection spurious above, name no idea. Say instead what would have to be true before one could be.'
       ],
       paperAHeader: 'PAPER A', paperBHeader: 'PAPER B',
       routeHeader: 'ROUTE (intermediate papers from A to B)',
@@ -4639,8 +4639,8 @@ const PROMPT_I18N = {
         '- Refer to papers by their [n] index and title.',
         '- If you are not confident about what a paper actually did, say so instead of inventing it.',
         '- Length: roughly 550-850 words. Prose, not a bullet list.',
-        '- Finally, write the paper that should sit at the centre of this graph and does not exist. Give it: a title; a one-paragraph abstract; the list of [n] papers above it would cite, each with one line saying why that one is needed; the single question it answers that neither research line answers alone; and what is missing today that stops it being written — data, method, or instrument.',
-        '- If you judged the connection spurious above, leave that paper unwritten. Say instead what would have to be true for it to become writable.'
+        '- Finally, name the idea missing from this graph — the paper nobody has written. Give a working title; which of the [n] papers above it would build on, each with one line saying why that one is needed; the single question it answers that neither research line answers alone; and what is missing today that stops anyone answering it — data, method, or instrument. Do not write its results: this is an idea to be judged, not a finding to report.',
+        '- If you judged the connection spurious above, name no idea. Say instead what would have to be true before one could be.'
       ],
       paperCHeader: 'PAPER C',
       routeABHeader: 'ROUTE A-B (intermediate papers, {n} step(s))',
@@ -4695,8 +4695,8 @@ const PROMPT_I18N = {
         '- 논문은 [n] 번호와 제목으로 지칭하세요.',
         '- 논문이 실제로 한 일을 확신할 수 없다면, 지어내지 말고 그렇다고 밝히세요.',
         '- 분량: 약 400~700 단어. 목록이 아닌 산문으로 작성하세요.',
-        '- 마지막으로, 이 그래프의 중심에 있어야 하지만 존재하지 않는 논문을 한 편 쓰세요. 제목, 한 문단 초록, 위 [n] 중 인용할 논문 목록과 각각이 왜 필요한지 한 줄씩, 어느 연구 흐름도 혼자서는 답하지 못하는 질문 하나, 그리고 지금 그 논문을 쓸 수 없게 막는 것(데이터·방법·장비 중 무엇이 빠졌는지)을 적으세요.',
-        '- 앞에서 이 연결이 허구라고 판단했다면 그 논문은 쓰지 마세요. 대신 무엇이 사실이어야 쓸 수 있게 되는지 적으세요.'
+        '- 마지막으로, 이 그래프에 빠져 있는 아이디어 — 아무도 쓰지 않은 논문 — 를 짚어 주세요. 가제 하나, 위 [n] 중 무엇 위에 서는지와 각각이 왜 필요한지 한 줄씩, 어느 연구 흐름도 혼자서는 답하지 못하는 질문 하나, 그리고 지금 그걸 아무도 답하지 못하게 막는 것(데이터·방법·장비 중 무엇이 빠졌는지)을 적어 주세요. 결과는 쓰지 마세요 — 이건 판단할 아이디어이지 보고할 발견이 아닙니다.',
+        '- 앞에서 이 연결이 허구라고 판단했다면 아이디어를 내지 마세요. 대신 무엇이 사실이어야 아이디어가 성립하는지 적어 주세요.'
       ],
       paperAHeader: '논문 A', paperBHeader: '논문 B',
       routeHeader: '경로 (A에서 B로 이어지는 중간 논문)',
@@ -4718,8 +4718,8 @@ const PROMPT_I18N = {
         '- 논문은 [n] 번호와 제목으로 지칭하세요.',
         '- 논문이 실제로 한 일을 확신할 수 없다면, 지어내지 말고 그렇다고 밝히세요.',
         '- 분량: 약 550~850 단어. 목록이 아닌 산문으로 작성하세요.',
-        '- 마지막으로, 이 그래프의 중심에 있어야 하지만 존재하지 않는 논문을 한 편 쓰세요. 제목, 한 문단 초록, 위 [n] 중 인용할 논문 목록과 각각이 왜 필요한지 한 줄씩, 어느 연구 흐름도 혼자서는 답하지 못하는 질문 하나, 그리고 지금 그 논문을 쓸 수 없게 막는 것(데이터·방법·장비 중 무엇이 빠졌는지)을 적으세요.',
-        '- 앞에서 이 연결이 허구라고 판단했다면 그 논문은 쓰지 마세요. 대신 무엇이 사실이어야 쓸 수 있게 되는지 적으세요.'
+        '- 마지막으로, 이 그래프에 빠져 있는 아이디어 — 아무도 쓰지 않은 논문 — 를 짚어 주세요. 가제 하나, 위 [n] 중 무엇 위에 서는지와 각각이 왜 필요한지 한 줄씩, 어느 연구 흐름도 혼자서는 답하지 못하는 질문 하나, 그리고 지금 그걸 아무도 답하지 못하게 막는 것(데이터·방법·장비 중 무엇이 빠졌는지)을 적어 주세요. 결과는 쓰지 마세요 — 이건 판단할 아이디어이지 보고할 발견이 아닙니다.',
+        '- 앞에서 이 연결이 허구라고 판단했다면 아이디어를 내지 마세요. 대신 무엇이 사실이어야 아이디어가 성립하는지 적어 주세요.'
       ],
       paperCHeader: '논문 C',
       routeABHeader: '경로 A-B (중간 논문, {n}단계)',
