@@ -12,7 +12,7 @@
 
 # GraphPapers
 
-**v1.1** · [Open it in a browser](https://oddthumb.github.io/GraphPapers/)
+**v1.2** · [Open it in a browser](https://oddthumb.github.io/GraphPapers/)
 
 A free, single-file paper-graph tool. Enter a paper, get a graph of the forty works most related to it — then go where following citations cannot take you.
 
@@ -25,7 +25,7 @@ No install. No account. No API key. No backend. One HTML file, on a desktop or a
 
 ### Your first thirty seconds
 
-The fastest way in is the **?** button next to the legend, at the top right of the graph. Pick one of four short tracks and the app dims everything except the control you need next, tells you what it does, and waits while you press the real thing — the graph, Quantum Jump, Bridge, and getting results out each get their own. A written manual sits behind the same button if you would rather read.
+You do not have to find the way in: with no paper loaded, the guided tour is the screen. Pick one of four short tracks and the app dims everything except the control you need next, tells you what it does, and waits while you press the real thing — the graph, Quantum Jump, Bridge, and getting results out each get their own. A written manual sits behind the same button if you would rather read, and the **?** button next to the legend reopens either one later.
 
 Or find your own way:
 
@@ -51,7 +51,7 @@ Sharing it means sending a link, or one file. Either way the recipient is workin
 
 ### Similarity graph
 
-Enter a title, DOI, or OpenAlex ID. **Surprise me** picks a paper at random instead — from anywhere in OpenAlex, which in practice means anywhere in science. The draw asks only for a bibliography, since that is what a graph is built from; it does not ask for citations, which would quietly exclude everything published recently. The app pulls the seed paper's references and the works citing it, then scores every candidate against the seed using the same two measures Connected Papers uses:
+Enter a title, DOI, or OpenAlex ID. A half-remembered title is enough: the search matches on title and abstract rather than full text, so a famous paper that merely mentions your words cannot outrank the one you typed, and the results are then re-ranked by how much of your query the title actually covers. Typing four scattered words from a title brings that paper into view where it would otherwise sit thirteenth. **Surprise me** picks a paper at random instead — from anywhere in OpenAlex, which in practice means anywhere in science. The draw asks only for a bibliography, since that is what a graph is built from; it does not ask for citations, which would quietly exclude everything published recently. The app pulls the seed paper's references and the works citing it, then scores every candidate against the seed using the same two measures Connected Papers uses:
 
 - **Bibliographic coupling** — two papers that cite many of the same works are
 probably about the same thing.
@@ -60,9 +60,11 @@ about the same thing.
 
 Both measures are standard bibliometrics, not anyone's proprietary method — bibliographic coupling is Kessler (1963), co-citation is Small (1973).
 
-The box also takes an arXiv id in any form you would paste: `arXiv:2503.03799`, the bare number, or an arxiv.org link. Papers whose journal version became the canonical record cannot be reached that way, and it says so rather than going blank.
+The box also takes an arXiv id in any form you would paste: `arXiv:2503.03799`, the bare number, an arxiv.org link, or a pre-2007 id like `cond-mat/0410550`. It is resolved through the arXiv page listed on the record rather than through the `10.48550` DOI, because arXiv only started minting those around 2022 — going by the DOI, three of six ids tested came back empty, including papers that are plainly in OpenAlex. Where a journal version exists it is the one returned, since that is the record carrying the references.
 
 Or drop a PDF of an already-published paper anywhere on the page, and the app reads the DOI straight out of the file's own bytes and searches for it exactly as if you had typed the title. Only the first 200KB is read and the earliest identifier wins — a paper's own DOI is on page one while its references' are much later, so scanning further would find a cited work instead. An arXiv PDF cannot be read this way: arXiv draws its id as rotated glyphs inside a compressed stream, so the id has to be pasted. On a phone, where there is no drag-and-drop, the clip button beside the search box does the same thing.
+
+When a PDF carries no identifier at all — older scans predate DOIs being embedded — the app falls back to the title in the file's own metadata and puts it in the search box for you to choose from, rather than searching on your behalf. That metadata is wrong often enough to matter: of eight real papers sampled, six had no title at all and two carried a different paper's.
 
 The 40 highest-scoring papers become the graph. Each node connects to its three nearest neighbours, so clusters emerge on their own.
 
@@ -84,7 +86,7 @@ Drag nodes, scroll to zoom, and use the **Spacing** slider to loosen or tighten 
 
 **Reshuffle** throws the nodes to new starting positions and lets the layout settle again — a force layout falls into whichever arrangement its start positions lead to, so a tangled graph often untangles on the second try. **Timeline** stacks the papers by year instead, oldest at the top, so citation arrows all point upward into the past; each year that actually occurs gets an equal band, so a single old reference cannot squash the recent decade into a sliver. Four colour palettes sit in the header, in two pairs — Editorial and Dark are the soft ones, Ink and Noir the high-contrast ones — plus System, which follows your operating system.
 
-Click a node to pin its neighbourhood; click empty canvas to release it. Click any node to see its abstract, authors, and DOI — and to rebuild the whole graph around it.
+Click a node to pin its neighbourhood; click empty canvas to release it. Click any node to see its abstract, authors, and DOI — and to rebuild the whole graph around it. A long abstract folds to six lines behind **Show more**, so Quantum Jump and the route controls stay in view instead of being pushed below six paragraphs of someone else's prose.
 
 The **camera** button next to **?** and **i** saves the graph as a PNG, in this view or the bridge view. It captures the full layout, not just whatever is currently zoomed into view, so zooming in never crops the export; in Timeline mode the year grid is redrawn for the exported width. Chrome and Edge let you choose where to save the file; Safari and Firefox lack that browser capability and just download it — that is expected, not a bug.
 
