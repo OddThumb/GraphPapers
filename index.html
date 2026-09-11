@@ -1052,6 +1052,7 @@ const I18N = {
     oaBusy: 'OpenAlex is temporarily overloaded. Nothing is wrong on your side \u2014 try again in a moment.',
     retrying: 'OpenAlex is busy \u2014 retrying ({n})\u2026',
     noConnection: 'No connection. GraphPapers fetches every paper live from OpenAlex, so it needs internet.',
+    graphNoRelations: 'OpenAlex lists {refs} references and {citers} citing papers for this one, so there is nothing to compare it against yet \u2014 usually a very recent preprint. The graph will fill in once its references are indexed.',
     noData: 'No data', jumpedFrom: 'Jumped from',
     citeBothCount: '{n} paper(s) cite both', sharedRefCount: '{n} shared reference(s)', andMore: 'and {n} more',
     refsMissingCount: '{n} reference(s) could not be retrieved from OpenAlex.',
@@ -1157,6 +1158,7 @@ const I18N = {
     oaBusy: 'OpenAlex 서버가 일시적으로 몰려 있습니다. 사용자 쪽 문제가 아니니 잠시 후 다시 시도해 주세요.',
     retrying: 'OpenAlex 응답 지연 \u2014 다시 시도 중 ({n})\u2026',
     noConnection: '연결이 없습니다. GraphPapers는 모든 논문을 OpenAlex에서 실시간으로 가져오므로 인터넷이 필요합니다.',
+    graphNoRelations: 'OpenAlex에 이 논문의 참고문헌 {refs}개, 인용한 논문 {citers}개가 등록되어 있어 비교할 대상이 없습니다. 대개 아주 최근 프리프린트입니다. 참고문헌이 수집되면 그래프가 채워집니다.',
     noData: '데이터 없음', jumpedFrom: '여기서 건너옴',
     citeBothCount: '논문 {n}개가 둘 다 인용', sharedRefCount: '참고문헌 {n}개 공유', andMore: '외 {n}개 더',
     refsMissingCount: '참고문헌 {n}개를 OpenAlex에서 가져오지 못했습니다.',
@@ -3641,6 +3643,15 @@ async function loadAndBuildGraph(seedId, opts){
     }
     const { nodes, edges } = computeGraph(seed.id, pool);
     const baseNodes = nodes.slice();   // before trail waypoints are forced in
+    // Both similarity measures need OTHER papers: coupling needs the seed's references, co-citation
+    // needs papers citing it. A brand-new preprint often has neither indexed yet -- verified on one
+    // 2026 arXiv record with referenced_works_count 0 and cited_by_count 0. The graph is then a
+    // single dot, which reads as a broken app rather than as an empty shelf. Say which is missing.
+    if (nodes.length <= 1) {
+      const refs = (seed.referenced_works || []).length;
+      setError(tf('graphNoRelations', {
+        refs, citers: Math.max(0, pool.length - 1 - refs) }));
+    }
 
     // quantum-jump trail: force every trail member into the node list (the 40-node cap doesn't apply to it),
     // then wire consecutive trail pairs into edges wherever both ends made it into the final node list.
