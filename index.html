@@ -3295,6 +3295,25 @@ function buildBridgeGraph(clusters, routes, routePool){
 
   const routeWorks = new Map((routePool || []).map(w => [w.id, w]));
   const allRouteIds = new Set();
+  // where each route's intermediate papers should sit: halfway between the two clusters that route
+  // connects, NOT the middle of the canvas. Pulling every route node to one point piled all three
+  // legs on top of each other and drove them into the third paper as a single spike -- the shape
+  // that made a 3-paper bridge look like a spearhead instead of a triangle. A node on two routes
+  // (a paper both legs pass through) gets the average of their midpoints.
+  const seedLetter = new Map(clusters.map((c, i) => [c.seed.id, CLUSTER_LETTERS[i]]));
+  const anchorSum = new Map();
+  (routes || []).forEach(route => {
+    if (!route || !route.length) return;
+    const fa = bridgeClusterFrac(seedLetter.get(route[0]) || 'A', clusters.length);
+    const fb = bridgeClusterFrac(seedLetter.get(route[route.length - 1]) || 'B', clusters.length);
+    const mid = { x: (fa.x + fb.x) / 2, y: (fa.y + fb.y) / 2 };
+    route.forEach(id => {
+      const acc = anchorSum.get(id) || { x: 0, y: 0, n: 0 };
+      acc.x += mid.x; acc.y += mid.y; acc.n++;
+      anchorSum.set(id, acc);
+    });
+  });
+  const routeAnchor = new Map([...anchorSum].map(([id, a]) => [id, { x: a.x / a.n, y: a.y / a.n }]));
   (routes || []).forEach(route => (route || []).forEach(id => allRouteIds.add(id)));
   allRouteIds.forEach(id => {
     if (!nodeMap.has(id)) {
@@ -3307,7 +3326,12 @@ function buildBridgeGraph(clusters, routes, routePool){
       nodeMap.set(id, Object.assign({}, node, { _cluster: 'route', _unresolved: !w }));
     }
   });
-  for (const n of nodeMap.values()) if (allRouteIds.has(n.id)) n._onRoute = true;
+  for (const n of nodeMap.values()) {
+    if (!allRouteIds.has(n.id)) continue;
+    n._onRoute = true;
+    // only an intermediate paper gets moved; a cluster's own seed keeps its cluster anchor
+    if (!seedLetter.has(n.id) && routeAnchor.has(n.id)) n._routeFrac = routeAnchor.get(n.id);
+  }
 
   const key = (x, y) => x < y ? x + '|' + y : y + '|' + x;
   const edgeMap = new Map();
@@ -3478,8 +3502,8 @@ function renderBridgeGraph(nodes, edges, seedIds, routes){
     .force('link', d3.forceLink(edges).id(d => d.id).distance(60).strength(0.5))
     .force('charge', d3.forceManyBody().strength(-160).distanceMax(420))
     .force('collide', d3.forceCollide().radius(d => d.r + 8).strength(1).iterations(3))
-    .force('x', d3.forceX(d => bridgeClusterFrac(d._cluster, bridgeClusterCount).x * w).strength(0.15))
-    .force('y', d3.forceY(d => bridgeClusterFrac(d._cluster, bridgeClusterCount).y * h)
+    .force('x', d3.forceX(d => (d._routeFrac || bridgeClusterFrac(d._cluster, bridgeClusterCount)).x * w).strength(0.15))
+    .force('y', d3.forceY(d => (d._routeFrac || bridgeClusterFrac(d._cluster, bridgeClusterCount)).y * h)
       .strength(bridgeClusterCount >= 3 ? 0.12 : 0.05))
     .on('tick', () => {
       link.each(function(d){
@@ -3552,15 +3576,16 @@ function applyBridgeSpacing(){
   // the fractions out from the centre by the same multiplier, clamped so a cluster never leaves
   // the canvas.
   const spread = f => Math.max(0.06, Math.min(0.94, 0.5 + (f - 0.5) * spacing));
+  const frac = d => d._routeFrac || bridgeClusterFrac(d._cluster, bridgeClusterCount);
   // strength falls as spacing rises: a fixed anchor strength held every cluster at the same
   // tightness however far the slider was pushed, which is why the clusters looked stuck.
-  bridgeSim.force('x', d3.forceX(d => spread(bridgeClusterFrac(d._cluster, bridgeClusterCount).x) * graphW)
+  bridgeSim.force('x', d3.forceX(d => spread(frac(d).x) * graphW)
     .strength(0.15 / spacing));
   if (layoutMode === 'timeline') {
     tlScale = yearScaleFor(bridgeSim.nodes());
     bridgeSim.force('y', null);   // y is pinned directly in the tick handler (pinTimelineY), not a force
   } else {
-    bridgeSim.force('y', d3.forceY(d => spread(bridgeClusterFrac(d._cluster, bridgeClusterCount).y) * graphH)
+    bridgeSim.force('y', d3.forceY(d => spread(frac(d).y) * graphH)
       .strength((bridgeClusterCount >= 3 ? 0.12 : 0.05) / spacing));
   }
   bridgeSim.alpha(0.6).restart();
@@ -6565,6 +6590,21 @@ function selfTest(){
       titleCoverage(searchWords('gravitational wave'), 'Gravitational-wave memory') === 1);
     assert('titleCoverage: an empty query scores 0, not NaN',
       titleCoverage(searchWords('  '), 'Anything') === 0);
+    assert('buildBridgeGraph: each route sits between the two papers it connects, not mid-canvas', (() => {
+      const mk = id => ({ id, display_name: id, publication_year: 2020, cited_by_count: 1, referenced_works: [] });
+      const g = buildBridgeGraph(
+        [{ seed: mk('A'), pool: [mk('A')] }, { seed: mk('B'), pool: [mk('B')] }, { seed: mk('C'), pool: [mk('C')] }],
+        [['A', 'mAB', 'B'], ['A', 'mAC', 'C'], ['B', 'mBC', 'C']],
+        ['mAB', 'mAC', 'mBC'].map(mk));
+      const at = id => (g.nodes.find(n => n.id === id) || {})._routeFrac;
+      const mid = (p, q) => {
+        const a = bridgeClusterFrac(p, 3), b = bridgeClusterFrac(q, 3);
+        return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
+      };
+      const same = (u, v) => u && Math.abs(u.x - v.x) < 1e-9 && Math.abs(u.y - v.y) < 1e-9;
+      return same(at('mAB'), mid('A', 'B')) && same(at('mAC'), mid('A', 'C')) && same(at('mBC'), mid('B', 'C'))
+        && !at('A') && !at('C');   // a cluster's own seed keeps its cluster anchor
+    })());
     assert('bridgeTreeRoutes: three papers draw all three pairwise routes', (() => {
       const save = state.bridge;
       state.bridge = { route: ['a'], pool: [], distance: 1,
