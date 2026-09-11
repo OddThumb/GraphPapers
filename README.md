@@ -9,7 +9,7 @@
 
 # GraphPapers
 
-**v1.0.1** · [Open it in a browser](https://oddthumb.github.io/GraphPapers/)
+**v1.1** · [Open it in a browser](https://oddthumb.github.io/GraphPapers/)
 
 A free, single-file paper-graph tool. Enter a paper, get a graph of the forty works most related to it — then go where following citations cannot take you.
 
@@ -56,6 +56,8 @@ probably about the same thing.
 about the same thing.
 
 Both measures are standard bibliometrics, not anyone's proprietary method — bibliographic coupling is Kessler (1963), co-citation is Small (1973).
+
+Or drop a PDF of an already-published paper — anywhere on the page, or via the 📎 button next to the search box — and the app reads the DOI (or, failing that, an arXiv id) straight out of the file's own bytes and searches for it exactly as if you had typed the title; if it can't find one, or OpenAlex doesn't know it, it says so and leaves the search box focused so you can type the title instead.
 
 The 40 highest-scoring papers become the graph. Each node connects to its three nearest neighbours, so clusters emerge on their own.
 

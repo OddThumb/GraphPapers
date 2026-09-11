@@ -50,7 +50,13 @@ body{
   font-family:'Geist','Noto Sans KR','Apple SD Gothic Neo',sans-serif; font-size:0.8125rem; overflow:hidden;
 }
 h1{font-family:'Instrument Serif',serif; font-size:1.75rem; font-weight:400; margin:0}
-#version{font-family:'Geist Mono',monospace; font-size:0.5625rem; color:var(--soft); letter-spacing:0.08em; margin-left:-16px; align-self:flex-start; padding-top:4px}
+/* version sits as a superscript on the wordmark, with the mark stacked under it. The mark is
+   inline SVG rather than the favicon's data URI so it paints from the palette vars -- a fixed
+   ink black would vanish on the dark and noir palettes. */
+#titleMeta{display:flex; flex-direction:column; align-items:center; gap:3px;
+  margin-left:-16px; align-self:flex-start; padding-top:4px}
+#version{font-family:'Geist Mono',monospace; font-size:0.5625rem; color:var(--soft); letter-spacing:0.08em}
+#logoMark{width:1.15rem; height:1.15rem; display:block}
 header{
   position:relative; z-index:20;
   /* wraps only when the row genuinely doesn't fit -- at --ui-scale 1.5 the language and
@@ -90,6 +96,7 @@ header{
 #bridgeToggleBtn{white-space:nowrap; font-size:0.75rem; padding:6px 10px}
 #bridgeToggleBtn.active{border-color:var(--accent); color:var(--accent)}
 #surpriseBtn{white-space:nowrap; font-size:0.75rem; padding:6px 10px}
+#pdfPickBtn{white-space:nowrap; font-size:0.75rem; padding:6px 10px; line-height:1}
 #statusLine{font-family:'Geist Mono',monospace; font-size:0.625rem; color:var(--soft);
   letter-spacing:0.04em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
 #langCtl{margin-left:auto; display:flex; align-items:center; gap:8px}
@@ -107,6 +114,14 @@ header{
   border-bottom:1px solid var(--accent); color:var(--ink); font-size:0.75rem;
 }
 #netBar[hidden]{display:none}
+/* z-index 100: above every panel (5-8) so a drag is visible no matter what's open, but well
+   below the guided tour (8000+), which must stay on top of everything including this. */
+#pdfDropOverlay{
+  position:fixed; inset:0; z-index:100; display:flex; align-items:center; justify-content:center;
+  padding:24px; text-align:center; font-size:1.25rem; color:var(--accent);
+  background:var(--accent-tint); border:4px dashed var(--accent); pointer-events:none;
+}
+#pdfDropOverlay[hidden]{display:none}
 #bridgeBar{
   flex:0 0 auto; display:flex; align-items:center; gap:16px; padding:8px 24px;
   border-bottom:1px solid var(--rule); background:var(--paper-2);
@@ -210,6 +225,7 @@ main{flex:1; display:flex; overflow:hidden; min-height:0}
   h1{font-size:1.35rem}
   .search-wrap{order:3; flex:1 1 100%; max-width:none}
   #surpriseBtn{white-space:nowrap; font-size:0.75rem; padding:6px 10px}
+  #pdfPickBtn{white-space:nowrap; font-size:0.75rem; padding:6px 10px; line-height:1}
 #statusLine{order:4; flex:1 1 100%}
   #langCtl span, #paletteCtl span{display:none}
 
@@ -639,11 +655,14 @@ a{color:var(--link)}
 </head>
 <body>
 <header>
-  <h1 id="titleBtn" data-i18n-attr="title:resetTitle" title="Start over">GraphPapers</h1><span id="version">v1.0.1</span>
+  <h1 id="titleBtn" data-i18n-attr="title:resetTitle" title="Start over">GraphPapers</h1><span id="titleMeta"><span id="version">v1.1</span><svg id="logoMark" viewBox="0 0 100 100" aria-hidden="true"><g transform="translate(-1.82,-2.12)"><line x1="50" y1="50" x2="28.5" y2="33" stroke="var(--accent)" stroke-width="5.4" stroke-linecap="round"/><line x1="50" y1="50" x2="71" y2="25" stroke="var(--accent)" stroke-width="3.6" stroke-linecap="round"/><line x1="50" y1="50" x2="77" y2="55" stroke="var(--accent)" stroke-width="4.6" stroke-linecap="round"/><line x1="50" y1="50" x2="63" y2="79" stroke="var(--accent)" stroke-width="3" stroke-linecap="round"/><line x1="50" y1="50" x2="27" y2="71" stroke="var(--accent)" stroke-width="4.2" stroke-linecap="round"/><line x1="71" y1="25" x2="77" y2="55" stroke="var(--accent)" stroke-width="2.6" stroke-linecap="round"/><line x1="27" y1="71" x2="63" y2="79" stroke="var(--accent)" stroke-width="2" stroke-linecap="round"/><rect x="23.5" y="27.5" width="10" height="12.5" rx="0.7" fill="var(--paper)" stroke="var(--ink)" stroke-width="2"/><rect x="66.5" y="19" width="11" height="13.5" rx="0.7" fill="var(--paper)" stroke="var(--ink)" stroke-width="2"/><rect x="73" y="49.5" width="9" height="11" rx="0.7" fill="var(--paper)" stroke="var(--ink)" stroke-width="2"/><rect x="58" y="73.5" width="10" height="12.5" rx="0.7" fill="var(--paper)" stroke="var(--ink)" stroke-width="2"/><rect x="21.5" y="65" width="11" height="13.5" rx="0.7" fill="var(--paper)" stroke="var(--ink)" stroke-width="2"/><path d="M38.3,36.3 H61.7 V57.7 L54.7,64.7 H38.3 Z" fill="var(--paper)" stroke="var(--ink)" stroke-width="2.6" stroke-linejoin="round"/><path d="M61.7,57.7 H54.7 V64.7" fill="none" stroke="var(--ink)" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"/><g stroke="var(--ink)" stroke-width="2.6" stroke-linecap="round"><line x1="42.5" y1="43.5" x2="57.5" y2="43.5"/><line x1="42.5" y1="50" x2="57.5" y2="50"/><line x1="42.5" y1="56.5" x2="52" y2="56.5"/></g></g></svg></span>
   <div class="search-wrap">
     <input id="searchInput" type="text" data-i18n-attr="placeholder:searchPlaceholder" placeholder="Search by title, DOI, or OpenAlex ID">
     <div id="dropdown" hidden></div>
   </div>
+  <button class="btn" id="pdfPickBtn" type="button" data-i18n-attr="title:pdfPickTitle,aria-label:pdfPickTitle"
+    title="Drop a PDF here, or click to choose one, to identify the paper and search for it">📎</button>
+  <input type="file" id="pdfFileInput" accept="application/pdf" hidden>
   <button class="btn" id="bridgeToggleBtn" data-i18n="bridgeToggle" data-i18n-attr="title:bridgeToggleTitle" title="Compare with a second paper and find the route between them">Bridge to another paper</button>
   <button class="btn" id="surpriseBtn" data-i18n="surprise">Surprise me</button>
   <span id="statusLine"></span>
@@ -682,6 +701,7 @@ a{color:var(--link)}
   <span class="mono" id="bridgeReadout"></span>
 </div>
 <div id="netBar" hidden data-i18n="offlineBanner">Offline — GraphPapers needs an internet connection to fetch papers from OpenAlex.</div>
+<div id="pdfDropOverlay" hidden data-i18n="pdfDropOverlay">Drop the PDF to identify the paper</div>
 <main>
   <div id="leftPanel">
     <div id="tabs">
@@ -917,7 +937,7 @@ a{color:var(--link)}
 </dialog>
 
 <script>
-const APP_VERSION = 'v1.0.1';
+const APP_VERSION = 'v1.1';
 const API = 'https://api.openalex.org';
 const MAILTO = 'astrphscst@gmail.com';
 const bare = id => (id || '').replace(/^https?:\/\/openalex\.org\//, '');
@@ -1013,7 +1033,13 @@ const I18N = {
     bridgeUnresolvedExplain: 'This bridge-route hop is real, but OpenAlex returned no data for this id, so no title, authors or abstract are available.',
     bridgeStepLabel: 'step {i} of {n}',
     bridgeSearchStep: 'Searching, step {n}…',
-    weakLink: 'Weak link -- no shared citers or references found.'
+    weakLink: 'Weak link -- no shared citers or references found.',
+    pdfPickTitle: 'Drop a PDF here, or click to choose one, to identify the paper and search for it',
+    pdfDropOverlay: 'Drop the PDF to identify the paper',
+    pdfScanning: 'Scanning {name}…', pdfLookup: 'Looking up the paper on OpenAlex…',
+    pdfNotPdf: 'That is not a PDF. Drop or choose a PDF file instead.',
+    pdfNoId: 'Could not find a DOI or arXiv id in this PDF. Type the title instead.',
+    pdfNotFound: 'Found an identifier in the PDF, but OpenAlex has no record of it. Type the title instead.'
   },
   ko: {
     uiLanguage: '언어', palette: '팔레트', paletteSystem: '시스템', paletteEditorial: '에디토리얼',
@@ -1103,7 +1129,13 @@ const I18N = {
     bridgeUnresolvedExplain: '이 경로 연결은 실제로 존재하지만, OpenAlex가 이 id에 대한 데이터를 반환하지 않아 제목·저자·초록을 확인할 수 없습니다.',
     bridgeStepLabel: '{n}단계 중 {i}단계',
     bridgeSearchStep: '{n}단계 탐색 중…',
-    weakLink: '약한 연결 -- 공유 인용자나 참고문헌이 없습니다.'
+    weakLink: '약한 연결 -- 공유 인용자나 참고문헌이 없습니다.',
+    pdfPickTitle: 'PDF를 여기에 드롭하거나 클릭하여 선택하면 논문을 식별해 검색합니다',
+    pdfDropOverlay: 'PDF를 놓으면 논문을 식별합니다',
+    pdfScanning: '{name} 스캔 중…', pdfLookup: 'OpenAlex에서 논문을 찾는 중…',
+    pdfNotPdf: 'PDF 파일이 아닙니다. PDF 파일을 드롭하거나 선택하세요.',
+    pdfNoId: '이 PDF에서 DOI나 arXiv ID를 찾지 못했습니다. 제목을 직접 입력하세요.',
+    pdfNotFound: 'PDF에서 식별자를 찾았지만 OpenAlex에 해당 기록이 없습니다. 제목을 직접 입력하세요.'
   }
 };
 let lang = 'en';
@@ -4000,8 +4032,14 @@ async function surpriseBridgeB(){
   } catch (err) { setStatus(''); setError(netMessage(err)); }
 }
 
+// true when the bridge bar is open with paper A already set -- the shared rule for which box
+// a "give me a paper" action (Surprise me, a dropped/picked PDF) fills: the second box then,
+// the first one otherwise. bridgeBar/state are declared further down but hoisting makes that
+// fine -- this is only ever called from a click/drop handler, long after the whole script has run.
+function bridgeTargetActive(){ return !bridgeBar.hidden && state.seed; }
+
 function surpriseMe(){
-  return (!bridgeBar.hidden && state.seed) ? surpriseBridgeB() : surpriseSeed();
+  return bridgeTargetActive() ? surpriseBridgeB() : surpriseSeed();
 }
 document.getElementById('surpriseBtn').onclick = surpriseMe;
 
@@ -4637,7 +4675,8 @@ const MANUAL_I18N = {
     s1h: 'Finding a paper',
     s1p: [
       'Search by title, DOI, or OpenAlex ID.',
-      'Press Surprise me to load a random paper instead.'
+      'Press Surprise me to load a random paper instead.',
+      'Drop a PDF of an already-published paper anywhere on the page, or click the 📎 button next to the search box, to identify and search for it automatically.'
     ],
     s2h: 'The similarity graph',
     s2p: [
@@ -4774,7 +4813,8 @@ const MANUAL_I18N = {
     s1h: '논문 찾기',
     s1p: [
       '제목, DOI, OpenAlex ID로 검색하세요.',
-      '아무 논문이나 버튼을 눌러 무작위 논문을 불러오세요.'
+      '아무 논문이나 버튼을 눌러 무작위 논문을 불러오세요.',
+      '이미 출판된 논문의 PDF를 화면 어디에나 놓거나 검색창 옆 📎 버튼을 클릭하면 논문을 자동으로 식별해 검색합니다.'
     ],
     s2h: '유사도 그래프',
     s2p: [
@@ -5079,6 +5119,120 @@ async function chooseBridgeB(w){
   }
 }
 wireSearchBox(searchInputB, dropdownB, chooseBridgeB);
+
+// ---- PDF drop / pick: identify an already-published paper from its own bytes ----
+// Convenience only, not a checking tool -- if identification fails the user just types the
+// title, which is what they'd have done anyway, so a method that works most of the time is a
+// clear win. No PDF library: raw-byte regex only, since many PDFs carry the DOI as plain text
+// in uncompressed front-matter (link annotations, Info dict, XMP), and the fallback is cheap.
+
+// 200KB is ample and avoids loading a huge PDF into memory: verified against an 11MB physics
+// paper where the paper's OWN doi.org/Crossmark links appeared five times by byte ~5800, while
+// the first REFERENCE's DOI didn't appear until byte ~11.4M -- scanning further buys nothing.
+const PDF_SCAN_BYTES = 200000;
+const DOI_RE = /10\.\d{4,9}\/[^\s"'<>]+/;
+
+// a raw DOI match can run on past the DOI itself into a query string (Crossmark links append
+// "&domain=pdf&date_stamp=...") or a closing paren/bracket from the surrounding text -- cut at
+// the first query-string-ish character, then trim trailing punctuation a sentence would leave.
+function cleanDoi(raw){
+  return raw.split(/[\s&?#]/)[0].replace(/[.,;:)\]>'"]+$/, '');
+}
+
+// prefers a DOI sitting in recognizable PDF metadata (Info dict /DOI key, XMP dc:identifier or
+// prism:doi) over the earliest raw match in the scanned bytes: a paper's OWN doi lives in its
+// metadata, while the earliest raw mention could in principle be something else. Falls back to
+// the earliest match otherwise -- on real papers that's already reliably the paper's own doi,
+// since a reference list's DOIs sit thousands of times further into the file (see above).
+function findDoiInText(text){
+  const metaPatterns = [/\/DOI\s*\(([^)]+)\)/, /<prism:doi>\s*(?:doi:)?([^<\s]+)/i, /<dc:identifier[^>]*>\s*(?:doi:)?([^<\s]+)/i];
+  for (const re of metaPatterns) {
+    const m = text.match(re);
+    const hit = m && (m[1].match(DOI_RE) || [])[0];
+    if (hit) return cleanDoi(hit);
+  }
+  const m = text.match(DOI_RE);
+  return m ? cleanDoi(m[0]) : null;
+}
+
+function findArxivId(text){
+  const m = text.match(/arXiv:(\d{4}\.\d{4,5})/i) || text.match(/arXiv:([a-z-]+\/\d{7})/i);
+  return m ? m[1] : null;
+}
+
+// same shape as the dropdown/Surprise-me paths: one request, normalized like every other work.
+async function fetchByDoi(doi){
+  const data = await fetchJSON(API + '/works?filter=doi:' + encodeURIComponent(doi) + '&per-page=1&select=' + SELECT_WORK);
+  const w = (data.results || [])[0];
+  return w ? normalizeWork(w) : null;
+}
+
+// hands the identified paper to whichever box Surprise me would have filled -- same rule
+// (bridgeTargetActive), same per-box setup surpriseBridgeB/surpriseSeed already use.
+async function applyIdentifiedWork(w){
+  if (bridgeTargetActive()) {
+    searchInputB.value = w.display_name || '';
+    dropdownB.hidden = true;
+    await chooseBridgeB(w);
+  } else {
+    searchInput.value = w.display_name || '';
+    dropdown.hidden = true;
+    await loadAndBuildGraph(w.id);
+  }
+}
+
+async function identifyAndSearchPdf(file){
+  if (file.type !== 'application/pdf' && !/\.pdf$/i.test(file.name)) {
+    setError(t('pdfNotPdf'));
+    searchInput.focus();
+    return;
+  }
+  setStatus(tf('pdfScanning', { name: file.name }));
+  try {
+    const buf = await file.slice(0, PDF_SCAN_BYTES).arrayBuffer();
+    const text = new TextDecoder('latin1').decode(buf);
+    const doi = findDoiInText(text);
+    const arxivId = doi ? null : findArxivId(text);
+    if (!doi && !arxivId) { setStatus(''); setError(t('pdfNoId')); searchInput.focus(); return; }
+    setStatus(t('pdfLookup'));
+    // arXiv preprints that have a DataCite doi carry it as 10.48550/arXiv.<id> -- resolving
+    // through the same filter=doi: lookup reuses the whole DOI path instead of a second mechanism.
+    const w = await fetchByDoi(doi || ('10.48550/arxiv.' + arxivId));
+    if (!w) { setStatus(''); setError(t('pdfNotFound')); searchInput.focus(); return; }
+    setStatus('');
+    await applyIdentifiedWork(w);
+  } catch (err) {
+    setStatus('');
+    setError(netMessage(err));
+    searchInput.focus();
+  }
+}
+
+const pdfDropOverlay = document.getElementById('pdfDropOverlay');
+let pdfDragDepth = 0;
+const dragHasFiles = e => !!(e.dataTransfer && Array.from(e.dataTransfer.types || []).includes('Files'));
+// counts nested dragenter/dragleave pairs (they fire again for every child element the pointer
+// crosses) so the overlay doesn't flicker while dragging across the page; pointer-events:none on
+// the overlay itself means these still land on whatever's underneath, and bubble up to window.
+window.addEventListener('dragenter', e => { if (dragHasFiles(e)) { pdfDragDepth++; pdfDropOverlay.hidden = false; } });
+window.addEventListener('dragover', e => { if (dragHasFiles(e)) e.preventDefault(); });
+window.addEventListener('dragleave', () => { if (--pdfDragDepth <= 0) { pdfDragDepth = 0; pdfDropOverlay.hidden = true; } });
+window.addEventListener('drop', e => {
+  if (!dragHasFiles(e)) return;
+  e.preventDefault();
+  pdfDragDepth = 0;
+  pdfDropOverlay.hidden = true;
+  const file = e.dataTransfer.files[0];
+  if (file) identifyAndSearchPdf(file);
+});
+// click-to-choose (the only path that works on a phone -- drag-and-drop does not)
+const pdfFileInput = document.getElementById('pdfFileInput');
+document.getElementById('pdfPickBtn').addEventListener('click', () => pdfFileInput.click());
+pdfFileInput.addEventListener('change', e => {
+  const file = e.target.files[0];
+  e.target.value = '';   // let the same file be picked again later
+  if (file) identifyAndSearchPdf(file);
+});
 
 bridgeToggleBtn.addEventListener('click', () => {
   const opening = bridgeBar.hidden;
@@ -5828,6 +5982,35 @@ function selfTest(){
 
   const sn = splitName('Ashish Vaswani');
   assert('splitName splits on the last space', sn.family === 'Vaswani' && sn.given === 'Ashish');
+
+  // ---- PDF identification: DOI/arXiv extraction from raw bytes ----
+  {
+    assert('cleanDoi cuts a Crossmark query string at "&"',
+      cleanDoi('10.1103/PhysRevD.109.102003&domain=pdf&date_stamp=2024-05-07') === '10.1103/PhysRevD.109.102003');
+    assert('cleanDoi trims a trailing close-paren left by wrapping text',
+      cleanDoi('10.1103/PhysRevD.109.102003)') === '10.1103/PhysRevD.109.102003');
+    assert('cleanDoi trims trailing sentence punctuation',
+      cleanDoi('10.1000/xyz123.') === '10.1000/xyz123');
+
+    // mirrors a real front-matter layout: the paper's own doi in a Crossmark link near the top,
+    // a reference list's doi thousands of characters later -- earliest match must win
+    const ownDoiFirst = 'noise ' + 'https://crossmark.crossref.org/dialog/?doi=10.1103/PhysRevD.109.102003&domain=pdf) '
+      + 'x'.repeat(500) + ' [12] 10.1002/3527608958.ch12';
+    assert('findDoiInText picks the EARLIEST match (the paper\'s own doi), not a later reference doi',
+      findDoiInText(ownDoiFirst) === '10.1103/PhysRevD.109.102003');
+
+    // a reference doi appearing before the paper's own -- metadata (Info dict /DOI) must win anyway
+    const metaOverridesEarlier = '[3] 10.1002/3527608958.ch12 ' + 'x'.repeat(200) + ' /DOI(10.1103/PhysRevD.109.102003)';
+    assert('findDoiInText prefers an Info-dict /DOI match over an earlier raw match',
+      findDoiInText(metaOverridesEarlier) === '10.1103/PhysRevD.109.102003');
+    assert('findDoiInText reads an XMP prism:doi tag',
+      findDoiInText('<prism:doi>10.1234/abc.5678</prism:doi>') === '10.1234/abc.5678');
+    assert('findDoiInText returns null with no doi in range', findDoiInText('no identifiers here') === null);
+
+    assert('findArxivId reads the new-style id', findArxivId('arXiv:1706.03762v7 [cs.CL]') === '1706.03762');
+    assert('findArxivId reads the old-style category/number id', findArxivId('arXiv:hep-th/9901001') === 'hep-th/9901001');
+    assert('findArxivId returns null with no arXiv id present', findArxivId('nothing here') === null);
+  }
 
   // ---- guided tour data consistency (en/ko strings, and strings vs. the step tables) ----
   {
