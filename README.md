@@ -57,7 +57,9 @@ about the same thing.
 
 Both measures are standard bibliometrics, not anyone's proprietary method — bibliographic coupling is Kessler (1963), co-citation is Small (1973).
 
-Or drop a PDF of an already-published paper — anywhere on the page, or via the 📎 button next to the search box — and the app reads the DOI (or, failing that, an arXiv id) straight out of the file's own bytes and searches for it exactly as if you had typed the title; if it can't find one, or OpenAlex doesn't know it, it says so and leaves the search box focused so you can type the title instead.
+The box also takes an arXiv id in any form you would paste: `arXiv:2503.03799`, the bare number, or an arxiv.org link. Papers whose journal version became the canonical record cannot be reached that way, and it says so rather than going blank.
+
+Or drop a PDF of an already-published paper anywhere on the page, and the app reads the DOI straight out of the file's own bytes and searches for it exactly as if you had typed the title. Only the first 200KB is read and the earliest identifier wins — a paper's own DOI is on page one while its references' are much later, so scanning further would find a cited work instead. An arXiv PDF cannot be read this way: arXiv draws its id as rotated glyphs inside a compressed stream, so the id has to be pasted. On a phone, where there is no drag-and-drop, the clip button beside the search box does the same thing.
 
 The 40 highest-scoring papers become the graph. Each node connects to its three nearest neighbours, so clusters emerge on their own.
 

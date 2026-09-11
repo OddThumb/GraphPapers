@@ -49,14 +49,14 @@ body{
   display:flex; flex-direction:column; background:var(--paper); color:var(--ink);
   font-family:'Geist','Noto Sans KR','Apple SD Gothic Neo',sans-serif; font-size:0.8125rem; overflow:hidden;
 }
-h1{font-family:'Instrument Serif',serif; font-size:2.15rem; font-weight:400; margin:0}
+h1{font-family:'Instrument Serif',serif; font-size:1.75rem; font-weight:400; margin:0}
 /* version sits as a superscript on the wordmark, with the mark stacked under it. The mark is
    inline SVG rather than the favicon's data URI so it paints from the palette vars -- a fixed
    ink black would vanish on the dark and noir palettes. */
-#titleMeta{display:flex; flex-direction:column; align-items:center; gap:3px;
-  margin-left:-16px; align-self:flex-start; padding-top:4px}
-#version{font-family:'Geist Mono',monospace; font-size:0.5625rem; color:var(--soft); letter-spacing:0.08em}
-#logoMark{width:1.5rem; height:1.5rem; display:block}
+#version{font-family:'Geist Mono',monospace; font-size:0.5625rem; color:var(--soft);
+  letter-spacing:0.08em; margin-left:-14px; align-self:flex-start; padding-top:4px}
+/* the mark leads the wordmark as a lockup, sized to the cap height of the type beside it */
+#logoMark{width:2.1rem; height:2.1rem; display:block; flex:0 0 auto; margin-right:-14px}
 header{
   position:relative; z-index:20;
   /* wraps only when the row genuinely doesn't fit -- at --ui-scale 1.5 the language and
@@ -64,7 +64,10 @@ header{
   display:flex; align-items:center; flex-wrap:wrap; gap:8px 24px; padding:12px 24px;
   border-bottom:1px solid var(--rule); flex:0 0 auto;
 }
-.search-wrap{position:relative; flex:1; max-width:26.25rem}
+/* flex:1 gives a 0 basis, so the box was crushed to a sliver as soon as the other header
+   items needed room. A real basis plus a floor means it either keeps a usable width or
+   wraps to its own line, which the header already allows. */
+.search-wrap{position:relative; flex:1 1 16rem; min-width:11rem; max-width:26.25rem}
 /* the search box is where everything starts, so it carries the accent at rest, not only on
    focus -- a first-time visitor should see where to begin without hunting for it */
 #searchInput{
@@ -96,18 +99,24 @@ header{
 #bridgeToggleBtn{white-space:nowrap; font-size:0.75rem; padding:6px 10px}
 #bridgeToggleBtn.active{border-color:var(--accent); color:var(--accent)}
 #surpriseBtn{white-space:nowrap; font-size:0.75rem; padding:6px 10px}
-#pdfPickBtn{white-space:nowrap; font-size:0.75rem; padding:6px 10px; line-height:1}
+/* dropping a PDF is the desktop path and the placeholder now says so, so the button is
+   redundant there. It stays below the breakpoint: a phone has no drag-and-drop, and
+   this is the only way in. */
+#pdfPickBtn{display:none}
 #statusLine{font-family:'Geist Mono',monospace; font-size:0.625rem; color:var(--soft);
   letter-spacing:0.04em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
-#langCtl{margin-left:auto; display:flex; align-items:center; gap:8px}
+/* language and palette are set once and then ignored, so they get the least horizontal
+   room in the header: two short rows instead of two side-by-side pairs */
+#prefsCtl{margin-left:auto; display:flex; flex-direction:column; gap:2px; align-items:flex-end}
+#langCtl{display:flex; align-items:center; gap:6px}
 #repoLink{
   display:flex; align-items:center; color:var(--accent); text-decoration:none; padding:2px;
 }
 #repoLink:hover{opacity:0.75}
-#paletteCtl{display:flex; align-items:center; gap:8px}
+#paletteCtl{display:flex; align-items:center; gap:6px}
 #langCtl span, #paletteCtl span{font-family:'Geist Mono',monospace; font-size:0.5625rem; text-transform:uppercase;
   letter-spacing:0.18em; color:var(--soft)}
-#uiLang, #palette{font:inherit; font-size:0.6875rem; padding:4px 8px; border:1px solid var(--rule);
+#uiLang, #palette{font:inherit; font-size:0.625rem; padding:2px 6px; border:1px solid var(--rule);
   border-radius:4px; background:var(--paper); color:var(--ink); cursor:pointer}
 #netBar{
   flex:0 0 auto; padding:8px 24px; background:var(--accent-tint);
@@ -225,7 +234,7 @@ main{flex:1; display:flex; overflow:hidden; min-height:0}
   h1{font-size:1.35rem}
   .search-wrap{order:3; flex:1 1 100%; max-width:none}
   #surpriseBtn{white-space:nowrap; font-size:0.75rem; padding:6px 10px}
-  #pdfPickBtn{white-space:nowrap; font-size:0.75rem; padding:6px 10px; line-height:1}
+  #pdfPickBtn{display:inline-block; white-space:nowrap; font-size:0.75rem; padding:6px 10px; line-height:1}
 #statusLine{order:4; flex:1 1 100%}
   #langCtl span, #paletteCtl span{display:none}
 
@@ -581,7 +590,10 @@ a{color:var(--link)}
     position:static; width:2.25rem; height:2.25rem; border-radius:6px;
     top:auto; right:auto; left:auto; transform:none;
   }
-  .gt-collapsed .panel-handle .hnd-icon{display:block; color:var(--muted)}
+  /* the svg's width/height attributes are a fixed 14px, which filled barely a quarter of the
+     2.25rem tab. Size it in rem so it scales with the box and with --ui-scale. */
+  .gt-collapsed .panel-handle .hnd-icon{display:block; color:var(--muted);
+    width:1.4rem; height:1.4rem; stroke-width:1.25}
   .dp-collapsed .panel-handle{width:auto; padding:0 0.75rem; white-space:nowrap}
   .dp-collapsed .panel-handle .hnd-tab-label{
     display:inline; font-family:'Geist','Noto Sans KR','Apple SD Gothic Neo',sans-serif;
@@ -655,9 +667,9 @@ a{color:var(--link)}
 </head>
 <body>
 <header>
-  <h1 id="titleBtn" data-i18n-attr="title:resetTitle" title="Start over">GraphPapers</h1><span id="titleMeta"><span id="version">v1.1</span><svg id="logoMark" viewBox="0 0 100 100" aria-hidden="true"><g transform="translate(-1.82,-2.12)"><line x1="50" y1="50" x2="28.5" y2="33" stroke="var(--accent)" stroke-width="5.4" stroke-linecap="round"/><line x1="50" y1="50" x2="71" y2="25" stroke="var(--accent)" stroke-width="3.6" stroke-linecap="round"/><line x1="50" y1="50" x2="77" y2="55" stroke="var(--accent)" stroke-width="4.6" stroke-linecap="round"/><line x1="50" y1="50" x2="63" y2="79" stroke="var(--accent)" stroke-width="3" stroke-linecap="round"/><line x1="50" y1="50" x2="27" y2="71" stroke="var(--accent)" stroke-width="4.2" stroke-linecap="round"/><line x1="71" y1="25" x2="77" y2="55" stroke="var(--accent)" stroke-width="2.6" stroke-linecap="round"/><line x1="27" y1="71" x2="63" y2="79" stroke="var(--accent)" stroke-width="2" stroke-linecap="round"/><rect x="23.5" y="27.5" width="10" height="12.5" rx="0.7" fill="var(--paper)" stroke="var(--ink)" stroke-width="2"/><rect x="66.5" y="19" width="11" height="13.5" rx="0.7" fill="var(--paper)" stroke="var(--ink)" stroke-width="2"/><rect x="73" y="49.5" width="9" height="11" rx="0.7" fill="var(--paper)" stroke="var(--ink)" stroke-width="2"/><rect x="58" y="73.5" width="10" height="12.5" rx="0.7" fill="var(--paper)" stroke="var(--ink)" stroke-width="2"/><rect x="21.5" y="65" width="11" height="13.5" rx="0.7" fill="var(--paper)" stroke="var(--ink)" stroke-width="2"/><path d="M38.3,36.3 H61.7 V57.7 L54.7,64.7 H38.3 Z" fill="var(--paper)" stroke="var(--ink)" stroke-width="2.6" stroke-linejoin="round"/><path d="M61.7,57.7 H54.7 V64.7" fill="none" stroke="var(--ink)" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"/><g stroke="var(--ink)" stroke-width="2.6" stroke-linecap="round"><line x1="42.5" y1="43.5" x2="57.5" y2="43.5"/><line x1="42.5" y1="50" x2="57.5" y2="50"/><line x1="42.5" y1="56.5" x2="52" y2="56.5"/></g></g></svg></span>
+  <svg id="logoMark" viewBox="0 0 100 100" aria-hidden="true"><g transform="translate(-1.82,-2.12)"><line x1="50" y1="50" x2="28.5" y2="33" stroke="var(--accent)" stroke-width="5.4" stroke-linecap="round"/><line x1="50" y1="50" x2="71" y2="25" stroke="var(--accent)" stroke-width="3.6" stroke-linecap="round"/><line x1="50" y1="50" x2="77" y2="55" stroke="var(--accent)" stroke-width="4.6" stroke-linecap="round"/><line x1="50" y1="50" x2="63" y2="79" stroke="var(--accent)" stroke-width="3" stroke-linecap="round"/><line x1="50" y1="50" x2="27" y2="71" stroke="var(--accent)" stroke-width="4.2" stroke-linecap="round"/><line x1="71" y1="25" x2="77" y2="55" stroke="var(--accent)" stroke-width="2.6" stroke-linecap="round"/><line x1="27" y1="71" x2="63" y2="79" stroke="var(--accent)" stroke-width="2" stroke-linecap="round"/><rect x="23.5" y="27.5" width="10" height="12.5" rx="0.7" fill="var(--paper)" stroke="var(--ink)" stroke-width="2"/><rect x="66.5" y="19" width="11" height="13.5" rx="0.7" fill="var(--paper)" stroke="var(--ink)" stroke-width="2"/><rect x="73" y="49.5" width="9" height="11" rx="0.7" fill="var(--paper)" stroke="var(--ink)" stroke-width="2"/><rect x="58" y="73.5" width="10" height="12.5" rx="0.7" fill="var(--paper)" stroke="var(--ink)" stroke-width="2"/><rect x="21.5" y="65" width="11" height="13.5" rx="0.7" fill="var(--paper)" stroke="var(--ink)" stroke-width="2"/><path d="M38.3,36.3 H61.7 V57.7 L54.7,64.7 H38.3 Z" fill="var(--paper)" stroke="var(--ink)" stroke-width="2.6" stroke-linejoin="round"/><path d="M61.7,57.7 H54.7 V64.7" fill="none" stroke="var(--ink)" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"/><g stroke="var(--ink)" stroke-width="2.6" stroke-linecap="round"><line x1="42.5" y1="43.5" x2="57.5" y2="43.5"/><line x1="42.5" y1="50" x2="57.5" y2="50"/><line x1="42.5" y1="56.5" x2="52" y2="56.5"/></g></g></svg><h1 id="titleBtn" data-i18n-attr="title:resetTitle" title="Start over">GraphPapers</h1><span id="version">v1.1</span>
   <div class="search-wrap">
-    <input id="searchInput" type="text" data-i18n-attr="placeholder:searchPlaceholder" placeholder="Search by title, DOI, or OpenAlex ID">
+    <input id="searchInput" type="text" data-i18n-attr="placeholder:searchPlaceholder" placeholder="Title, DOI, arXiv id — or drop a PDF">
     <div id="dropdown" hidden></div>
   </div>
   <button class="btn" id="pdfPickBtn" type="button" data-i18n-attr="title:pdfPickTitle,aria-label:pdfPickTitle"
@@ -666,6 +678,7 @@ a{color:var(--link)}
   <button class="btn" id="bridgeToggleBtn" data-i18n="bridgeToggle" data-i18n-attr="title:bridgeToggleTitle" title="Compare with a second paper and find the route between them">Bridge to another paper</button>
   <button class="btn" id="surpriseBtn" data-i18n="surprise">Surprise me</button>
   <span id="statusLine"></span>
+  <div id="prefsCtl">
   <label id="langCtl"><span data-i18n="uiLanguage">Language</span>
     <select id="uiLang">
       <option value="en">English</option>
@@ -681,6 +694,7 @@ a{color:var(--link)}
       <option value="noir" data-i18n="paletteNoir">Noir</option>
     </select>
   </label>
+  </div>
   <a id="repoLink" href="https://github.com/OddThumb/GraphPapers" target="_blank" rel="noopener"
      data-i18n-attr="title:repoTitle" title="Source on GitHub" aria-label="GitHub">
     <svg viewBox="0 0 16 16" width="22" height="22" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
@@ -950,7 +964,7 @@ const I18N = {
     paletteDark: 'Dark', paletteInk: 'Ink', paletteNoir: 'Noir',
     resetTitle: 'Start over', surprise: 'Surprise me',
     findingRandom: 'Picking a paper at random\u2026', noRandom: 'Could not find a random paper. Try again.', repoTitle: 'Source on GitHub',
-    searchPlaceholder: 'Search by title, DOI, arXiv id, or OpenAlex ID',
+    searchPlaceholder: 'Title, DOI, arXiv id \u2014 or drop a PDF',
     offlineBanner: 'Offline — GraphPapers needs an internet connection to fetch papers from OpenAlex.',
     tabGraph: 'Similarity graph', tabRefs: 'Prior works', tabCiters: 'Derivative works',
     storyBtn: 'Story prompt', exportCitations: 'Export citations',
@@ -1047,7 +1061,7 @@ const I18N = {
     paletteDark: '다크', paletteInk: '잉크', paletteNoir: '느와르',
     resetTitle: '처음부터 다시 시작합니다', surprise: '아무 논문이나',
     findingRandom: '무작위로 논문을 고르는 중\u2026', noRandom: '무작위 논문을 찾지 못했습니다. 다시 시도해 주세요.', repoTitle: 'GitHub 저장소로 이동',
-    searchPlaceholder: '제목, DOI, arXiv ID, OpenAlex ID로 검색',
+    searchPlaceholder: '제목, DOI, arXiv ID \u2014 또는 PDF를 끌어다 놓기',
     offlineBanner: '오프라인 상태입니다 — GraphPapers는 OpenAlex에서 논문을 가져오려면 인터넷 연결이 필요합니다.',
     tabGraph: '유사도 그래프', tabRefs: '선행 논문', tabCiters: '후행 논문',
     storyBtn: '이야기 프롬프트', exportCitations: '인용 내보내기',
@@ -4706,9 +4720,9 @@ const MANUAL_I18N = {
   en: {
     s1h: 'Finding a paper',
     s1p: [
-      'Search by title, DOI, or OpenAlex ID.',
+      'Search by title, DOI, arXiv id (arXiv:2503.03799, the bare number, or an arxiv.org link), or OpenAlex ID.',
       'Press Surprise me to load a random paper instead.',
-      'Drop a PDF of an already-published paper anywhere on the page, or click the 📎 button next to the search box, to identify and search for it automatically.'
+      'Drop a PDF of an already-published paper anywhere on the page to identify and search for it automatically. On a phone, use the clip button beside the search box.'
     ],
     s2h: 'The similarity graph',
     s2p: [
@@ -4799,7 +4813,7 @@ const MANUAL_I18N = {
     overviewHint: 'That’s everything in this track. Press Finish to close the tour.',
     steps: {
       basics: [
-        'Search by title, DOI, or OpenAlex ID — or press Surprise me for a random paper. Either builds a graph of about 40 related works.',
+        'Search by title, DOI, arXiv id or OpenAlex ID — or drop a PDF, or press Surprise me for a random paper. Any of them builds a graph of about 40 related works.',
         'Hover a node to preview its neighbours, scroll to zoom, and drag a node to move it. Press Next when you’re ready to continue.',
         'Hover an edge for a moment to see why the two papers it joins are linked — the papers that cite both, and the references they share. Press Next when you’re ready to continue.',
         'Click any node to see its title, authors, abstract, and DOI in the detail panel.',
@@ -4844,9 +4858,9 @@ const MANUAL_I18N = {
   ko: {
     s1h: '논문 찾기',
     s1p: [
-      '제목, DOI, OpenAlex ID로 검색하세요.',
+      '제목, DOI, arXiv ID(arXiv:2503.03799, 번호만, arxiv.org 주소 모두 가능), OpenAlex ID로 검색하세요.',
       '아무 논문이나 버튼을 눌러 무작위 논문을 불러오세요.',
-      '이미 출판된 논문의 PDF를 화면 어디에나 놓거나 검색창 옆 📎 버튼을 클릭하면 논문을 자동으로 식별해 검색합니다.'
+      '이미 출판된 논문의 PDF를 화면 어디에나 끌어다 놓으면 논문을 자동으로 식별해 검색합니다. 휴대폰에서는 검색창 옆 클립 버튼을 쓰세요.'
     ],
     s2h: '유사도 그래프',
     s2p: [
@@ -4937,7 +4951,7 @@ const MANUAL_I18N = {
     overviewHint: '이 트랙에서 살펴볼 내용은 여기까지입니다. 마치기를 눌러 투어를 닫으세요.',
     steps: {
       basics: [
-        '제목, DOI, OpenAlex ID로 검색하거나, 아무 논문이나를 눌러 무작위 논문을 불러오세요. 두 방법 모두 관련 논문 약 40개로 그래프를 만듭니다.',
+        '제목, DOI, arXiv ID, OpenAlex ID로 검색하거나, PDF를 끌어다 놓거나, 아무 논문이나를 눌러보세요. 어느 쪽이든 관련 논문 약 40개로 그래프를 만듭니다.',
         '노드에 마우스를 올리면 이웃을 미리 보여주고, 스크롤로 확대/축소하며, 노드를 드래그해 옮길 수 있습니다. 준비되면 다음을 누르세요.',
         '선 위에 마우스를 잠시 올리면 그 선이 잇는 두 논문이 왜 이어졌는지 보여줍니다 — 둘 다 인용한 논문들과 함께 공유하는 참고문헌입니다. 준비되면 다음을 누르세요.',
         '아무 노드나 클릭하면 상세 패널에 제목, 저자, 초록, DOI가 표시됩니다.',
