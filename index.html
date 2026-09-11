@@ -939,7 +939,7 @@ a{color:var(--link)}
           <svg width="76" height="24" aria-hidden="true">
             <line x1="2" y1="12" x2="62" y2="12" stroke="var(--accent)" stroke-width="2" stroke-dasharray="6,3"/>
             <polygon points="62 8, 71 12, 62 16" fill="var(--accent)"/>
-          </svg><span class="lg-val" data-i18n="lgJumpVal" data-i18n-html>Where you jumped from &mdash; by whichever of the four <b>Find by</b> routes was set: <b>Read together</b> (co-citation), <b>Shared foundations</b> (shared rare references), <b>Same ideas</b> (shared subject keywords, no citation tie at all), or <b>Linked through a third paper</b> (a shared intermediate). Every route guarantees no citation link between the two papers, so the trail records a path citations could not have found. The ringed nodes it connects are past seeds, their ring fading the further back along the path they sit.</span></div>
+          </svg><span class="lg-val" data-i18n="lgJumpVal" data-i18n-html>Where you jumped from &mdash; by whichever of the four <b>Find by</b> routes was set: <b>Read together</b> (co-citation), <b>Shared foundations</b> (shared rare references), <b>Same ideas</b> (shared subject keywords, no citation tie at all), or <b>Linked through a third paper</b> (a shared intermediate). Every route guarantees no direct citation link between the two papers, so the trail records a path citations could not have found. The ringed nodes it connects are past seeds, their ring fading the further back along the path they sit.</span></div>
       </div>
       <div id="promptPanel" hidden>
         <div id="promptHead">
@@ -1061,7 +1061,7 @@ const I18N = {
     lgDashedEdge: 'Dashed edge',
     lgDashedVal: 'A real citation, arrow pointing at the older paper. Turn these on with <b>Citation links</b>.',
     lgJumpTrail: 'Jump trail',
-    lgJumpVal: 'Where you jumped from &mdash; by whichever of the four <b>Find by</b> routes was set: <b>Read together</b> (co-citation), <b>Shared foundations</b> (shared rare references), <b>Same ideas</b> (shared subject keywords, no citation tie at all), or <b>Linked through a third paper</b> (a shared intermediate). Every route guarantees no citation link between the two papers, so the trail records a path citations could not have found. The ringed nodes it connects are past seeds, their ring fading the further back along the path they sit.',
+    lgJumpVal: 'Where you jumped from &mdash; by whichever of the four <b>Find by</b> routes was set: <b>Read together</b> (co-citation), <b>Shared foundations</b> (shared rare references), <b>Same ideas</b> (shared subject keywords, no citation tie at all), or <b>Linked through a third paper</b> (a shared intermediate). Every route guarantees no direct citation link between the two papers, so the trail records a path citations could not have found. The ringed nodes it connects are past seeds, their ring fading the further back along the path they sit.',
     promptHeading: 'LLM story prompt', depth: 'Depth', depthAll: 'All', output: 'Output',
     copy: 'Copy', close: 'Close', copied: 'Copied', pressCmdC: 'Press Cmd+C',
     promptCount: '{n} papers · {chars} chars',
@@ -1075,7 +1075,7 @@ const I18N = {
     unknownAuthors: 'Unknown authors', authorsMore: '{names} et al. ({n} more)', etAlSuffix: ' et al.',
     citedCount: 'cited {n}×', hopLabel: 'hop {h}', untitled: '(untitled)',
     quantumJumpHeading: 'Quantum Jump', quantumJumpBtn: 'Quantum Jump!',
-    quantumJumpTitle: 'Jump to a random high-similarity paper with no citation link to the current one',
+    quantumJumpTitle: 'Jump to a random high-similarity paper with no direct citation link to the current one',
     undoJump: 'Undo jump', undoJumpTitle: 'Undo the last jump',
     restoreJumpOpts: 'Previous options', backToPaper: 'Back to the paper',
     findBy: 'Find by', findByCocite: 'Read together', findByCoupling: 'Shared foundations',
@@ -1169,7 +1169,7 @@ const I18N = {
     lgDashedEdge: '점선',
     lgDashedVal: '실제 인용 관계이며, 화살표는 더 오래된 논문을 가리킵니다. <b>인용 연결선</b>으로 켤 수 있습니다.',
     lgJumpTrail: '점프 경로',
-    lgJumpVal: '어디서 건너왔는지를 보여줍니다 &mdash; 네 가지 <b>찾는 방식</b> 중 무엇이 선택되었든: <b>함께 읽히는 논문</b>(함께 인용됨), <b>같은 토대를 쓰는 논문</b>(참고문헌 겹침), <b>같은 아이디어</b>(공유 주제 키워드, 인용 관계 전혀 없음), 또는 <b>제3의 논문 경유</b>(공유된 중간 논문). 어느 방식이든 두 논문 사이에 인용 관계가 없음을 보장하므로, 이 경로는 인용만으로는 찾을 수 없었던 길을 기록합니다. 경로가 잇는, 테두리가 있는 노드들은 이전 기준 논문들이며, 경로를 따라 더 뒤에 있을수록 테두리가 흐려집니다.',
+    lgJumpVal: '어디서 건너왔는지를 보여줍니다 &mdash; 네 가지 <b>찾는 방식</b> 중 무엇이 선택되었든: <b>함께 읽히는 논문</b>(함께 인용됨), <b>같은 토대를 쓰는 논문</b>(참고문헌 겹침), <b>같은 아이디어</b>(공유 주제 키워드, 인용 관계 전혀 없음), 또는 <b>제3의 논문 경유</b>(공유된 중간 논문). 어느 방식이든 두 논문 사이에 직접 인용 관계가 없음을 보장하므로, 이 경로는 인용만으로는 찾을 수 없었던 길을 기록합니다. 경로가 잇는, 테두리가 있는 노드들은 이전 기준 논문들이며, 경로를 따라 더 뒤에 있을수록 테두리가 흐려집니다.',
     promptHeading: 'LLM 이야기 프롬프트', depth: '깊이', depthAll: '전체', output: '출력',
     copy: '복사', close: '닫기', copied: '복사됨', pressCmdC: 'Cmd+C를 누르세요',
     promptCount: '{n}개 논문 · {chars}자',
@@ -1183,7 +1183,7 @@ const I18N = {
     unknownAuthors: '저자 미상', authorsMore: '{names} 외 {n}명', etAlSuffix: ' 외',
     citedCount: '피인용 {n}회', hopLabel: '{h}단계', untitled: '(제목 없음)',
     quantumJumpHeading: 'Quantum Jump', quantumJumpBtn: 'Quantum Jump!',
-    quantumJumpTitle: '현재 논문과 인용 관계가 없는, 유사도 높은 논문으로 무작위로 점프합니다',
+    quantumJumpTitle: '현재 논문과 직접 인용 관계가 없는, 유사도 높은 논문으로 무작위로 점프합니다',
     undoJump: '점프 되돌리기', undoJumpTitle: '마지막 점프를 되돌립니다',
     restoreJumpOpts: '이전 설정으로', backToPaper: '논문으로 돌아가기',
     findBy: '찾는 방식', findByCocite: '함께 읽히는 논문', findByCoupling: '같은 토대를 쓰는 논문',
@@ -5067,8 +5067,8 @@ const MANUAL_I18N = {
     s5p: ['Press Prior works or Derivative works to see the seed’s references and citing papers, ranked by citation count.'],
     s6h: 'Quantum Jump',
     s6p: [
-      'Press Quantum Jump! to jump to a paper with no citation link at all to the current one.',
-      'Choose Find by to pick how the jump target relates: Read together, Shared foundations, Same ideas, or Linked through a third paper. Every route guarantees no citation between the two papers.',
+      'Press Quantum Jump! to jump to a paper with no direct citation link to the current one.',
+      'Choose Find by to pick how the jump target relates: Read together, Shared foundations, Same ideas, or Linked through a third paper. Every route guarantees no direct citation between the two papers.',
       'Choose Field to require the same field, a different field, or any field.',
       'Press Undo jump to step back one jump; press Reset draws to forget which candidates were already drawn.',
       'Press Clear trail to empty the jump trail; each step it records carries the evidence behind that jump.'
@@ -5134,7 +5134,7 @@ const MANUAL_I18N = {
         'Click the ringed seed node to bring up Quantum Jump for it.',
         'Choose Find by to pick how the jump target relates: Read together, Shared foundations, Same ideas, or Linked through a third paper.',
         'Choose Field to require the same field, a different field, or any field.',
-        'Press Quantum Jump! to jump to a paper with no citation link at all to the current one.',
+        'Press Quantum Jump! to jump to a paper with no direct citation link to the current one.',
         'Press Clear trail to empty the jump trail, or Reset draws to forget which candidates were already drawn.',
         'Press Undo jump to step back one jump.'
       ],
@@ -5207,8 +5207,8 @@ const MANUAL_I18N = {
     s5p: ['선행 논문 또는 후행 논문을 누르면 기준 논문의 참고문헌과 이를 인용한 논문이 피인용수 순으로 나타납니다.'],
     s6h: 'Quantum Jump',
     s6p: [
-      'Quantum Jump!를 누르면 현재 논문과 인용 관계가 전혀 없는 논문으로 점프합니다.',
-      '찾는 방식에서 후보와의 관계를 고르세요: 함께 읽히는 논문, 같은 토대를 쓰는 논문, 같은 아이디어, 제3의 논문 경유. 어떤 방식이든 두 논문 사이에 인용 관계가 없음을 보장합니다.',
+      'Quantum Jump!를 누르면 현재 논문과 직접 인용 관계가 없는 논문으로 점프합니다.',
+      '찾는 방식에서 후보와의 관계를 고르세요: 함께 읽히는 논문, 같은 토대를 쓰는 논문, 같은 아이디어, 제3의 논문 경유. 어떤 방식이든 두 논문 사이에 직접 인용 관계가 없음을 보장합니다.',
       '분야에서 같은 분야, 다른 분야, 분야 무관 중 하나를 고르세요.',
       '점프 되돌리기를 누르면 마지막 점프를 되돌리고, 뽑기 기록 초기화를 누르면 이미 뽑은 후보 기록을 지웁니다.',
       '경로 지우기를 누르면 점프 경로를 비우며, 각 단계에는 그 점프를 뒷받침한 근거가 함께 기록됩니다.'
@@ -5274,7 +5274,7 @@ const MANUAL_I18N = {
         '테두리로 표시된 기준 논문 노드를 클릭해 그 논문의 Quantum Jump를 여세요.',
         '찾는 방식에서 후보와의 관계를 고르세요: 함께 읽히는 논문, 같은 토대를 쓰는 논문, 같은 아이디어, 제3의 논문 경유.',
         '분야에서 같은 분야, 다른 분야, 분야 무관 중 하나를 고르세요.',
-        'Quantum Jump!를 누르면 현재 논문과 인용 관계가 전혀 없는 논문으로 점프합니다.',
+        'Quantum Jump!를 누르면 현재 논문과 직접 인용 관계가 없는 논문으로 점프합니다.',
         '경로 지우기를 누르면 점프 경로를 비우고, 뽑기 기록 초기화를 누르면 이미 뽑은 후보 기록을 지웁니다.',
         '점프 되돌리기를 누르면 마지막 점프를 되돌립니다.'
       ],

@@ -18,7 +18,7 @@ A free, single-file paper-graph tool. Enter a paper, get a graph of the forty wo
 
 Tools of this kind show you the neighbourhood of one paper. These two are why this one exists:
 
-- **Quantum Jump** — moves to a paper with *no citation link* to the one you are reading, found four different ways, leaving a trail you can retrace and evidence for every step.
+- **Quantum Jump** — moves to a paper with *no direct citation link* to the one you are reading, found four different ways, leaving a trail you can retrace and evidence for every step.
 - **Bridge** — give it two papers and it finds the chain connecting them, or tells you plainly that there isn't one.
 
 No install. No account. No API key. No backend. One HTML file, on a desktop or a phone.
@@ -96,7 +96,7 @@ Two tabs beside the graph list what the seed paper cites and what cites it, rank
 
 ### Quantum Jump
 
-Following citations keeps you inside one conversation. **Quantum Jump!** leaves it: it moves the graph to a paper that has *no citation link* to the current one, and draws a trail back to where you came from, so the path stays visible however far you wander.
+Following citations keeps you inside one conversation. **Quantum Jump!** leaves it: it moves the graph to a paper that has *no direct citation link* to the current one, and draws a trail back to where you came from, so the path stays visible however far you wander.
 
 Four ways of finding those papers, chosen with **Find by**:
 
