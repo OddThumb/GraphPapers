@@ -603,6 +603,21 @@ a{color:var(--link)}
 
 /* must stay last: these override rules declared further down the sheet */
 @media (max-width: 760px){
+  /* The header wrapped in source order, which on a phone scattered the clip button between the
+     wordmark and the bridge button and stranded Surprise me beside the palette menus. Three
+     deliberate rows instead: identity, input, actions. This also tightens the guided tour --
+     a step that highlights the search box was drawing a union rect across half the header. */
+  header{gap:8px 8px}
+  #logoMark{order:1} h1{order:2} #version{order:3}
+  #prefsCtl{order:4} #repoLink{order:5}
+  .search-wrap{order:6; flex:1 1 calc(100% - 3.6rem); min-width:0; max-width:none}
+  #pdfPickBtn{order:7; flex:0 0 auto}
+  #bridgeToggleBtn{order:8; flex:1 1 calc(50% - 4px)}
+  #surpriseBtn{order:9; flex:1 1 calc(50% - 4px)}
+  #statusLine{order:10; flex:1 1 100%; text-align:center}
+  #prefsCtl{gap:1px}
+  #uiLang, #palette{font-size:0.5625rem; padding:1px 4px}
+
   /* 1.5x is a desktop preference. On a 393px phone it wrapped the header to four rows (220px of
      a 852px screen) leaving almost no graph; phones already have the pixel density to read 1x. */
   :root{--ui-scale:1}
@@ -1041,10 +1056,11 @@ const I18N = {
     bridgeSamePaper: 'That is the same paper.',
     bridgeNoRoute: 'No route found within {n} steps.',
     bridgeReadout: '{distance} step(s) · {mode} · {requests} request(s)',
+    bridgeShownPerSide: '{shown} of each paper\u2019s {total} related works shown',
     bridgeDirect: 'These two papers are directly linked by a citation, so there is no intermediate paper -- both modes give the same answer.',
     bridgeShorterRejected: 'A shorter, {n}-step route exists but was rejected as weaker.',
     bridgeUnresolved: 'Record could not be retrieved',
-    bridgeUnresolvedExplain: 'This bridge-route hop is real, but OpenAlex returned no data for this id, so no title, authors or abstract are available.',
+    bridgeUnresolvedExplain: 'Other papers cite this id, which is why it sits on the route, but OpenAlex holds no record for it \u2014 most likely merged into another entry or withdrawn. There is nothing to look up, here or on openalex.org.',
     bridgeStepLabel: 'step {i} of {n}',
     bridgeSearchStep: 'Searching, step {n}…',
     weakLink: 'Weak link -- no shared citers or references found.',
@@ -1138,10 +1154,11 @@ const I18N = {
     bridgeSamePaper: '같은 논문입니다.',
     bridgeNoRoute: '{n}단계 이내에서 경로를 찾지 못했습니다.',
     bridgeReadout: '{distance}단계 · {mode} · 요청 {requests}회',
+    bridgeShownPerSide: '각 논문의 관련 논문 {total}편 중 {shown}편씩 표시',
     bridgeDirect: '두 논문은 인용으로 직접 연결되어 있어 중간 논문이 없습니다 -- 두 방식 모두 같은 답을 줍니다.',
     bridgeShorterRejected: '더 짧은 {n}단계 경로가 있지만 더 약하다고 판단해 제외했습니다.',
     bridgeUnresolved: '가져올 수 없는 기록',
-    bridgeUnresolvedExplain: '이 경로 연결은 실제로 존재하지만, OpenAlex가 이 id에 대한 데이터를 반환하지 않아 제목·저자·초록을 확인할 수 없습니다.',
+    bridgeUnresolvedExplain: '다른 논문들이 이 id를 인용하고 있어서 경로에 올라왔지만, OpenAlex에는 해당 기록이 없습니다. 다른 항목으로 병합되었거나 철회된 것으로 보입니다. 여기서도, openalex.org에서도 확인할 수 있는 내용이 없습니다.',
     bridgeStepLabel: '{n}단계 중 {i}단계',
     bridgeSearchStep: '{n}단계 탐색 중…',
     weakLink: '약한 연결 -- 공유 인용자나 참고문헌이 없습니다.',
@@ -1395,8 +1412,12 @@ function simScorer(pool){
 }
 
 // pure: pool = array of normalized works (includes seed). Returns {nodes, edges}.
+// Papers in a single-paper graph. The bridge view cuts this down per side (BRIDGE_SIDE_CAP) so
+// two clusters plus a route stay readable, and its readout names both numbers.
+const GRAPH_CAP = 40;
+
 function computeGraph(seedId, pool, cap){
-  cap = cap || 40;   // bridge view halves this per side so two clusters + a route stay readable
+  cap = cap || GRAPH_CAP;
   const map = new Map(pool.map(w => [w.id, w]));
   const sim = simScorer(pool);
   const Rmap = sim.Rmap;
@@ -2230,12 +2251,13 @@ function renderDetail(work){
   if (work._unresolved) {
     // OpenAlex returned nothing for this bridge-route id -- there is no title, authors,
     // abstract or reference list to show, and no graph can be rebuilt from an empty one.
-    // Replace the usual (empty) fields with an honest explanation and a direct link.
+    // The id is shown as plain text, NOT a link: openalex.org 404s on it (verified), and a
+    // link that promises a page and delivers a dead end is worse than no link. The id still
+    // earns its place as evidence -- it is what other papers' reference lists point at.
     detailBody.innerHTML =
       '<div class="d-title">' + esc(t('bridgeUnresolved')) + '</div>' +
       '<div class="d-row">' + esc(t('bridgeUnresolvedExplain')) + '</div>' +
-      '<div class="d-row mono"><a href="https://openalex.org/' + esc(work.id) + '" target="_blank" rel="noopener">' +
-        esc(work.id) + '</a></div>';
+      '<div class="d-row mono">' + esc(work.id) + '</div>';
     return;
   }
   const abstract = reconstructAbstract(work.abstract_inverted_index);
@@ -3060,9 +3082,14 @@ function resolveBridgeSearch(route){
 // pure: merges both papers' own similarity graphs (capped smaller per side so two clusters + a
 // route stay readable, instead of two full 40-node graphs side by side) into one, tagging cluster
 // membership ('A'/'B') and route membership (_onRoute).
+// Papers drawn per side in the bridge view. Two full 40-node graphs side by side cannot be
+// read, so each side is cut to its most-related few -- and the readout says so, because a
+// graph that silently loses 24 of its 40 papers looks broken rather than filtered.
+const BRIDGE_SIDE_CAP = 16;
+
 function buildBridgeGraph(seedA, poolA, seedB, poolB, route, routePool){
-  const gA = computeGraph(seedA.id, poolA, 16);
-  const gB = computeGraph(seedB.id, poolB, 16);
+  const gA = computeGraph(seedA.id, poolA, BRIDGE_SIDE_CAP);
+  const gB = computeGraph(seedB.id, poolB, BRIDGE_SIDE_CAP);
   const nodeMap = new Map();
   // a node present in BOTH subgraphs (other than the two seeds themselves) is a shared neighbour
   // of A and B -- it belongs at the w*0.5 midpoint, not dragged into either side's cluster.
@@ -5134,6 +5161,9 @@ function updateBridgeReadout(){
   if (state.bridge.noRoute) { bridgeReadoutEl.textContent = tf('bridgeNoRoute', { n: 5 }); return; }
   if (state.bridge.distance == null) { bridgeReadoutEl.textContent = ''; return; }
   let line = tf('bridgeReadout', { distance: state.bridge.distance, mode: bridgeName(state.bridge.mode), requests: state.bridge.requests });
+  // say what the two clusters actually show: each side is the top BRIDGE_SIDE_CAP of its own
+  // ~40-paper graph, so nothing was lost -- it was narrowed, and the user can see by how much
+  line += ' · ' + tf('bridgeShownPerSide', { shown: BRIDGE_SIDE_CAP, total: GRAPH_CAP });
   // distance 1 means bridgeSearch's early nA0.has(bId) return fired -- no intermediate paper, so
   // 'Strongest link' and 'Fewest steps' can't differ here. Say so; don't block or change the result.
   if (state.bridge.distance === 1) line += ' · ' + t('bridgeDirect');
@@ -5411,7 +5441,7 @@ const tourTrailWatch = () => {
 // which leave nothing else to poll). manual:true: no completion test, just a Next button.
 const TOUR_TRACKS = {
   basics: [
-    { sel: ['#searchInput', '#surpriseBtn', '#dropdown'], before: tourGraphTab,
+    { sel: ['#searchInput', '#dropdown'], before: tourGraphTab,
       check: () => !!state.seed && !!nodeSel },
     { sel: '#graphView', before: tourGraphTab, manual: true },
     { sel: '#graphView', before: tourGraphTab, manual: true },
@@ -5420,7 +5450,7 @@ const TOUR_TRACKS = {
     { sel: '#storyBtn', check: () => !document.getElementById('promptPanel').hidden }
   ],
   quantum: [
-    { sel: ['#searchInput', '#surpriseBtn', '#dropdown'], before: tourGraphTab, check: () => !!state.seed },
+    { sel: ['#searchInput', '#dropdown'], before: tourGraphTab, check: () => !!state.seed },
     { sel: tourSeedNodeEl, before: tourGraphTab,
       check: () => !!(lastDetailWork && state.seed && lastDetailWork.id === state.seed.id && document.getElementById('quantumJumpBtn')) },
     { sel: '#qFindBy', makeCheck: tourValueWatch('#qFindBy') },
@@ -5430,7 +5460,7 @@ const TOUR_TRACKS = {
     { sel: '#quantumUndoBtn', makeCheck: tourSeedChangeWatch }
   ],
   bridge: [
-    { sel: ['#searchInput', '#surpriseBtn', '#dropdown'], before: tourGraphTab, check: () => !!state.seed },
+    { sel: ['#searchInput', '#dropdown'], before: tourGraphTab, check: () => !!state.seed },
     { sel: '#bridgeToggleBtn', check: () => !document.getElementById('bridgeBar').hidden },
     { sel: ['#searchInputB', '#surpriseBtn', '#dropdownB'], check: () => !!(state.bridge && state.bridge.b) },
     { sel: '#bridgeMode', makeCheck: tourValueWatch('#bridgeMode') },
@@ -5438,7 +5468,7 @@ const TOUR_TRACKS = {
     { sel: '#graphView', manual: true }
   ],
   exportT: [
-    { sel: ['#searchInput', '#surpriseBtn', '#dropdown'], before: tourGraphTab, check: () => !!state.seed },
+    { sel: ['#searchInput', '#dropdown'], before: tourGraphTab, check: () => !!state.seed },
     { sel: '#citeToolbarBtn', check: () => !document.getElementById('citePanel').hidden },
     { sel: ['#citeFormat', '#citeScope'], makeCheck: tourValueWatch('#citeFormat', '#citeScope') },
     { sel: ['#citeCopy', '#citeDownload'] },
