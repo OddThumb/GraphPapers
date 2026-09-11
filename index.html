@@ -470,6 +470,14 @@ body.landing-tour #graphView .status-line{visibility:hidden}
 .d-row{font-size:0.75rem; color:var(--muted); margin-bottom:4px}
 .mono{font-family:'Geist Mono',monospace; font-size:0.625rem; color:var(--soft)}
 .d-abstract{font-size:0.75rem; line-height:1.6; color:var(--ink); margin:8px 0}
+/* clamps long abstracts to ~6 lines; removed on expand (see renderDetail) */
+.d-abstract.clamped{display:-webkit-box; -webkit-line-clamp:6; -webkit-box-orient:vertical; overflow:hidden}
+#abstractToggle{
+  display:block; margin:4px 0 0; background:none; border:none; padding:0; font:inherit;
+  font-size:0.6875rem; color:var(--accent); cursor:pointer; text-decoration:underline;
+  text-underline-offset:2px;
+}
+#abstractToggle:hover{color:var(--accent-strong)}
 .btn{
   background:transparent; border:1px solid var(--rule); border-radius:4px; padding:8px 12px;
   font:inherit; font-size:0.75rem; cursor:pointer; color:var(--ink);
@@ -1057,6 +1065,7 @@ const I18N = {
     scopeAll: 'All 40 papers', scopeAllRefs: 'All references ({n})', citeCount: '{n} entries', download: 'Download',
     detail: 'Detail', detailEmpty: 'Search for a paper to begin.', closeDetails: 'Close details',
     noDOI: 'No DOI', readPdf: 'Read the free PDF →', noAbstract: 'No abstract', cite: 'Cite',
+    showMore: 'Show more', showLess: 'Show less',
     rebuildGraph: 'Rebuild from this paper', undoStep: 'Undo',
     unknownAuthors: 'Unknown authors', authorsMore: '{names} et al. ({n} more)', etAlSuffix: ' et al.',
     citedCount: 'cited {n}×', hopLabel: 'hop {h}', untitled: '(untitled)',
@@ -1163,6 +1172,7 @@ const I18N = {
     scopeAll: '전체 40개 논문', scopeAllRefs: '전체 참고문헌 ({n})', citeCount: '{n}개 항목', download: '다운로드',
     detail: '상세', detailEmpty: '시작하려면 논문을 검색하세요.', closeDetails: '상세 정보 닫기',
     noDOI: 'DOI 없음', readPdf: '무료 PDF로 읽기 →', noAbstract: '초록 없음', cite: '인용',
+    showMore: '펼치기', showLess: '접기',
     rebuildGraph: '이 논문으로 다시 그리기', undoStep: '되돌리기',
     unknownAuthors: '저자 미상', authorsMore: '{names} 외 {n}명', etAlSuffix: ' 외',
     citedCount: '피인용 {n}회', hopLabel: '{h}단계', untitled: '(제목 없음)',
@@ -2371,7 +2381,7 @@ function renderDetail(work){
       (abstract ? '<button class="btn" id="abstractCopy" style="font-size:0.6875rem; padding:4px 8px">' + esc(t('copy')) + '</button> ' : '') +
       '<button class="btn" id="citeOneBtn" style="font-size:0.6875rem; padding:4px 8px">' + esc(t('cite')) + '</button>' +
     '</div>' +
-    (abstract ? '<div class="d-abstract">' + esc(abstract) + '</div>' : '<div class="d-abstract mono">' + esc(t('noAbstract')) + '</div>') +
+    (abstract ? '<div class="d-abstract clamped" id="abstractText">' + esc(abstract) + '</div>' : '<div class="d-abstract mono">' + esc(t('noAbstract')) + '</div>') +
     (showQuantum ? quantumBlockHtml()
       : '<div id="rebuildBtns">' +
           '<button class="btn" id="redrawBtn">' + esc(t('rebuildGraph')) + '</button>' +
@@ -2395,6 +2405,20 @@ function renderDetail(work){
                                        : Promise.resolve(fallbackCopy(abstract));
       done.then(ok => { abstractCopyBtn.textContent = ok ? t('copied') : t('pressCmdC'); setTimeout(() => { abstractCopyBtn.textContent = t('copy'); }, 2000); });
     };
+  }
+  // only worth a toggle if the clamp is actually hiding text -- a short abstract already
+  // fits, and a button that expands nothing is worse than no button
+  const abstractEl = document.getElementById('abstractText');
+  if (abstractEl && abstractEl.scrollHeight > abstractEl.clientHeight) {
+    const toggle = document.createElement('button');
+    toggle.type = 'button';
+    toggle.id = 'abstractToggle';
+    toggle.textContent = t('showMore');
+    toggle.onclick = () => {
+      const clamped = abstractEl.classList.toggle('clamped');
+      toggle.textContent = t(clamped ? 'showMore' : 'showLess');
+    };
+    abstractEl.after(toggle);
   }
   if (showQuantum) wireQuantumBlock();
 

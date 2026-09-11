@@ -1,9 +1,12 @@
+<div align="right">
+
+### 한국어 &nbsp;·&nbsp; [English](README.md)
+
+</div>
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/hero-dark.png">
   <img src="docs/hero.png" alt="GraphPapers — a similarity graph built around the GW150914 detection paper">
 </picture>
-
-[English](README.md)
 
 <sub>2016년 GW150914 검출을 중심으로 만든 그래프입니다. 앱이 항상 보여주는 실시간 데이터입니다.</sub>
 
