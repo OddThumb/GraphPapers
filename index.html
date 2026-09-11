@@ -4571,7 +4571,31 @@ const PROMPT_I18N = {
       paperAHeader: 'PAPER A', paperBHeader: 'PAPER B',
       routeHeader: 'ROUTE (intermediate papers from A to B)',
       clusterAHeader: "CLUSTER AROUND PAPER A", clusterBHeader: "CLUSTER AROUND PAPER B",
-      countBridge: '{nRoute} intermediate paper(s) on the route, {nA} around A, {nB} around B. Source: OpenAlex, fetched {ts}.'
+      countBridge: '{nRoute} intermediate paper(s) on the route, {nA} around A, {nB} around B. Source: OpenAlex, fetched {ts}.',
+      // three-paper variants -- used instead of the pairs above whenever a third paper (C) is present
+      intro3: 'You are helping a researcher evaluate a possible connection between three papers that may not obviously belong to the same research line, and the triangle of pairwise connections between them.',
+      graphDesc3: [
+        'Below are three papers (A, B and C), the chain of intermediate papers a citation-similarity search found connecting each pair (A-B, A-C, B-C), and the cluster of papers surrounding each one, extracted from OpenAlex.',
+        'Each route is a chain of similarity links, not a chain of citations — finding it does not by itself prove that pair of papers is actually related.',
+        'Each cluster lists the papers most similar to that paper, for context on what that research line already covers.'
+      ],
+      req3: [
+        '- Write the entire answer in {lang}. This overrides the language of this prompt.',
+        '- Briefly describe the problem each paper, A, B and C, addresses.',
+        "- Walk through each of the three routes (A-B, A-C, B-C): for each intermediate paper, explain why it plausibly connects to both sides of that pair.",
+        '- State what each paper’s research line appears not to know about the other two.',
+        '- Propose one concrete research question that an actual link among all three papers would raise.',
+        '- Explicitly judge whether each pairwise connection is spurious — e.g. shared vocabulary, a widely-cited generic methods paper, or a coincidental co-citation, rather than genuine shared substance. Say so plainly for any pair that looks spurious; do not manufacture a connection the evidence does not support.',
+        '- Refer to papers by their [n] index and title.',
+        '- If you are not confident about what a paper actually did, say so instead of inventing it.',
+        '- Length: roughly 550-850 words. Prose, not a bullet list.'
+      ],
+      paperCHeader: 'PAPER C',
+      routeABHeader: 'ROUTE A-B (intermediate papers, {n} step(s))',
+      routeACHeader: 'ROUTE A-C (intermediate papers, {n} step(s))',
+      routeBCHeader: 'ROUTE B-C (intermediate papers, {n} step(s))',
+      clusterCHeader: 'CLUSTER AROUND PAPER C',
+      countBridge3: '{nAB} intermediate paper(s) on A-B, {nAC} on A-C, {nBC} on B-C, {nA} around A, {nB} around B, {nC} around C. Source: OpenAlex, fetched {ts}.'
     }
   },
   Korean: {
@@ -4623,7 +4647,30 @@ const PROMPT_I18N = {
       paperAHeader: '논문 A', paperBHeader: '논문 B',
       routeHeader: '경로 (A에서 B로 이어지는 중간 논문)',
       clusterAHeader: '논문 A 주변 군집', clusterBHeader: '논문 B 주변 군집',
-      countBridge: '경로상의 중간 논문 {nRoute}개, A 주변 {nA}개, B 주변 {nB}개. 출처: OpenAlex, {ts} 조회.'
+      countBridge: '경로상의 중간 논문 {nRoute}개, A 주변 {nA}개, B 주변 {nB}개. 출처: OpenAlex, {ts} 조회.',
+      intro3: '세 논문이 같은 연구 흐름에 속하는지 분명하지 않을 수 있는 상황에서, 연구자가 그 연결 가능성과 세 논문 사이의 삼각 관계를 평가하도록 돕는 역할입니다.',
+      graphDesc3: [
+        '아래는 세 논문(A, B, C), 인용 유사도 검색이 찾아낸 각 쌍(A-B, A-C, B-C)을 잇는 중간 논문들의 경로, 그리고 각 논문 주변의 논문 군집입니다. OpenAlex에서 추출했습니다.',
+        '각 경로는 유사도 연결의 사슬이지 인용의 사슬이 아닙니다 — 경로를 찾았다는 사실 자체가 해당 두 논문이 실제로 관련되어 있음을 증명하지는 않습니다.',
+        '각 군집은 그 논문과 가장 유사한 논문들을 나열한 것으로, 해당 연구 흐름이 이미 다루고 있는 내용을 보여주기 위한 맥락입니다.'
+      ],
+      req3: [
+        '- 전체 답변을 {lang}로 작성하세요. 이 지시가 이 프롬프트 자체의 언어보다 우선합니다.',
+        '- 논문 A, B, C가 각각 다루는 문제를 간단히 설명하세요.',
+        '- 세 경로(A-B, A-C, B-C) 각각을 따라가며, 각 중간 논문이 해당 쌍의 양쪽 모두와 왜 연결되는지 설명하세요.',
+        '- 각 논문의 연구 흐름이 나머지 두 편에 대해 모르고 있는 것으로 보이는 부분을 밝히세요.',
+        '- 세 논문 사이에 실제 연결이 있다면 제기될 만한 구체적인 연구 질문을 하나 제안하세요.',
+        '- 각 쌍의 연결이 허구적인지 명시적으로 판단하세요 — 예를 들어 공유 어휘, 널리 인용되는 범용 방법론 논문, 우연한 동시 인용일 뿐 실질적인 내용 공유가 아닐 수 있습니다. 허구적으로 보이는 쌍이 있다면 그렇다고 분명히 말하고, 근거 없는 연결을 지어내지 마세요.',
+        '- 논문은 [n] 번호와 제목으로 지칭하세요.',
+        '- 논문이 실제로 한 일을 확신할 수 없다면, 지어내지 말고 그렇다고 밝히세요.',
+        '- 분량: 약 550~850 단어. 목록이 아닌 산문으로 작성하세요.'
+      ],
+      paperCHeader: '논문 C',
+      routeABHeader: '경로 A-B (중간 논문, {n}단계)',
+      routeACHeader: '경로 A-C (중간 논문, {n}단계)',
+      routeBCHeader: '경로 B-C (중간 논문, {n}단계)',
+      clusterCHeader: '논문 C 주변 군집',
+      countBridge3: 'A-B 경로 중간 논문 {nAB}개, A-C 경로 {nAC}개, B-C 경로 {nBC}개, A 주변 {nA}개, B 주변 {nB}개, C 주변 {nC}개. 출처: OpenAlex, {ts} 조회.'
     }
   }
 };
@@ -4719,17 +4766,27 @@ function buildBridgePrompt(lang){
   const Ptop = PROMPT_I18N[lang] || PROMPT_I18N.English;
   const P = Ptop.bridge;
   const a = state.seed, b = bridge.b;
+  const c = bridge.c && bridge.c.w ? bridge.c.w : null;   // third paper, when present
   const nodes = bridge.nodeById ? [...bridge.nodeById.values()] : [];
   const byId = new Map(nodes.map(n => [n.id, n]));
-  const inRoute = new Set(bridge.route);
+  const routeAC = c ? (bridge.c.routeAC || []) : [];
+  const routeBC = c ? (bridge.c.routeBC || []) : [];
+  // clusters must exclude every pairwise route's nodes, not just A-B's, or a paper sitting on the
+  // A-C or B-C leg would double-list under a cluster too. Reduces to the old A-B-only set when
+  // there's no third paper, since routeAC/routeBC are empty.
+  const inRoute = new Set([...bridge.route, ...routeAC, ...routeBC]);
   const routeMids = bridge.route.filter(id => id !== a.id && id !== b.id);
+  const routeMidsAC = c ? routeAC.filter(id => id !== a.id && id !== c.id) : [];
+  const routeMidsBC = c ? routeBC.filter(id => id !== b.id && id !== c.id) : [];
   const byCitesDesc = (x, y) => (byId.get(y).cited_by_count || 0) - (byId.get(x).cited_by_count || 0);
   const clusterA = nodes.filter(n => n._cluster === 'A' && n.id !== a.id && !inRoute.has(n.id)).map(n => n.id).sort(byCitesDesc);
   const clusterB = nodes.filter(n => n._cluster === 'B' && n.id !== b.id && !inRoute.has(n.id)).map(n => n.id).sort(byCitesDesc);
+  const clusterC = c ? nodes.filter(n => n._cluster === 'C' && n.id !== c.id && !inRoute.has(n.id)).map(n => n.id).sort(byCitesDesc) : [];
 
   let i = 2;
   const idx = new Map([[a.id, 0], [b.id, 1]]);
-  [...routeMids, ...clusterA, ...clusterB].forEach(id => { if (!idx.has(id)) idx.set(id, i++); });
+  if (c) { idx.set(c.id, 2); i = 3; }
+  [...routeMids, ...routeMidsAC, ...routeMidsBC, ...clusterA, ...clusterB, ...clusterC].forEach(id => { if (!idx.has(id)) idx.set(id, i++); });
 
   const promptAuthors = authorships => {
     const names = (authorships || []).map(x => x.author && x.author.display_name).filter(Boolean);
@@ -4755,33 +4812,52 @@ function buildBridgePrompt(lang){
   const native = { Korean: '답변은 반드시 처음부터 끝까지 한국어로 작성하세요.', English: '' }[lang] || '';
   const directive = 'ANSWER LANGUAGE: ' + lang + '. Write the entire response in ' + lang +
                     ', including headings.' + (native ? ' ' + native : '');
+  const ts = new Date().toISOString().slice(0, 16).replace('T', ' ');
 
-  return [
+  const parts = [
 directive,
 '',
-P.intro,
+c ? P.intro3 : P.intro,
 '',
-P.graphDesc[0],
-P.graphDesc[1],
-P.graphDesc[2],
+...(c ? P.graphDesc3 : P.graphDesc),
 '',
 P.reqHeader,
-...P.req.map(r => ptf(r, { lang: Ptop.langName })),
+...(c ? P.req3 : P.req).map(r => ptf(r, { lang: Ptop.langName })),
 '',
 '=== ' + P.paperAHeader + ' ===',
 paperBlock(a),
 '',
 '=== ' + P.paperBHeader + ' ===',
-paperBlock(b),
-section(P.routeHeader, routeMids) +
-section(P.clusterAHeader, clusterA) +
-section(P.clusterBHeader, clusterB),
-'---',
-ptf(Ptop.generatedBy, { v: APP_VERSION }),
-ptf(P.countBridge, { nRoute: routeMids.length, nA: clusterA.length, nB: clusterB.length, ts: new Date().toISOString().slice(0, 16).replace('T', ' ') }),
-'',
-directive
-  ].join('\n');
+paperBlock(b)
+  ];
+  if (c) {
+    parts.push(
+      '',
+      '=== ' + P.paperCHeader + ' ===',
+      paperBlock(c),
+      section(ptf(P.routeABHeader, { n: bridge.distance }), routeMids) +
+      section(ptf(P.routeACHeader, { n: bridge.c.distAC }), routeMidsAC) +
+      section(ptf(P.routeBCHeader, { n: bridge.c.distBC }), routeMidsBC) +
+      section(P.clusterAHeader, clusterA) +
+      section(P.clusterBHeader, clusterB) +
+      section(P.clusterCHeader, clusterC)
+    );
+  } else {
+    parts.push(
+      section(P.routeHeader, routeMids) +
+      section(P.clusterAHeader, clusterA) +
+      section(P.clusterBHeader, clusterB)
+    );
+  }
+  parts.push(
+    '---',
+    ptf(Ptop.generatedBy, { v: APP_VERSION }),
+    c ? ptf(P.countBridge3, { nAB: routeMids.length, nAC: routeMidsAC.length, nBC: routeMidsBC.length, nA: clusterA.length, nB: clusterB.length, nC: clusterC.length, ts })
+      : ptf(P.countBridge, { nRoute: routeMids.length, nA: clusterA.length, nB: clusterB.length, ts }),
+    '',
+    directive
+  );
+  return parts.join('\n');
 }
 
 function refreshPrompt(){
@@ -4847,6 +4923,10 @@ function syncCiteScopeOptions(){
   const bridge = isBridgeView();
   sel.querySelector('option[value="visible"]').hidden = bridge;
   sel.querySelector('option[value="route"]').hidden = !bridge;
+  // "All references" is the FIRST paper's bibliography. In the bridge view, where two or three
+  // papers are on screen and nothing on the option says which one it means, that reads as a list
+  // covering all of them and silently exports one. Hidden here, like Visible papers.
+  sel.querySelector('option[value="allRefs"]').hidden = bridge;
   sel.querySelector('option[value="all"]').textContent = t(bridge ? 'scopeAllBridge' : 'scopeAll');
   sel.querySelector('option[value="allRefs"]').textContent =
     tf('scopeAllRefs', { n: state.seed ? state.seed.referenced_works.length : 0 });
