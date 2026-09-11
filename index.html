@@ -49,14 +49,14 @@ body{
   display:flex; flex-direction:column; background:var(--paper); color:var(--ink);
   font-family:'Geist','Noto Sans KR','Apple SD Gothic Neo',sans-serif; font-size:0.8125rem; overflow:hidden;
 }
-h1{font-family:'Instrument Serif',serif; font-size:1.75rem; font-weight:400; margin:0}
+h1{font-family:'Instrument Serif',serif; font-size:2.15rem; font-weight:400; margin:0}
 /* version sits as a superscript on the wordmark, with the mark stacked under it. The mark is
    inline SVG rather than the favicon's data URI so it paints from the palette vars -- a fixed
    ink black would vanish on the dark and noir palettes. */
 #titleMeta{display:flex; flex-direction:column; align-items:center; gap:3px;
   margin-left:-16px; align-self:flex-start; padding-top:4px}
 #version{font-family:'Geist Mono',monospace; font-size:0.5625rem; color:var(--soft); letter-spacing:0.08em}
-#logoMark{width:1.15rem; height:1.15rem; display:block}
+#logoMark{width:1.5rem; height:1.5rem; display:block}
 header{
   position:relative; z-index:20;
   /* wraps only when the row genuinely doesn't fit -- at --ui-scale 1.5 the language and
@@ -950,7 +950,7 @@ const I18N = {
     paletteDark: 'Dark', paletteInk: 'Ink', paletteNoir: 'Noir',
     resetTitle: 'Start over', surprise: 'Surprise me',
     findingRandom: 'Picking a paper at random\u2026', noRandom: 'Could not find a random paper. Try again.', repoTitle: 'Source on GitHub',
-    searchPlaceholder: 'Search by title, DOI, or OpenAlex ID',
+    searchPlaceholder: 'Search by title, DOI, arXiv id, or OpenAlex ID',
     offlineBanner: 'Offline — GraphPapers needs an internet connection to fetch papers from OpenAlex.',
     tabGraph: 'Similarity graph', tabRefs: 'Prior works', tabCiters: 'Derivative works',
     storyBtn: 'Story prompt', exportCitations: 'Export citations',
@@ -1038,7 +1038,8 @@ const I18N = {
     pdfDropOverlay: 'Drop the PDF to identify the paper',
     pdfScanning: 'Scanning {name}…', pdfLookup: 'Looking up the paper on OpenAlex…',
     pdfNotPdf: 'That is not a PDF. Drop or choose a PDF file instead.',
-    pdfNoId: 'Could not find a DOI or arXiv id in this PDF. Type the title instead.',
+    arxivNotFound: 'OpenAlex has no record under that arXiv id. If the paper was later published in a journal, search its title or the published DOI instead.',
+    pdfNoId: 'No DOI in this PDF. arXiv papers print their id down the left margin of page 1 \u2014 paste it here, or type the title.',
     pdfNotFound: 'Found an identifier in the PDF, but OpenAlex has no record of it. Type the title instead.'
   },
   ko: {
@@ -1046,7 +1047,7 @@ const I18N = {
     paletteDark: '다크', paletteInk: '잉크', paletteNoir: '느와르',
     resetTitle: '처음부터 다시 시작합니다', surprise: '아무 논문이나',
     findingRandom: '무작위로 논문을 고르는 중\u2026', noRandom: '무작위 논문을 찾지 못했습니다. 다시 시도해 주세요.', repoTitle: 'GitHub 저장소로 이동',
-    searchPlaceholder: '제목, DOI, OpenAlex ID로 검색',
+    searchPlaceholder: '제목, DOI, arXiv ID, OpenAlex ID로 검색',
     offlineBanner: '오프라인 상태입니다 — GraphPapers는 OpenAlex에서 논문을 가져오려면 인터넷 연결이 필요합니다.',
     tabGraph: '유사도 그래프', tabRefs: '선행 논문', tabCiters: '후행 논문',
     storyBtn: '이야기 프롬프트', exportCitations: '인용 내보내기',
@@ -1134,7 +1135,8 @@ const I18N = {
     pdfDropOverlay: 'PDF를 놓으면 논문을 식별합니다',
     pdfScanning: '{name} 스캔 중…', pdfLookup: 'OpenAlex에서 논문을 찾는 중…',
     pdfNotPdf: 'PDF 파일이 아닙니다. PDF 파일을 드롭하거나 선택하세요.',
-    pdfNoId: '이 PDF에서 DOI나 arXiv ID를 찾지 못했습니다. 제목을 직접 입력하세요.',
+    arxivNotFound: '그 arXiv 번호로 등록된 논문이 OpenAlex에 없습니다. 이후 학술지에 실렸다면 제목이나 출판 DOI로 검색해 보세요.',
+    pdfNoId: '이 PDF에 DOI가 없습니다. arXiv 논문이면 1쪽 왼쪽 여백에 적힌 arXiv 번호를 여기에 붙여넣거나, 제목을 입력하세요.',
     pdfNotFound: 'PDF에서 식별자를 찾았지만 OpenAlex에 해당 기록이 없습니다. 제목을 직접 입력하세요.'
   }
 };
@@ -1215,6 +1217,21 @@ function normalizeWork(w){
   });
 }
 
+// pure: an arXiv id out of anything a reader would paste -- the bare number, the "arXiv:" stamp
+// printed down the margin of page 1, or an abs/pdf URL. Returns null when it isn't one.
+// (A PDF cannot give us this: arXiv draws that stamp as rotated glyphs inside a compressed
+// stream, so byte scanning finds nothing and decompressing finds the REFERENCES' ids instead --
+// measured on two real papers. Pasting the id is the reliable path, so the box accepts it.)
+function parseArxivId(q){
+  const t = (q || '').trim();
+  const m = t.match(/(?:arxiv[:\s]*|arxiv\.org\/(?:abs|pdf)\/)?(\d{4}\.\d{4,5})(v\d+)?$/i)
+         || t.match(/(?:arxiv[:\s]*|arxiv\.org\/(?:abs|pdf)\/)([a-z-]+(?:\.[A-Z]{2})?\/\d{7})(v\d+)?$/i);
+  if (!m) return null;
+  // a bare 4-digit.4-digit number is only an arXiv id if it was labelled as one
+  if (/^\d{4}\.\d{4,5}(v\d+)?$/i.test(t) || /arxiv/i.test(t)) return m[1];
+  return null;
+}
+
 async function searchWorks(q){
   if (/^W\d+$/i.test(q.trim())) {
     const w = await fetchJSON(API + '/works/' + q.trim());
@@ -1223,6 +1240,15 @@ async function searchWorks(q){
   if (/^(https?:\/\/(dx\.)?doi\.org\/)?10\.\d{4,9}\//.test(q.trim())) {
     const w = await fetchJSON(API + '/works/doi:' + encodeURIComponent(q.trim()));
     return [normalizeWork(w)];
+  }
+  const ax = parseArxivId(q);
+  if (ax) {
+    // arXiv mints a DataCite DOI for every submission, so this reuses the DOI path entirely
+    const data = await fetchJSON(API + '/works?filter=doi:' +
+      encodeURIComponent('10.48550/arxiv.' + ax.toLowerCase()) + '&per-page=1&select=' + SELECT_WORK);
+    const w = (data.results || [])[0];
+    if (w) return [normalizeWork(w)];
+    return [];
   }
   const data = await fetchJSON(API + '/works?search=' + encodeURIComponent(q) +
     '&per-page=8&select=id,display_name,publication_year,cited_by_count,authorships');
@@ -3884,7 +3910,13 @@ document.addEventListener('click', e => {
 
 const detailPanelEl = document.getElementById('detailPanel');
 const isNarrow = () => window.matchMedia('(max-width: 760px)').matches;
-const openSheet = () => { if (isNarrow()) detailPanelEl.classList.add('open'); };
+// Selecting a paper should show it. On a phone that means sliding the sheet up; on a desktop
+// it means expanding the panel if the user had collapsed it -- otherwise a click on a node
+// updates a panel nobody can see and reads as the click having done nothing.
+const openSheet = () => {
+  if (isNarrow()) { detailPanelEl.classList.add('open'); return; }
+  if (detailPanelEl.classList.contains('dp-collapsed')) setDetailCollapsed(false);
+};
 document.getElementById('sheetClose').onclick = () => detailPanelEl.classList.remove('open');
 
 // re-measures the graph container and re-lays-out whichever graph is on screen, on an actual
@@ -5024,7 +5056,15 @@ function wireSearchBox(input, dropdown, onChoose){
     searchTimer = setTimeout(async () => {
       try {
         const results = await searchWorks(q);
-        if (!results.length) { dropdown.hidden = true; return; }
+        if (!results.length) {
+          // an arXiv id that resolves to nothing is a specific, explainable situation -- OpenAlex
+          // only holds the preprint as its own record sometimes; say that rather than going blank
+          if (parseArxivId(q)) {
+            dropdown.innerHTML = '<div class="status-line" style="padding:8px 12px">' + esc(t('arxivNotFound')) + '</div>';
+            dropdown.hidden = false;
+          } else dropdown.hidden = true;
+          return;
+        }
         dropdown.innerHTML = '';
         results.forEach(w => {
           const row = document.createElement('div');
