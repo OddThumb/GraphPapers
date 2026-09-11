@@ -134,8 +134,16 @@ header{
 #bridgeBar{
   flex:0 0 auto; display:flex; align-items:center; gap:16px; padding:8px 24px;
   border-bottom:1px solid var(--rule); background:var(--paper-2);
+  flex-wrap:wrap; row-gap:10px;
 }
 #bridgeBar[hidden]{display:none}
+/* the third paper (and any later one) gets its own row rather than squeezing the first row: a
+   full-width basis plus a later `order` drops it to a new line with no wrapper div. shrink MUST
+   be 0 -- with the default 1 the box just squeezes into whatever space is left on row one and
+   the wrap happens or not depending on the window width. The 60px keeps the ✕ beside it.
+   Sets no `display`, so the [hidden] attribute still hides it. */
+#searchWrapC{flex:1 0 calc(100% - 60px); max-width:none; order:2}
+#removePaperCBtn{order:2}
 #bridgeModeCtl{display:flex; align-items:center; gap:8px}
 #bridgeModeCtl span{font-family:'Geist Mono',monospace; font-size:0.5625rem; text-transform:uppercase;
   letter-spacing:0.18em; color:var(--soft)}
@@ -145,7 +153,17 @@ header{
 #findBridgeBtn{font-size:0.75rem; padding:6px 10px}
 #findBridgeBtn:disabled{color:var(--soft); cursor:default}
 #addPaperBtn, #removePaperCBtn{font-size:0.75rem; padding:6px 10px}
-#bridgeReadout{white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+/* the bridge readout used to sit inside #bridgeBar, where it competed with the controls and
+   truncated. Pinned to the bottom of the viewport instead: it's a footnote about the view, not a
+   control. Stays an HTML element (not SVG) so the camera export, which serialises only the SVG,
+   never picks it up. */
+#bridgeReadout{
+  position:fixed; left:50%; bottom:10px; transform:translateX(-50%); z-index:5;
+  max-width:min(90vw, 900px); text-align:center; pointer-events:none;
+  font-size:0.625rem; line-height:1.4; color:var(--soft); opacity:0.65;
+  text-shadow:0 0 6px var(--paper), 0 0 6px var(--paper);
+}
+#bridgeReadout:empty{display:none}
 main{flex:1; display:flex; overflow:hidden; min-height:0}
 /* the only flex child of `main` now -- #detailPanel moved into #content as an overlay (see its own
    rule), so the graph area gets the full width instead of a fixed 68% split. */
@@ -330,6 +348,17 @@ main{flex:1; display:flex; overflow:hidden; min-height:0}
   background:rgba(0,0,0,0.35);
 }
 #tourChooser[hidden]{display:none}
+/* landing mode: the chooser IS the empty-graph screen, so it drops the dim backdrop and lets
+   clicks through to the search box behind it. Only the box itself takes the pointer. */
+/* centred on the GRAPH area, not the viewport: viewport-centred, the box lands half on top of
+   the detail panel and slices its text mid-word, which reads as a rendering fault. The inset is
+   measured rather than hard-coded because both side panels collapse. */
+#tourChooser.landing{background:none; pointer-events:none;
+  left:var(--landing-l,0px); right:var(--landing-r,0px); width:auto}
+#tourChooser.landing #tourChooserBox{pointer-events:auto; box-shadow:0 2px 16px rgba(0,0,0,0.06)}
+#tourChooser.landing #tourChooserClose{display:none}
+/* the chooser replaces this text rather than sitting on top of it */
+body.landing-tour #graphView .status-line{visibility:hidden}
 #tourChooserBox{
   background:var(--paper); border:1px solid var(--rule-solid); border-radius:8px;
   padding:1.25rem; width:20rem; max-width:calc(100% - 32px); display:flex; flex-direction:column; gap:10px;
@@ -738,8 +767,8 @@ a{color:var(--link)}
     <div id="dropdownC" hidden></div>
   </div>
   <button class="btn" id="removePaperCBtn" data-i18n-attr="title:removePaperCBtnTitle,aria-label:removePaperCBtnTitle" title="Remove the third paper" aria-label="Remove the third paper" hidden>✕</button>
-  <span class="mono" id="bridgeReadout"></span>
 </div>
+<span class="mono" id="bridgeReadout"></span>
 <div id="netBar" hidden data-i18n="offlineBanner">Offline — GraphPapers needs an internet connection to fetch papers from OpenAlex.</div>
 <div id="pdfDropOverlay" hidden data-i18n="pdfDropOverlay">Drop the PDF to identify the paper</div>
 <main>
@@ -1283,10 +1312,13 @@ function normalizeWork(w){
 function parseArxivId(q){
   const t = (q || '').trim();
   const m = t.match(/(?:arxiv[:\s]*|arxiv\.org\/(?:abs|pdf)\/)?(\d{4}\.\d{4,5})(v\d+)?$/i)
-         || t.match(/(?:arxiv[:\s]*|arxiv\.org\/(?:abs|pdf)\/)([a-z-]+(?:\.[A-Z]{2})?\/\d{7})(v\d+)?$/i);
+         || t.match(/(?:arxiv[:\s]*|arxiv\.org\/(?:abs|pdf)\/)?([a-z-]+(?:\.[A-Z]{2})?\/\d{7})(v\d+)?$/i);
   if (!m) return null;
-  // a bare 4-digit.4-digit number is only an arXiv id if it was labelled as one
-  if (/^\d{4}\.\d{4,5}(v\d+)?$/i.test(t) || /arxiv/i.test(t)) return m[1];
+  // a bare 4-digit.4-digit number is only an arXiv id if it was labelled as one. The pre-2007
+  // form is the opposite: `cond-mat/0410550` is a shape nothing else uses, so requiring the
+  // "arXiv:" label there just made a valid paste fail silently.
+  if (/^\d{4}\.\d{4,5}(v\d+)?$/i.test(t) || /^[a-z-]+(\.[A-Za-z]{2})?\/\d{7}(v\d+)?$/i.test(t)
+      || /arxiv/i.test(t)) return m[1];
   return null;
 }
 
@@ -1301,16 +1333,51 @@ async function searchWorks(q){
   }
   const ax = parseArxivId(q);
   if (ax) {
-    // arXiv mints a DataCite DOI for every submission, so this reuses the DOI path entirely
-    const data = await fetchJSON(API + '/works?filter=doi:' +
-      encodeURIComponent('10.48550/arxiv.' + ax.toLowerCase()) + '&per-page=1&select=' + SELECT_WORK);
+    // NOT the 10.48550/arxiv.<id> DataCite DOI: arXiv only started minting those around 2022, so
+    // that lookup silently returns nothing for older papers -- measured 3 of 6 ids missing
+    // (1903.06881, cond-mat/0410550, 0705.0123 all 0 hits). Every one of those six IS in OpenAlex
+    // with the arXiv page as a location, so match on that instead: 6/6, same one request, same
+    // ~400ms. Two hits means the published version and the preprint both list it; OpenAlex's
+    // default order puts the published one first, which is the one carrying the references.
+    const data = await fetchJSON(API + '/works?filter=locations.landing_page_url:' +
+      encodeURIComponent('http://arxiv.org/abs/' + ax) +
+      '&per-page=2&select=' + SELECT_WORK);
     const w = (data.results || [])[0];
     if (w) return [normalizeWork(w)];
     return [];
   }
-  const data = await fetchJSON(API + '/works?search=' + encodeURIComponent(q) +
-    '&per-page=8&select=id,display_name,publication_year,cited_by_count,authorships');
-  return (data.results || []).map(normalizeWork);
+  // `search=` scores the abstract and full text too, which buries an exact title match under
+  // whatever famous paper merely mentions those words: searching this paper's own title put it
+  // THIRD, behind a 2195-citation GW paper. Restricting to title+abstract ranks it first and is
+  // also 2-4x faster (measured: 1646ms -> 678ms on that query, 1743ms -> 426ms on a topic one).
+  // 25, not the 8 shown: OpenAlex ranks by relevance_score, which weights citations, so a
+  // half-remembered query buries the wanted paper below famous ones that merely share the words
+  // -- it came back 13th of 25 for "icecube neutrinos gravitational wave events". Fetching 25 and
+  // re-ranking by how much of the query the TITLE actually covers puts it 3rd, i.e. on screen.
+  // Costs ~460ms median on a slow query and nothing on a fast one (measured over 4 repeats;
+  // a single sample suggested 3-8x and was an outlier). Never demoted a query that was already
+  // right: exact titles, "icecube 33 gravitational", "Attention Is All You Need" and a topic
+  // search all stayed 1st. Ties keep OpenAlex's own order, so relevance still decides within a
+  // coverage band -- this re-ranks, it does not replace their scoring.
+  const data = await fetchJSON(API + '/works?filter=title_and_abstract.search:' + encodeURIComponent(q) +
+    '&per-page=25&select=id,display_name,publication_year,cited_by_count,authorships');
+  const qWords = searchWords(q);
+  return (data.results || [])
+    .map((w, i) => ({ w, i, cov: titleCoverage(qWords, w.display_name) }))
+    .sort((a, b) => b.cov - a.cov || a.i - b.i)
+    .slice(0, 8)
+    .map(x => normalizeWork(x.w));
+}
+
+// pure: the words of a query, lowercased and stripped of punctuation
+function searchWords(q){
+  return (q || '').toLowerCase().replace(/[^a-z0-9 ]/g, ' ').split(/\s+/).filter(Boolean);
+}
+// pure: what fraction of the query's words appear in this title, 0..1
+function titleCoverage(qWords, title){
+  if (!qWords.length) return 0;
+  const inTitle = new Set(searchWords(title));
+  return qWords.filter(w => inTitle.has(w)).length / qWords.length;
 }
 
 // shared select= list for citer/reference/candidate records -- keywords + concepts feed the
@@ -2862,6 +2929,7 @@ function renderGraph(nodes, edges, seedId){
   drawYearGrid(nodes);
   applySpacing();
   document.getElementById('cameraBtn').disabled = false;
+  hideLandingTour();
 
   // quantum-jump arrival: fade the graph in, draw the newest trail edge, ring the new seed once
   if (isArrival) {
@@ -3356,6 +3424,7 @@ function renderBridgeGraph(nodes, edges, seedIds, routes){
   applyBridgeSpacing();
   syncGraphToolsForView();
   document.getElementById('cameraBtn').disabled = false;
+  hideLandingTour();
 
   return new Map(nodes.map(n => [n.id, n]));
 }
@@ -3556,12 +3625,16 @@ function resetApp(){
   state.sourceImpact = new Map(); state.fetchedAt = null;
   pinnedId = null; nodeSel = linkSel = labelSel = citeGroupSel = citeLayerSel = null;
   document.getElementById('cameraBtn').disabled = true;
+  showLandingTour();
   stopRingLoop();
   bridgeSearchToken++;
   stopBridgeRings();
   state.bridge = null;
   syncGraphToolsForView();
   bridgeBar.hidden = true;
+  // the readout is a fixed overlay now, not a child of #bridgeBar -- hiding the bar no longer
+  // takes it off screen, so it has to be emptied explicitly on every exit from the bridge view
+  bridgeReadoutEl.textContent = '';
   bridgeToggleBtn.classList.remove('active');
   searchInputB.value = '';
   dropdownB.hidden = true;
@@ -4196,36 +4269,48 @@ async function surpriseSeed(){
   } catch (err) { setStatus(''); setError(netMessage(err)); }
 }
 
-// bridge panel open with a first paper already set: draw a random SECOND paper instead of
-// replacing the first, and hand it to chooseBridgeB -- exactly what picking it from the second
-// dropdown would do. Never draws the paper already chosen as A; a couple of retries on a
-// collision, then reports it rather than looping. Does not start the search.
-async function surpriseBridgeB(){
+// bridge panel open with paper A (and maybe B) already set: draw a random paper for whichever
+// box is open -- B, or C once the third box is showing -- instead of replacing an earlier paper,
+// and hand it to that box's chooser exactly what picking it from its own dropdown would do.
+// Never draws a paper already placed in the bridge; a couple of retries on a collision, then
+// reports it rather than looping. Does not start the search.
+async function surpriseBridgeTarget(slot){
+  if (slot === 'c' && (!state.bridge || !state.bridge.b)) return;   // nothing to grow yet
   setStatus(t('findingRandom'));
   try {
-    const excludeId = state.seed.id;
+    const excludeIds = slot === 'c' ? [state.seed.id, state.bridge.b.id] : [state.seed.id];
     let id = null;
     for (let attempt = 0; attempt < 3 && !id; attempt++) {
       const drawn = await drawSurpriseId();
-      if (drawn && drawn !== excludeId) id = drawn;
+      if (drawn && !excludeIds.includes(drawn)) id = drawn;
     }
     if (!id) { setStatus(''); setError(t('noRandom')); return; }
     const w = await fetchSeed(id);
     setStatus('');
-    searchInputB.value = w.display_name || '';
-    dropdownB.hidden = true;
-    await chooseBridgeB(w);
+    if (slot === 'c') {
+      searchInputC.value = w.display_name || '';
+      dropdownC.hidden = true;
+      await chooseBridgeC(w);
+    } else {
+      searchInputB.value = w.display_name || '';
+      dropdownB.hidden = true;
+      await chooseBridgeB(w);
+    }
   } catch (err) { setStatus(''); setError(netMessage(err)); }
 }
 
-// true when the bridge bar is open with paper A already set -- the shared rule for which box
-// a "give me a paper" action (Surprise me, a dropped/picked PDF) fills: the second box then,
-// the first one otherwise. bridgeBar/state are declared further down but hoisting makes that
-// fine -- this is only ever called from a click/drop handler, long after the whole script has run.
-function bridgeTargetActive(){ return !bridgeBar.hidden && state.seed; }
+// which box a "give me a paper" action (Surprise me, a dropped PDF) fills: the third box when it
+// is showing, the second when the bridge bar is open with paper A set, the first otherwise.
+// Previously two-way, so opening the third box still sent the paper to B and silently replaced it.
+function bridgeTargetSlot(){
+  if (bridgeBar.hidden || !state.seed) return 'seed';
+  return searchWrapC.hidden ? 'b' : 'c';
+}
+function bridgeTargetActive(){ return bridgeTargetSlot() !== 'seed'; }
 
 function surpriseMe(){
-  return bridgeTargetActive() ? surpriseBridgeB() : surpriseSeed();
+  const slot = bridgeTargetSlot();
+  return slot === 'seed' ? surpriseSeed() : surpriseBridgeTarget(slot);
 }
 document.getElementById('surpriseBtn').onclick = surpriseMe;
 
@@ -5245,7 +5330,7 @@ function wireSearchBox(input, dropdown, onChoose){
         dropdown.innerHTML = '<div class="status-line" style="padding:8px 12px">' + esc(netMessage(err)) + '</div>';
         dropdown.hidden = false;
       }
-    }, 350);
+    }, 220);   // the query itself is 2-4x faster now, so the wait before firing can be shorter
   });
 }
 const searchInput = document.getElementById('searchInput');
@@ -5519,9 +5604,14 @@ async function fetchByDoi(doi){
 }
 
 // hands the identified paper to whichever box Surprise me would have filled -- same rule
-// (bridgeTargetActive), same per-box setup surpriseBridgeB/surpriseSeed already use.
+// (bridgeTargetSlot), same per-box setup surpriseBridgeTarget/surpriseSeed already use.
 async function applyIdentifiedWork(w){
-  if (bridgeTargetActive()) {
+  const slot = bridgeTargetSlot();
+  if (slot === 'c') {
+    searchInputC.value = w.display_name || '';
+    dropdownC.hidden = true;
+    await chooseBridgeC(w);
+  } else if (slot === 'b') {
     searchInputB.value = w.display_name || '';
     dropdownB.hidden = true;
     await chooseBridgeB(w);
@@ -5578,7 +5668,7 @@ async function identifyAndSearchPdf(file){
       // as a query the user can check, rather than a result they have to trust.
       const title = findTitleInText(text) || findTitleInText(tail);
       if (title) {
-        const box = bridgeTargetActive() ? searchInputB : searchInput;
+        const box = { seed: searchInput, b: searchInputB, c: searchInputC }[bridgeTargetSlot()];
         box.value = title;
         box.focus();
         box.dispatchEvent(new Event('input', { bubbles: true }));
@@ -5588,9 +5678,9 @@ async function identifyAndSearchPdf(file){
       setError(t('pdfNoId')); searchInput.focus(); return;
     }
     setStatus(t('pdfLookup'));
-    // arXiv preprints that have a DataCite doi carry it as 10.48550/arXiv.<id> -- resolving
-    // through the same filter=doi: lookup reuses the whole DOI path instead of a second mechanism.
-    const w = await fetchByDoi(doi || ('10.48550/arxiv.' + arxivId));
+    // a DOI scanned out of the PDF resolves by DOI; a bare arXiv id goes through the same
+    // locations lookup searchWorks uses, because the 10.48550 DOI does not exist before ~2022.
+    const w = doi ? await fetchByDoi(doi) : (await searchWorks('arXiv:' + arxivId))[0] || null;
     if (!w) { setStatus(''); setError(t('pdfNotFound')); searchInput.focus(); return; }
     setStatus('');
     await applyIdentifiedWork(w);
@@ -5635,6 +5725,7 @@ bridgeToggleBtn.addEventListener('click', () => {
     bridgeSearchToken++;   // cancels any in-flight search -- restore the button it left disabled below
     stopBridgeRings();
     state.bridge = null;
+    bridgeReadoutEl.textContent = '';
     searchInputB.value = '';
     searchInputC.value = ''; dropdownC.hidden = true; addPaperBoxOpen = false;
     updateBridgeGrowUI();
@@ -5959,6 +6050,7 @@ function tourEnd(){
   tour = null;
 }
 function tourStart(track){
+  hideLandingTour();
   document.getElementById('tourChooser').hidden = true;
   tour = { track, idx: -1, active: true, overview: false, flag: false, seen: new Set(), missing: 0 };
   document.getElementById('tourCallout').hidden = false;
@@ -5970,7 +6062,7 @@ document.getElementById('tourNextBtn').onclick = () => tourAdvance();
 document.getElementById('tourExitBtn').onclick = () => tourEnd();
 document.getElementById('tourOverviewFinish').onclick = () => tourEnd();
 
-function openTourChooser(){
+function openTourChooser(landing){
   const M = tourM();
   document.getElementById('tourChooserTitle').textContent = M.tour.title;
   document.getElementById('tourChooserPick').textContent = M.tour.pick;
@@ -5980,7 +6072,39 @@ function openTourChooser(){
   document.getElementById('tourPickExport').textContent = M.tour.trackExport;
   document.getElementById('tourUseManual').textContent = M.tour.useManual;
   document.getElementById('tourChooserClose').textContent = t('close');
-  document.getElementById('tourChooser').hidden = false;
+  const el = document.getElementById('tourChooser');
+  el.classList.toggle('landing', !!landing);
+  el.hidden = false;
+}
+
+// the chooser doubles as the app's front door: with no paper loaded there is nothing to look at,
+// so the tracks are more use than a line of prose telling the reader where the tracks are.
+// Not dismissable on purpose -- there is no state behind it to get back to.
+function showLandingTour(){
+  openTourChooser(true);
+  document.body.classList.add('landing-tour');
+  fitLandingTour();
+}
+// keeps the landing box over the graph area as the side panels collapse or the window resizes
+function fitLandingTour(){
+  const g = document.getElementById('graphView');
+  if (!g || !document.body.classList.contains('landing-tour')) return;
+  const r = g.getBoundingClientRect();
+  // #graphTools and #detailPanel are OVERLAYS sitting inside #content, so graphView's own rect
+  // spans the full width underneath both of them. Measuring it alone centres the box half under
+  // one panel or the other; the clear strip is what's left between them.
+  const t = document.getElementById('graphTools').getBoundingClientRect();
+  const d = detailPanelEl.getBoundingClientRect();
+  const left  = t.width ? Math.max(r.left, t.right) : r.left;
+  const right = (d.width && d.left > left) ? Math.min(r.right, d.left) : r.right;
+  document.documentElement.style.setProperty('--landing-l', left + 'px');
+  document.documentElement.style.setProperty('--landing-r', (window.innerWidth - right) + 'px');
+}
+window.addEventListener('resize', fitLandingTour);
+function hideLandingTour(){
+  document.body.classList.remove('landing-tour');
+  const el = document.getElementById('tourChooser');
+  if (el.classList.contains('landing')) { el.hidden = true; el.classList.remove('landing'); }
 }
 document.getElementById('tourPickBasics').onclick = () => tourStart('basics');
 document.getElementById('tourPickQuantum').onclick = () => tourStart('quantum');
@@ -6306,6 +6430,16 @@ function selfTest(){
       fewest.distance === 3 && fewest.route.join(',') === 'brA,brH1,brH2,brB');
 
     // ---- 3-paper bridge growth: cap scaling, MST-over-metric-closure, cluster layout ----
+    assert('titleCoverage: every query word present scores 1',
+      titleCoverage(searchWords('icecube neutrinos'), 'A Search for IceCube Neutrinos from 33 Events') === 1);
+    assert('titleCoverage: half the query words present scores 0.5',
+      titleCoverage(searchWords('icecube muons'), 'IceCube and gravitational waves') === 0.5);
+    assert('titleCoverage: word order does not matter',
+      titleCoverage(searchWords('waves gravitational'), 'Gravitational waves') === 1);
+    assert('titleCoverage: punctuation in the title does not hide a word',
+      titleCoverage(searchWords('gravitational wave'), 'Gravitational-wave memory') === 1);
+    assert('titleCoverage: an empty query scores 0, not NaN',
+      titleCoverage(searchWords('  '), 'Anything') === 0);
     assert('bridgeSideCap: 16 per cluster at two papers', bridgeSideCap(2) === 16);
     assert('bridgeSideCap: shrinks to 11 per cluster at three papers', bridgeSideCap(3) === 11);
     assert('bridgeSideCap: total rendered per side stays roughly constant (32 vs. 33)',
@@ -6488,6 +6622,9 @@ function selfTest(){
   lines.forEach(l => console.log(l));
 }
 if (location.search.includes('selftest')) selfTest();
+// the front door, last of all: every element and every i18n string it reads is defined by now.
+// Skipped under ?selftest so the overlay never covers the results.
+else showLandingTour();
 </script>
 </body>
 </html>
